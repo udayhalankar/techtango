@@ -1,3 +1,17 @@
+# Techtango
+
+All-in-one app for managing proposals, meetings, workflows, and approvals.
+
+## Features
+
+- Modular architecture
+- User authentication with JWT
+- Protected routes and subscriptions
+- Dynamic module loading
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
