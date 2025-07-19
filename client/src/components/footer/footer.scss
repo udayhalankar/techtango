@@ -1,0 +1,25 @@
+.footer {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgb(194, 194, 141);
+    padding: 10px;
+ 
+
+    span{
+
+        
+        &:first-child{
+            font-weight: bold;
+        }
+
+        &:last-child{
+            font-weight: 40px;
+        }
+
+        &:hover{
+            background-color: #ffc400;
+        }
+    }
+}

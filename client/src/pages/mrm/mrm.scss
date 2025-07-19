@@ -1,0 +1,71 @@
+@import "../../styles/variables.scss";
+@import "../../styles/responsive.scss";
+
+.dashboardmain2 {
+
+display:grid;
+gap: 0px;
+grid-template-columns: auto, auto, auto, auto, auto, auto, auto, auto, auto;
+grid-gap: 00px;
+// background-color: $main-bg;
+// background-color: #2196F3;
+  padding: 0px;
+grid-auto-rows: minmax(10px, auto);
+
+.dashboardmain2 > div {
+    // background-color: rgba(255, 255, 255, 0.8);
+    // background-color: #2a3447;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 30px;
+  }
+
+   .bx{
+    padding: 10px;
+    // border-radius: 7px ;
+    border: 1px solid $soft-bg;
+    background-color: #3f62a4;
+   
+}
+.bx0{
+    grid-area: 1 / 1 / span 1 / span 9;
+    height: 40px;
+    background-color: #2a3447;
+}
+.bx1{
+    grid-area: 2 / 1 / span 1 / span 6;
+    height: 300px;
+    color: #2a3447;
+}
+.bx2{
+    grid-area: 2 / 7 / span 1 / span 3;
+    height: 300px;
+}
+.bx3{
+    grid-area: 3 / 1 / span 1 / span 9;
+    height: 100px;
+}
+.bx4{
+    grid-area: 4 / 1 / span 1 / span 6;
+    height: 300px;
+}
+.bx5{
+    grid-area: 4 / 7 / span 1 / span 3;
+    height: 300px;
+}
+// .bx6{
+//     grid-area: 4 / 3 / span 1 / span 1
+// }
+// .bx7{
+//     grid-area: 4 / 1 / span 1 / span 1
+// }
+// .bx8{
+//     grid-area: 4 / 2 / span 1 / span 1
+// }
+// .box9{
+//     grid-area: 4 / 4 / span 1 / span 1
+// }
+
+
+
+}

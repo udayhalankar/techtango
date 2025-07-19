@@ -1,0 +1,36 @@
+@import "../../styles/variables.scss";
+
+.menu {
+    .item {
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        
+        margin-bottom: 5px;
+        margin-left: 20px;
+        padding: 0px 0px 10px 0px;
+        
+
+    }
+
+    .title {
+        font-size: 14px;
+        font-weight: 200;
+        color: $soft-color;
+        text-transform: uppercase;
+        padding-top: 10px;
+       text-align: left;
+        
+      
+    }
+
+    .ListItem{
+        display: flex;
+        align-items: left;
+        gap:6px;       
+        border-radius: 5px;
+        
+
+    }
+}

@@ -1,0 +1,43 @@
+@import "../../styles/variables.scss";
+
+.topBox{   
+
+
+    .h3{
+        margin-bottom: 20px;
+    }
+
+    .list{
+
+    .listItem{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 5px;
+
+        .description{
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            .todoTexts{
+                font-size: 8px;
+                font-weight: 300; 
+            }
+
+            .descriptionTexts{
+                font-size: 14px;
+                font-weight: 300;            
+            }
+
+            .asgntxt{
+                font-size: 10px;
+                font-weight: 100; 
+
+            }
+
+
+        }
+       
+    }}
+}
