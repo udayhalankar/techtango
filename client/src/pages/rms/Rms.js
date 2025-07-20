@@ -16,6 +16,8 @@ export const Rms = () => {
   return (
 <div>
 {/* <Layout />   */}
+
+RMS 
 </div>
    
     

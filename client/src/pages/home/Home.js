@@ -80,7 +80,8 @@ export default function Home() {
               <div className="card my-assignments" key={mod.module_id}>
                 <Link to={mod.route} className="card-link">
                   <h4>{mod.module_name}</h4>
-                  <p>View your assignments and update status</p>
+                  <p>{mod.description}</p>
+                  {/* <p>View your assignments and update status</p> */}
                 </Link>
               </div>
             );

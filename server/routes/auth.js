@@ -4,7 +4,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');   // ← import here
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET || 'YOUR_SECRET_KEY';
 
 // 1️⃣ REGISTER + SEND ACTIVATION EMAIL
@@ -113,7 +115,46 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ➊ Endpoint that frontend will call with Google ID token
+router.post('/google', async (req, res) => {
+  const { idToken } = req.body;
+  try {
+    // ➋ Verify the ID token
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const firstname = payload.given_name;
+    const lastname = payload.family_name;
 
+    // ➌ Find or create user in your DB
+    let user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
+    if (user.rows.length === 0) {
+      const hash = ''; // no password for Google accounts
+      const insert = await pool.query(
+        `INSERT INTO users (firstname, lastname, email, password_hash, is_active, role)
+         VALUES ($1,$2,$3,$4,true,'user') RETURNING *`,
+        [firstname, lastname, email, hash]
+      );
+      user = insert;
+    }
+    const dbUser = user.rows[0];
+
+    // ➍ Issue your own JWT
+    const token = jwt.sign(
+      { userId: dbUser.id, email: dbUser.email, role: dbUser.role },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(401).json({ message: 'Google authentication failed' });
+  }
+});
 
 
 module.exports = router;

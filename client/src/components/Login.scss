@@ -1,0 +1,131 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f5f7fa;
+}
+
+.login-card {
+  display: flex;
+  width: 800px;
+  height: 600px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.login-left {
+  width: 50%;
+  padding: 40px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-logo {
+  width: 120px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.subtitle {
+  margin-top: 8px;
+  margin-bottom: 32px;
+  color: #666;
+}
+
+.login-input {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 8px;
+  background: #e0e0e0;
+  font-size: 16px;
+  outline: none;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: -12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+  }
+}
+
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 24px;
+  background: #000;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 16px 0;
+  color: #999;
+  font-size: 14px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+    margin: 0 8px;
+  }
+}
+
+.btn-google {
+  width: 100%;
+  padding: 12px;
+  background: #e0e0e0;
+  color: #444;
+  font-size: 16px;
+  border: none;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  .google-icon {
+    margin-right: 8px;
+  }
+}
+
+.signup-link {
+  margin-top: auto;
+  font-size: 14px;
+  color: #666;
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+  }
+}
+
+.login-right {
+  width: 50%;
+  background: linear-gradient(135deg, #004e92, #000428);
+}
