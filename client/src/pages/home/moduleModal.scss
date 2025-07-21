@@ -1,12 +1,11 @@
-// moduleModal.scss
-
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); // dim background
+  /* 20% yellow overlay */
+  background: rgba(251, 249, 228, 0.814);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -14,16 +13,18 @@
 }
 
 .modal-content {
-  background: #fff;
+  /* fully opaque white box */
+  background: #281414; /* or any solid color you like */
   padding: 2rem;
   border-radius: 12px;
   width: 80%;
   max-width: 900px;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 4px rgba(34, 31, 31, 0.46);
 }
+
 
 .close-button {
   position: absolute;
@@ -52,7 +53,7 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 1.2rem;
-  background: #f9f9f9;
+  background: #f3f5f5;
   transition: box-shadow 0.2s;
 }
 

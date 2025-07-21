@@ -8,6 +8,8 @@ import { BsBell } from "react-icons/bs";
 import { AiFillSetting } from "react-icons/ai";
 import { Link } from 'react-router-dom';
 
+const firstname = localStorage.getItem("firstname");
+const picture = localStorage.getItem("picture");
 
 const Navbar = () => {
   return (
@@ -23,16 +25,20 @@ const Navbar = () => {
 <BsLifePreserver />
 <div className='notification'>
 <BsBell />    
-<span>2</span>
+<div className="user-info">
+          {/* <img 
+          src="https://lh3.googleusercontent.com/ogw/AGvuzYbzV0pDdbjARQCfLno8g1OQfjmr5ct2vdNWNbF9MQ=s32-c-mo" 
+          alt="" />
+          <span> Uday</span> */}
+
+          {picture && <img src={picture} alt="Profile" className="avatar" />}
+          {firstname && <span className="username">Hi, {firstname}</span>}
+
+        </div>
 </div>
 <AiFillSetting /> 
 
-        <div className="user">
-          <img 
-          src="https://lh3.googleusercontent.com/ogw/AGvuzYbzV0pDdbjARQCfLno8g1OQfjmr5ct2vdNWNbF9MQ=s32-c-mo" 
-          alt="" />
-          <span> Uday</span>
-        </div>
+        
         <div>
           <Link to="/logout">Logout</Link>
         </div>

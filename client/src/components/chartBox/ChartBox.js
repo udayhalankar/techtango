@@ -11,7 +11,7 @@ export default function ChartBox() {
   
     useEffect(() => {
       const fetchDatas = async () => {
-        const res = await fetch("http://localhost:5000/todos");
+        const res = await fetch("http://localhost:5000/api/todos");
         const todo = await res.json();
         console.log(todo);
         //used below site for reference and in the example the ?.data referers to 

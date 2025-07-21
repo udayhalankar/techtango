@@ -2,54 +2,60 @@ import React, { Fragment, useEffect, useState } from 'react';
 import "./topbox.scss";
 
 const Topbox = () => {
-
   const [todos, setTodos] = useState([]);
-  
-  const getTodos = async() => {
-      try {
 
-          const response = await fetch ("http://localhost:5000/todos");
-          const jsonData = await response.json();
+  const getTodos = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/todos");
 
-          setTodos (jsonData);
+      const contentType = response.headers.get("content-type");
 
-      } catch (err) {
-
-          console.error(err.message);            
-      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("❌ Server error:", response.status, text);
+        return;
       }
+
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("❌ Expected JSON but got:", text);
+        return;
+      }
+
+      const jsonData = await response.json();
+      setTodos(jsonData);
+    } catch (err) {
+      console.error("❌ Fetch failed:", err.message);
+    }
   };
 
-useEffect(() => {
-  getTodos();
-}, []);
+  useEffect(() => {
+    getTodos();
+  }, []);
 
-
-return (
-  <Fragment>
-    <div className="topBox">
-      <h5>Assignments</h5> 
- <div className="list">     
-{todos.map(todo => (
-  <div className="listItem" key={todo.todo_id}>
-    <div className="description">
-    {/* <span className="todoTexts">{todo.todo_id}</span> */}
-      <span className="descriptionTexts">{todo.description}</span>
+  return (
+    <Fragment>
+      <div className="topBox">
+        <h5>Assignments</h5>
+        <div className="list">
+          {todos.length === 0 ? (
+            <div style={{ padding: "1rem", color: "#999" }}>No assignments found.</div>
+          ) : (
+            todos.map((todo) => (
+              <div className="listItem" key={todo.todo_id}>
+                <div className="description">
+                  <span className="descriptionTexts">{todo.description}</span>
+                </div>
+                <div className="description">
+                  <span className="asgntxt">{todo.assignto}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-      <div className="description">
-      <span className="asgntxt">{todo.assignto}</span>
-  </div>
-  
-  </div>
-  
-  
-              )
-              )}
-              </div>
-              </div>
-      
-  </Fragment>
-)
-}
+    </Fragment>
+  );
+};
 
 export default Topbox;

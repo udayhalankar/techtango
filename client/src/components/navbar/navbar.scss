@@ -6,8 +6,23 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: rgba(17, 37, 56, 0.8);
+    background-color: rgba(176, 180, 180, 0.8);
     // border-bottom: 1px solid rgb(194, 194, 141);
+
+    .user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+.username {
+  font-weight: 500;
+}
+
 
     .logo{
         display: flex;

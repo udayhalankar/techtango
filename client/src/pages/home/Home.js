@@ -1,29 +1,44 @@
+// src/pages/home/Home.js
 import React, { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ModuleModal from "./ModuleModal";
 import "./home.scss";
-import api from '../../services/api';
+import api from "../../services/api";
+import { jwtDecode } from "jwt-decode";
 
 export default function Home() {
+  const token = localStorage.getItem("token");
+  let firstname = "";
+
+  if (token) {
+    try {
+      const { firstname: fn } = jwtDecode(token);
+      firstname = fn;
+    } catch (e) {
+      console.error("Invalid token", e);
+    }
+  }
+
   const sliderRef = useRef();
   const [modules, setModules] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   const scrollLeft = () => {
-    sliderRef.current.scrollBy({ left: -300, behavior: "smooth" });
+    sliderRef.current?.scrollBy({ left: -300, behavior: "smooth" });
   };
 
   const scrollRight = () => {
-    sliderRef.current.scrollBy({ left: 300, behavior: "smooth" });
+    sliderRef.current?.scrollBy({ left: 300, behavior: "smooth" });
   };
 
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const res = await api.get('/subscriptions');
+        const res = await api.get("/subscription/subscriptions"); // ✅ Correct endpoint
+        console.log("🏷️ subscriptions response:", res.data);
         setModules(res.data);
       } catch (err) {
-        console.error("Failed to fetch modules", err); // global modal will handle 401/403
+        console.error("❌ Failed to fetch modules", err);
       }
     };
     fetchModules();
@@ -31,6 +46,10 @@ export default function Home() {
 
   return (
     <div className="home-page">
+      <div className="home-container">
+        <h1>Welcome{firstname ? `, ${firstname}` : ""}!</h1>
+      </div>
+
       <div className="nav-bar">
         <button>Proposals</button>
         <button>Meetings</button>
@@ -52,12 +71,24 @@ export default function Home() {
           <h3>Scheduled Meetings</h3>
           <table>
             <thead>
-              <tr><th>Date</th><th>Agenda</th></tr>
+              <tr>
+                <th>Date</th>
+                <th>Agenda</th>
+              </tr>
             </thead>
             <tbody>
-              <tr><td>15 Nov 2024</td><td>Discuss Multiple Items.</td></tr>
-              <tr><td>22 Nov 2024</td><td>Discuss Multiple Items.</td></tr>
-              <tr><td>27 Nov 2024</td><td>Discuss Multiple Items.</td></tr>
+              <tr>
+                <td>15 Nov 2024</td>
+                <td>Discuss Multiple Items.</td>
+              </tr>
+              <tr>
+                <td>22 Nov 2024</td>
+                <td>Discuss Multiple Items.</td>
+              </tr>
+              <tr>
+                <td>27 Nov 2024</td>
+                <td>Discuss Multiple Items.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -65,29 +96,40 @@ export default function Home() {
 
       <div className="add-modules-button">
         Applications
-        <button className="add-btn" onClick={() => setShowModal(true)}>Add Modules</button>
+        <button className="add-btn" onClick={() => setShowModal(true)}>
+          Add Modules
+        </button>
       </div>
 
       <div className="slider-container">
-        <button className="slider-arrow left" onClick={scrollLeft}>◀</button>
+        <button className="slider-arrow left" onClick={scrollLeft}>
+          ◀
+        </button>
         <div className="cards-slider" ref={sliderRef}>
-          {modules.map((mod) => {
-            if (!mod.route) {
-              console.warn(`Skipping module: ${mod.module_name} due to missing routeinfo`);
-              return null;
-            }
-            return (
-              <div className="card my-assignments" key={mod.module_id}>
-                <Link to={mod.route} className="card-link">
-                  <h4>{mod.module_name}</h4>
-                  <p>{mod.description}</p>
-                  {/* <p>View your assignments and update status</p> */}
-                </Link>
-              </div>
-            );
-          })}
+          {modules.length === 0 ? (
+            <div style={{ padding: "1rem", color: "#666" }}>
+              You have no active subscriptions.
+            </div>
+          ) : (
+            modules.map((mod) => {
+              if (!mod.route) {
+                console.warn(`Skipping module: ${mod.module_name} (no route)`);
+                return null;
+              }
+              return (
+                <div className="card my-assignments" key={mod.subscription_id}>
+                  <Link to={mod.route} className="card-link">
+                    <h4>{mod.module_name}</h4>
+                    <p>{mod.description}</p>
+                  </Link>
+                </div>
+              );
+            })
+          )}
         </div>
-        <button className="slider-arrow right" onClick={scrollRight}>▶</button>
+        <button className="slider-arrow right" onClick={scrollRight}>
+          ▶
+        </button>
       </div>
 
       <div className="bottom-info">

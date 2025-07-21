@@ -6,30 +6,28 @@ import { useGoogleLogin } from "@react-oauth/google";
 import api from "../../services/api";
 import logo from "../../logo.svg";
 import "./Login.scss";
+import { jwtDecode } from "jwt-decode";  // make sure it's installed
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const apiBase = process.env.REACT_APP_API_URL;
 
-  // ➊ Email/password change handler
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // ➋ Email/password submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await api.post("/auth/login", form);
       const { token } = res.data;
-      // store JWT
+
+      if (!token) throw new Error("No token returned");
+
       localStorage.setItem("token", token);
-      // fetch & store subscriptions
-      const subs = await api.get("/subscriptions");
-      localStorage.setItem(
-        "subscriptions",
-        JSON.stringify(subs.data)
-      );
+
+      const subs = await api.get("/subscription/subscriptions");
+      localStorage.setItem("subscriptions", JSON.stringify(subs.data));
+
       navigate("/");
     } catch (err) {
       console.error("Login error:", err);
@@ -37,28 +35,41 @@ export default function Login() {
     }
   };
 
-  // ➌ Google login hook
   const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (credentialResponse) => {
+    flow: "auth-code",
+    scope: "openid profile email",
+    onSuccess: async (codeResponse) => {
       try {
+        console.log("▶▶ Google auth code:", codeResponse.code);
         const res = await api.post("/auth/google", {
-          idToken: credentialResponse.credential,
+          code: codeResponse.code,
         });
+
         const { token } = res.data;
+        
+
+
+        if (!token) throw new Error("No token returned");
+
         localStorage.setItem("token", token);
-        const subs = await api.get("/subscriptions");
-        localStorage.setItem(
-          "subscriptions",
-          JSON.stringify(subs.data)
-        );
+
+        // 🧠 Decode name/photo from token
+        const decoded = jwtDecode(token);
+        localStorage.setItem("firstname", decoded.firstname);
+        localStorage.setItem("lastname", decoded.lastname);
+        localStorage.setItem("picture", decoded.picture);
+
+        const subs = await api.get("/subscription/subscriptions");
+        localStorage.setItem("subscriptions", JSON.stringify(subs.data));
+
         navigate("/");
       } catch (err) {
-        console.error("Google login failed", err);
-        alert("Google login failed");
+        console.error("Google login failed:", err.response?.data || err.message);
+        alert("Google login failed: " + (err.response?.data?.message || err.message));
       }
     },
-    onError: () => {
-      console.error("Google login error");
+    onError: (errorResponse) => {
+      console.error("Google login error:", errorResponse);
       alert("Google login error");
     },
   });
@@ -102,7 +113,6 @@ export default function Login() {
             <span>Or</span>
           </div>
 
-          {/* ➍ Custom Google button */}
           <button
             type="button"
             className="btn-google"

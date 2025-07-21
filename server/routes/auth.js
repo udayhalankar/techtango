@@ -1,46 +1,50 @@
+// routes/auth.js
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const nodemailer = require('nodemailer');
-const { OAuth2Client } = require('google-auth-library');   // ← import here
+const { OAuth2Client } = require('google-auth-library');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const JWT_SECRET = process.env.JWT_SECRET || 'YOUR_SECRET_KEY';
+const {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
+  JWT_SECRET = 'YOUR_SECRET_KEY'
+} = process.env;
 
-// 1️⃣ REGISTER + SEND ACTIVATION EMAIL
+const client = new OAuth2Client(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI
+);
+
+router.use(express.json());
+
+/** 1️⃣ REGISTER + SEND ACTIVATION EMAIL **/
 router.post('/register', async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
-  // console.log('Register request body:', req.body);
-
-  const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `INSERT INTO users (firstname, lastname, email, password_hash, is_active)
        VALUES ($1, $2, $3, $4, false)
        RETURNING id, email`,
       [firstname, lastname, email, hashedPassword]
     );
-
     const newUser = result.rows[0];
 
-    // Generate activation token
-    const activationToken = jwt.sign(
-      { userId: newUser.id },
-      JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    const activationToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '1d' });
+    const activationLink = `${GOOGLE_REDIRECT_URI}/activate?token=${activationToken}`;
 
-    const activationLink = `http://localhost:5000/api/auth/activate?token=${activationToken}`;
-
-    // Send Email
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'udayhalankar@gmail.com',        // ✅ Use your Gmail
-        pass: 'cxte vspd jslh iaea'           // ✅ App password, not your Gmail password!
+        user: 'udayhalankar@gmail.com',
+        pass: 'YOUR_GMAIL_APP_PASSWORD'
       }
     });
 
@@ -53,108 +57,113 @@ router.post('/register', async (req, res) => {
     });
 
     res.status(201).json({ message: 'Registration successful. Please check your email.' });
-
   } catch (err) {
-    console.error(err);
+    console.error('Register error:', err);
     res.status(500).json({ message: 'Registration failed' });
   }
 });
 
-// 2️⃣ ACTIVATE ACCOUNT
+/** 2️⃣ ACTIVATE ACCOUNT **/
 router.get('/activate', async (req, res) => {
   const token = req.query.token;
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const userId = decoded.userId;
-
-    await pool.query(
-      'UPDATE users SET is_active = true WHERE id = $1',
-      [userId]
-    );
-
-    res.redirect('http://localhost:3000/login'); // frontend login page
+    await pool.query('UPDATE users SET is_active = true WHERE id = $1', [decoded.userId]);
+    return res.redirect(`${GOOGLE_REDIRECT_URI}/login`);
   } catch (err) {
-    console.error(err);
-    res.status(400).send('Invalid or expired activation link.');
+    console.error('Activation error:', err);
+    return res.status(400).send('Invalid or expired activation link.');
   }
 });
 
-// 3️⃣ LOGIN (with activation check)
+/** 3️⃣ EMAIL/PASSWORD LOGIN **/
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
-
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
-
     if (!user) return res.status(401).json({ message: 'User not found' });
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
-
-    if (!user.is_active) {
-      return res.status(403).json({ message: 'Please activate your account first.' });
-    }
+    if (!user.is_active) return res.status(403).json({ message: 'Activate your account first.' });
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id, email: user.email, firstname: user.firstname, lastname: user.lastname },
       JWT_SECRET,
+      //session expires in 1 hour
       { expiresIn: '1h' }
     );
-
     res.json({ token });
-
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed' });
   }
 });
 
-// ➊ Endpoint that frontend will call with Google ID token
+/** 4️⃣ GOOGLE SIGN‑IN **/
 router.post('/google', async (req, res) => {
-  const { idToken } = req.body;
+  const { idToken, code } = req.body;
+
+  if (!idToken && !code) {
+    return res.status(400).json({ message: 'Missing idToken or authorization code' });
+  }
+
   try {
-    // ➋ Verify the ID token
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    let ticket;
+
+    if (idToken) {
+      ticket = await client.verifyIdToken({
+        idToken,
+        audience: GOOGLE_CLIENT_ID,
+      });
+    } else {
+      const { tokens } = await client.getToken({ code, redirect_uri: GOOGLE_REDIRECT_URI });
+      ticket = await client.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: GOOGLE_CLIENT_ID,
+      });
+    }
+
     const payload = ticket.getPayload();
     const email = payload.email;
     const firstname = payload.given_name;
     const lastname = payload.family_name;
+    const picture   = payload.picture; // ✅ Google profile photo
 
-    // ➌ Find or create user in your DB
-    let user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    if (user.rows.length === 0) {
-      const hash = ''; // no password for Google accounts
+    let dbRes = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (dbRes.rows.length === 0) {
       const insert = await pool.query(
-        `INSERT INTO users (firstname, lastname, email, password_hash, is_active, role)
-         VALUES ($1,$2,$3,$4,true,'user') RETURNING *`,
-        [firstname, lastname, email, hash]
+        `INSERT INTO users (firstname, lastname, email, password_hash, is_active)
+         VALUES ($1, $2, $3, '', true)
+         RETURNING *`,
+        [firstname, lastname, email]
       );
-      user = insert;
+      dbRes = insert;
     }
-    const dbUser = user.rows[0];
 
-    // ➍ Issue your own JWT
+    const dbUser = dbRes.rows[0];
+
     const token = jwt.sign(
-      { userId: dbUser.id, email: dbUser.email, role: dbUser.role },
+      {
+        userId: dbUser.id,
+        email: dbUser.email,
+        // firstname: dbUser.firstname,
+        // lastname: dbUser.lastname,
+        firstname,
+        lastname,
+        picture,
+      },
       JWT_SECRET,
+       //session expires in 1 hour
       { expiresIn: '1h' }
     );
 
-    res.json({ token });
+    res.json({ token }); // ✅ this is the fix you were missing
   } catch (err) {
-    console.error("Google login error:", err);
-    res.status(401).json({ message: 'Google authentication failed' });
+    console.error('❌ Google login error:', err);
+    res.status(401).json({ message: 'Google authentication failed', details: err.message });
   }
 });
-
 
 module.exports = router;

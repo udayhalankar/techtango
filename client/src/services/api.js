@@ -3,8 +3,13 @@ import axios from 'axios';
 import ReactDOM from 'react-dom';
 import SessionExpiredModal from '../components/SessionExpiredModal';
 
+// const api = axios.create({
+//   baseURL: process.env.REACT_APP_API_URL,
+// });
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  // …other defaults
 });
 
 // ✅ Attach token to every request

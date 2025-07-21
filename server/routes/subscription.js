@@ -5,6 +5,19 @@ const router = express.Router();
 const pool = require('../db');
 const { verifyToken, authorizeRole } = require('../middleware/authMiddleware');
 
+
+// sanity‐check log
+router.get('/', async (req, res) => {
+  console.log('▶▶ HIT /api/subscriptions');
+  try {
+    const { rows } = await pool.query('SELECT * FROM subscriptions');
+    return res.json(rows);
+  } catch (err) {
+    console.error('Subscriptions error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ✅ Existing: subscribe to a module
 router.post('/subscribe', verifyToken, async (req, res) => {
   const { moduleId } = req.body;
