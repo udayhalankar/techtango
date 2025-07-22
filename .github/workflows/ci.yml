@@ -78,3 +78,12 @@ jobs:
         git add $FILE
         git commit -m "📦 Backup: $TIMESTAMP"
         git push origin $BRANCH
+
+    - name: 🧹 Delete ZIPs older than 30 days
+      run: |
+        echo "🧹 Cleaning up old zip backups..."
+        find . -name 'techtango-backup-*.zip' -type f -mtime +30 -print -delete
+        git add .
+        git commit -m "🧹 Cleanup: Remove zips older than 30 days" || echo "No old zips to delete"
+        git push origin $BRANCH
+
