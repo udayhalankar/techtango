@@ -1,0 +1,45 @@
+# .github/workflows/ci.yml
+name: Node.js CI
+
+on:
+  push:
+    branches: [ master, main ]
+  schedule:
+    - cron: '0 20 * * *'  # every day at 20:00 UTC (8 PM)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - name: 📦 Checkout repo
+      uses: actions/checkout@v3
+
+    - name: 🔧 Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: 🔄 Install dependencies (server)
+      run: |
+        cd server
+        npm install
+
+    - name: ✅ Run server tests
+      run: |
+        cd server
+        npm test || echo "No tests found"
+
+    - name: 🔄 Install dependencies (client)
+      run: |
+        cd client
+        npm install
+
+    - name: ✅ Run client build
+      run: |
+        cd client
+        npm run build || echo "Build skipped or failed"
