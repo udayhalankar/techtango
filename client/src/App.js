@@ -1,6 +1,6 @@
 // src/App.js
-import React from 'react';
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { Routes, Route, useNavigate  } from "react-router-dom";
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedModuleRoute from './components/ProtectedModuleRoute';
 import Layout from './components/Layout';
@@ -17,7 +17,47 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 
 export default function App() {
+
+
+   //END added by UH 
+
+     const navigate = useNavigate();
+
+  useEffect(() => {
+    const updateActivity = () => {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    };
+
+    const checkInactivity = setInterval(() => {
+      const last = parseInt(localStorage.getItem('lastActivity') || "0", 10);
+      const now = Date.now();
+      if (now - last > 15 * 60 * 1000) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('lastActivity');
+        navigate('/login');
+      }
+    }, 60000); // check every 1 min
+
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', updateActivity);
+    updateActivity();
+
+    return () => {
+      clearInterval(checkInactivity);
+      window.removeEventListener('mousemove', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('click', updateActivity);
+    };
+  }, [navigate]);
+
+    //END added by UH
+
+
+
+
   return (
+
     <QueryClientProvider client={queryClient}>
       <Routes>
         {/* Public Routes */}

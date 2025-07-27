@@ -4,29 +4,35 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('ws');
 const pool = require('./db');
-const router  = express.Router();
 
-const authRoutes          = require('./routes/auth');
-const subscriptionRoutes  = require('./routes/subscription');
-const usersRoutes         = require('./routes/users');
+const authRoutes         = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscription');
+const usersRoutes        = require('./routes/users');
+const approvalsRoutes    = require('./routes/approvals');
 
 const app = express();
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true, // if using cookies or auth headers
+}));
 app.use(express.json());
 
-// ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+// ─── API ROUTES ───────────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/approvals', approvalsRoutes);
+
+// ─── TEST ROUTES ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.send('OK');
 });
 
-// ─── API ROUTES ────────────────────────────────────────────────────────────────
-// Authentication (register, login, Google, etc.)
-// GET /api/subscriptions
-router.get('/', async (req, res) => {
-console.log('▶▶ HIT /api/subscriptions');
-
+// 🔍 Optional: add /api/subscriptions list if still needed
+app.get('/api/subscriptions', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM subscriptions'); 
     return res.json(rows);
@@ -36,17 +42,6 @@ console.log('▶▶ HIT /api/subscriptions');
   }
 });
 
-
-app.use('/api/auth', authRoutes);
-
-// Subscription management
-// app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-
-// User CRUD
-app.use('/api/users', usersRoutes);
-
-// Example TODOs endpoint (now under /api/todos)
 app.get('/api/todos', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM todo');
@@ -57,7 +52,7 @@ app.get('/api/todos', async (req, res) => {
   }
 });
 
-// ─── HTTP & WEBSOCKET SERVER SETUP ─────────────────────────────────────────────
+// ─── WEBSOCKET SERVER SETUP ───────────────────────────────────────────────────
 const server = http.createServer(app);
 const wss = new Server({ server });
 
@@ -67,7 +62,6 @@ wss.on('connection', ws => {
 
   ws.on('message', message => {
     console.log('📨 Received via WS:', message);
-    // (Optionally broadcast or handle the message here)
   });
 
   ws.on('close', () => {
@@ -75,7 +69,7 @@ wss.on('connection', ws => {
   });
 });
 
-// ─── START SERVER ──────────────────────────────────────────────────────────────
+// ─── START SERVER ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server listening on port ${PORT}`);
