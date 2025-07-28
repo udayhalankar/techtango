@@ -9,6 +9,7 @@ const authRoutes         = require('./routes/auth');
 const subscriptionRoutes = require('./routes/subscription');
 const usersRoutes        = require('./routes/users');
 const approvalsRoutes    = require('./routes/approvals');
+const templatesRoute = require('./routes/templates');
 
 const app = express();
 
@@ -20,11 +21,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
+
 // ─── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/approvals', approvalsRoutes);
+
+
+app.use('/api/templates', templatesRoute); // <-- mounts the endpoint
 
 // ─── TEST ROUTES ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
