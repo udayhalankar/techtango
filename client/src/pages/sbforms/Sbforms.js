@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './sbforms.scss';
 import Footer from '../../components/footer/Footer';
 import api from '../../services/api';
+import FormViewBuilder from './FormViewBuilder';
+
 
 const TABS = ['Templates', 'Forms Views', 'Report Views', 'Create Query', 'Chart Views'];
 
@@ -10,31 +12,47 @@ export const Sbforms = () => {
   const [showFormModal, setShowFormModal] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [fields, setFields] = useState([]);
-  const [newField, setNewField] = useState({ name: '', type: 'text' });
+  const [newField, setNewField] = useState({ name: '', type: 'text', inputtype: 'text', options: '' });
   const [templateList, setTemplateList] = useState([]);
 
-  const addField = () => {
-  const fieldRegex = /^[a-z0-9]{1,20}$/;
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newInputType, setNewInputType] = useState("text");
+  const [newRadioOptions, setNewRadioOptions] = useState("");
+  const [newDateFormat, setNewDateFormat] = useState("full");
+  const [formFields, setFormFields] = useState([]);
+  const [showViewBuilder, setShowViewBuilder] = useState(false);
 
   
 
-  if (!newField.name.trim()) {
-    alert("Field name is required.");
-    return;
-  }
 
-  if (!fieldRegex.test(newField.name)) {
-    alert("Field name must be lowercase letters and numbers only (max 20 characters). No spaces or special characters.");
-    return;
-  }
+      const addField = () => {
+        const nameRegex = /^[a-z0-9]{1,20}$/;
 
-  setFields([...fields, newField]);
-  setNewField({ name: '', type: 'text' });
-};
+        if (!newField.name.trim()) {
+          alert("Field name is required.");
+          return;
+        }
+
+        if (!nameRegex.test(newField.name)) {
+          alert("Field name must be lowercase letters and numbers only, max 20 characters.");
+          return;
+        }
+
+        if (!newField.inputtype) {
+          alert("Please select an input type.");
+          return;
+        }
+
+        setFields([...fields, newField]);
+        setNewField({ name: '', type: 'text', inputtype: '' }); // Clear input after add
+      };
+
+
 
 
 useEffect(() => {
   const fetchTemplates = async () => {
+    console.log("formFields changed:", formFields);
     try {
       const res = await api.get('/templates/list');
       setTemplateList(res.data);
@@ -60,6 +78,80 @@ const handleUpdateTemplate = () => {
   setEditModal(false);
 };
 
+const handleAddField = () => {
+  // Field name validation
+  console.log("Adding field");
+  const nameRegex = /^[a-z0-9]{1,20}$/;
+  if (!nameRegex.test(newFieldName)) {
+    alert("Field name must be lowercase letters/numbers, max 20 chars, no spaces/special chars.");
+    return;
+  }
+
+  // Check for duplicate names
+  if (formFields.some(f => f.fieldname === newFieldName)) {
+    alert("Field name already exists.");
+    return;
+  }
+
+  // Determine backend-compatible datatype
+  let dataType = "TEXT";
+  let options = null;
+  let format = null;
+
+  if (newInputType === "checkbox") dataType = "INTEGER";
+  if (newInputType === "dropdownlist") {
+  dataType = "TEXT";
+  options = newRadioOptions
+    .split(",")
+    .map(opt => opt.trim())
+    .filter(Boolean);
+
+  if (options.length < 2) {
+    alert("Please provide at least 2 options for dropdown list.");
+    return;
+  }
+}
+
+  if (newInputType === "radio") {
+    dataType = "INTEGER";
+    options = newRadioOptions.split(",").map(opt => opt.trim()).filter(Boolean);
+    if (options.length < 2) {
+      alert("Please provide at least 2 options for radio buttons.");
+      return;
+    }
+  }
+  if (newInputType === "image") dataType = "TEXT";
+  if (newInputType === "date") {
+    dataType = "DATE";
+    format = newDateFormat;
+  }
+
+  // Add new field to state
+  const newField = {
+    fieldname: newFieldName,
+    datatype: dataType,
+    inputtype: newInputType,
+    options,        // for radio buttons
+    format          // for date
+  };
+
+  setFormFields([...formFields, newField]);
+
+  // Reset all form inputs
+  setNewFieldName("");
+  setNewInputType("text");
+  setNewRadioOptions("");
+  setNewDateFormat("full");
+};
+
+
+
+const handleRemoveField = (indexToRemove) => {
+  setFormFields(prev => prev.filter((_, index) => index !== indexToRemove));
+};
+
+
+
   const handleSaveTemplate = async () => {
   // ✅ 1. Basic Validation
   const nameRegex = /^[a-z0-9]+$/;
@@ -80,16 +172,26 @@ const handleUpdateTemplate = () => {
     return;
   }
 
-  if (fields.length === 0) {
-    alert("Please add at least one field before saving.");
-    return;
-  }
+  if (formFields.length === 0) {
+  alert("Please add at least one field before saving.");
+  return;
+}
+
+setShowFormModal(false);
+setTemplateName('');
+setFormFields([]);
+setNewFieldName('');
+setNewInputType('text');
+setNewRadioOptions('');
+setNewDateFormat('full');
+
+
 
   try {
-    const payload = {
+        const payload = {
       templateName,
-      fields,
-      createdBy: 1 // Replace with actual user ID
+      fields: formFields,
+      createdBy: 1
     };
 
     const res = await api.post('/templates/create', payload);
@@ -113,7 +215,7 @@ const handleUpdateTemplate = () => {
   return (
   <div className="sbforms-page">
     <div className="sbforms-main">
-      <h2>🛠️ Smart Business Form Builder</h2>
+      <h2>🛠️ Smart Business Component Builder</h2>
 
       <div className="tabs">
         {TABS.map(tab => (
@@ -181,6 +283,20 @@ const handleUpdateTemplate = () => {
             </thead>
             <tbody>
               <tr><td colSpan="6" style={{ textAlign: 'center' }}>No form views yet</td></tr>
+
+              <button className="primary-btn" onClick={() => setShowViewBuilder(true)}>
+                  Create New View
+                </button>
+
+                {showViewBuilder && (
+                  <div className="modal-overlay" onClick={() => setShowViewBuilder(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                      <FormViewBuilder close={() => setShowViewBuilder(false)} />
+                    </div>
+                  </div>
+                )}
+
+
             </tbody>
           </table>
         )}
@@ -231,7 +347,7 @@ const handleUpdateTemplate = () => {
       {showFormModal && (
         <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Template Designer</h3>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '15px' }}>Template Designer</h2>
             <input
               type="text"
               placeholder="Template Name"
@@ -244,35 +360,108 @@ const handleUpdateTemplate = () => {
               <input
                 type="text"
                 placeholder="Field Name"
-                value={newField.name}
-                onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
               />
+
               <select
-                value={newField.type}
-                onChange={(e) => setNewField({ ...newField, type: e.target.value })}
+                value={newInputType}
+                onChange={(e) => {
+                  setNewInputType(e.target.value);
+                  setNewRadioOptions(""); // Clear radio options on type change
+                  setNewDateFormat("full"); // Reset date format
+                }}
               >
                 <option value="text">Text</option>
-                <option value="number">Number</option>
-                <option value="date">Date</option>
+                <option value="textarea">Textarea</option>
                 <option value="checkbox">Checkbox</option>
-                <option value="longtext">Long Text</option>
-                <option value="image">Image Upload</option>
+                <option value="radio">Radio Button</option>
+                <option value="image">Image</option>
+                <option value="date">Date</option>
+                <option value="integer">Integer</option> {/* ✅ Add this */}
+                <option value="dropdownlist">Dropdownlist</option> {/* ✅ Add this */}
               </select>
-              <button onClick={addField}>Add Field</button>
+
+              {/* For Radio Buttons: input comma-separated options */}
+              {newInputType === "radio" && (
+                <input
+                  type="text"
+                  placeholder="Radio options (e.g. Yes,No,Maybe)"
+                  value={newRadioOptions}
+                  onChange={(e) => setNewRadioOptions(e.target.value)}
+                />
+              )}
+
+              {newInputType === "dropdownlist" && (
+                <input
+                  type="text"
+                  placeholder="Dropdown options (e.g. Option A, Option B)"
+                  value={newRadioOptions}
+                  onChange={(e) => setNewRadioOptions(e.target.value)}
+                />
+              )}
+
+
+              {/* For Date Format Selection */}
+              {newInputType === "date" && (
+                <select
+                  value={newDateFormat}
+                  onChange={(e) => setNewDateFormat(e.target.value)}
+                >
+                  <option value="full">Full Date (dd/mm/yyyy)</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                  <option value="day">Day Only</option>
+                </select>
+              )}
+
+              <button onClick={handleAddField}>Add Field</button>
             </div>
 
-            <ul className="field-list">
-              {fields.map((f, i) => (
-                <li key={i}>
-                  {f.name} ({f.type})
-                  <button className="remove-btn" onClick={() => {
-                    const updated = [...fields];
-                    updated.splice(i, 1);
-                    setFields(updated);
-                  }}>✕</button>
-                </li>
-              ))}
-            </ul>
+
+
+            <table className="field-grid-table">
+                  <thead>
+                    <tr>
+                      <th>Field Name</th>
+                      <th>Data Type</th>
+                      <th>Input Type</th>
+                      <th>Options / Format</th>
+                       <th>Action</th> {/* 🧱 Add this */}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formFields.map((field, index) => (
+                      <tr key={index}>
+                        <td>{field.fieldname}</td>
+                        <td>{field.datatype}</td>
+                        <td>{field.inputtype}</td>
+                        <td>
+                          {field.options?.join(", ") || field.format || "-"}
+                        </td>
+                        <td>
+                        <button
+                          onClick={() => handleRemoveField(index)}
+                          style={{
+                            padding: "4px 8px",
+                            backgroundColor: "#dc3545",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </td>
+
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+
+
 
                   {editModal && selectedTemplate && (
         <div className="modal-overlay" onClick={() => setEditModal(false)}>
@@ -290,6 +479,25 @@ const handleUpdateTemplate = () => {
             <button className="save-template-btn" onClick={handleSaveTemplate}>
               Save Template
             </button>
+
+            <button
+              className="close-modal-btn"
+              onClick={() => {
+                const confirmClose = window.confirm("All data will be lost. Do you want to continue?");
+                if (confirmClose) {
+                  setShowFormModal(false);
+                  setTemplateName('');
+                  setFormFields([]);
+                  setNewFieldName('');
+                  setNewInputType('text');
+                  setNewRadioOptions('');
+                  setNewDateFormat('full');
+                }
+              }}
+            >
+              ×
+            </button>
+
           </div>
         </div>
       )}
