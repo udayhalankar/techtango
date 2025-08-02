@@ -253,7 +253,7 @@ module.exports = router;
 // require('dotenv').config();
 // const express = require('express');
 // const router = express.Router();
-// const bcrypt = require('bcrypt');
+
 // const jwt = require('jsonwebtoken');
 // const pool = require('../db');
 // const nodemailer = require('nodemailer');
@@ -522,7 +522,7 @@ module.exports = router;
 // // require('dotenv').config();
 // // const express = require('express');
 // // const router = express.Router();
-// // const bcrypt = require('bcrypt');
+
 // // const jwt = require('jsonwebtoken');
 // // const pool = require('../db');
 // // const nodemailer = require('nodemailer');
