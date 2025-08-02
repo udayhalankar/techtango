@@ -471,8 +471,15 @@ router.post('/formdata/insert', verifyToken, async (req, res) => {
     const tableName = templateRes.rows[0].table_name;
 
     // Step 3: Build insert query
-    const keys = Object.keys(formData);
-    const values = Object.values(formData);
+    // const keys = Object.keys(formData);
+    // const values = Object.values(formData);
+
+    const filteredEntries = Object.entries(formData).filter(
+  ([key]) => !key.startsWith('label_')
+);
+
+    const keys = filteredEntries.map(([key]) => key);
+const values = filteredEntries.map(([, value]) => value);
     const placeholders = keys.map((_, i) => `$${i + 1}`).join(',');
 
     const insertQuery = `
@@ -553,8 +560,14 @@ router.post('/formdata/update', verifyToken, async (req, res) => {
     const tableName = templateRes.rows[0].table_name;
 
     // Step 2: Build dynamic update query
-    const keys = Object.keys(formData);
-    const values = Object.values(formData);
+    // const keys = Object.keys(formData);
+    // const values = Object.values(formData);
+    const filteredEntries = Object.entries(formData).filter(
+  ([key]) => !key.startsWith('label_')
+);
+
+    const keys = filteredEntries.map(([key]) => key);
+const values = filteredEntries.map(([, value]) => value);
     const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
 
     const updateQuery = `

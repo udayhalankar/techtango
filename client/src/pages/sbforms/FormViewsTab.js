@@ -142,9 +142,11 @@ const FormViewsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [modalVisible, setModalVisible] = useState(false);
-    const [modalFields, setModalFields] = useState([]);
-    const [formValues, setFormValues] = useState({});
-    const [modalTitle, setModalTitle] = useState("");
+  const [modalFields, setModalFields] = useState([]);
+  const [formValues, setFormValues] = useState({});
+  const [modalTitle, setModalTitle] = useState("");
+  const [selectedView, setSelectedView] = useState(null);  // 🆕 holds active view during data entry
+
 
 
 //    const filteredViews = savedViews.filter(view =>
@@ -221,6 +223,7 @@ const openDataEntryModal = async (viewId) => {
     const res = await api.get(`/form-views/${viewId}`);
     setModalTitle(res.data.view_name);
     setModalFields(res.data.layout || []);
+    setSelectedView(res.data); // 🆕 Save the full view object here
     
     // Prepare empty values
     const initialValues = {};
@@ -228,7 +231,6 @@ const openDataEntryModal = async (viewId) => {
       initialValues[f.fieldname] = "";
     });
     setFormValues(initialValues);
-    
     setModalVisible(true);
   } catch (err) {
     console.error("Error opening data entry modal:", err);
@@ -241,11 +243,35 @@ const handleInputChange = (fieldname, value) => {
 };
 
 
-const submitDataEntry = () => {
-  console.log("🔄 Form Submitted:", formValues);
-  alert("Form submitted (data printed to console for now)");
-  setModalVisible(false);
+// const submitDataEntry = () => {
+//   console.log("🔄 Form Submitted:", formValues);
+//   alert("Form submitted (data printed to console for now)");
+//   setModalVisible(false);
+// };
+
+
+const submitDataEntry = async () => {
+  if (!selectedView?.id) {
+    alert("View not loaded correctly. Please try again.");
+    return;
+  }
+
+  try {
+    const response = await api.post('/form-views/formdata/insert', {
+      viewId: selectedView.id,
+      formData: formValues,
+    });
+
+    console.log("✅ Form submitted successfully:", response.data);
+    alert("✅ Form submitted successfully!");
+    setModalVisible(false);
+  } catch (error) {
+    console.error("❌ Submission failed:", error.response?.data || error.message);
+    alert("❌ Failed to submit form.\n" + (error.response?.data?.message || error.message));
+  }
 };
+
+
 
 
 
