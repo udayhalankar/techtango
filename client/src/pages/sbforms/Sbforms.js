@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './sbforms.scss';
 import Footer from '../../components/footer/Footer';
 import api from '../../services/api';
-import FormViewBuilder from './FormViewBuilder';
 
-
+import FormViewsTab from './FormViewsTab';
+import { Settings } from "lucide-react";
 const TABS = ['Templates', 'Forms Views', 'Report Views', 'Create Query', 'Chart Views'];
 
 export const Sbforms = () => {
@@ -21,8 +21,27 @@ export const Sbforms = () => {
   const [newDateFormat, setNewDateFormat] = useState("full");
   const [formFields, setFormFields] = useState([]);
   const [showViewBuilder, setShowViewBuilder] = useState(false);
-
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef();
+  const iconWrapperRef = useRef();
   
+  
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      iconWrapperRef.current &&
+      !iconWrapperRef.current.contains(event.target)
+    ) {
+      setShowDropdown(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
 
 
       const addField = () => {
@@ -215,9 +234,31 @@ setNewDateFormat('full');
   return (
   <div className="sbforms-page">
     <div className="sbforms-main">
-      <h2>🛠️ Smart Business Component Builder</h2>
+      <div className="sbcb-header">
+  <div className="title-wrapper">
+    <h4 className="builder-title">
+      Smart Business Component Builder
+      <span className="icon-wrapper" ref={iconWrapperRef}>
+        <Settings onClick={() => setShowDropdown(!showDropdown)} />
+        {showDropdown && (
+          <div className="dropdown-menu" ref={dropdownRef}>
+            <button onClick={() => setActiveTab('Templates')}>Templates</button>
+            <button onClick={() => setActiveTab('Forms Views')}>Form Views</button>
+            <button onClick={() => setActiveTab('Report Views')}>Report Views</button>
+            <button onClick={() => setActiveTab('Create Query')}>Create Query</button>
+            <button onClick={() => setActiveTab('Chart Views')}>Chart Views</button>
+          </div>
+        )}
+      </span>
+    </h4>
+  </div>
+  <hr className="title-divider" />
+</div>
 
-      <div className="tabs">
+
+
+
+      {/* <div className="tabs">
         {TABS.map(tab => (
           <button
             key={tab}
@@ -227,7 +268,7 @@ setNewDateFormat('full');
             {tab}
           </button>
         ))}
-      </div>
+      </div> */}
 
       <div className="tab-content">
         {/* All your tab switch logic stays unchanged */}
@@ -269,37 +310,8 @@ setNewDateFormat('full');
           </>
         )}
 
-        {activeTab === 'Forms Views' && (
-          <table className="grid-table">
-            <thead>
-              <tr>
-                <th>Form View Name</th>
-                <th>Template Name</th>
-                <th>Date Created</th>
-                <th>Created By</th>
-                <th>View Form</th>
-                <th>Edit</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colSpan="6" style={{ textAlign: 'center' }}>No form views yet</td></tr>
+       {activeTab === 'Forms Views' && <FormViewsTab />}
 
-              <button className="primary-btn" onClick={() => setShowViewBuilder(true)}>
-                  Create New View
-                </button>
-
-                {showViewBuilder && (
-                  <div className="modal-overlay" onClick={() => setShowViewBuilder(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                      <FormViewBuilder close={() => setShowViewBuilder(false)} />
-                    </div>
-                  </div>
-                )}
-
-
-            </tbody>
-          </table>
-        )}
 
         {activeTab === 'Report Views' && (
           <table className="grid-table">

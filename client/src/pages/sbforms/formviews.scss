@@ -1,0 +1,458 @@
+.formviews-layout {
+  display: flex;
+  height: calc(100vh - 80px); // adjust based on your header
+  border: 1px solid #ccc;     // outer container border like pic 1
+}
+
+/* === Left Panel === */
+.left-panel {
+ // width: 30%;
+  background: #f3f3f3;
+  flex: 0 0 20%;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+
+  h4 {
+    margin-top: 0;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+  }
+
+  .form-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* === Center Panel === */
+.center-panel {
+  width: 20%;
+  background: #ffffff;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+
+  select,
+  input {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+  }
+
+  .template-component-list {
+    margin-top: 10px;
+
+    .draggable-field {
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: grab;
+      font-weight: 500;
+    }
+  }
+
+  .save-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+}
+
+.row.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+
+  > .col {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+
+/* === Right Panel === */
+.right-panel {
+  width: 60%;
+    padding: 16px;
+    overflow-y: auto;
+    background-color: #fff;
+
+  .tab-bar {
+    display: flex;
+    border-bottom: 2px solid #007bff;
+    background-color: #f9f9f9;
+
+    button {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+
+      &.active {
+        background-color: white;
+        border-bottom: 3px solid #007bff;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .view-area {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  .code-preview {
+    background: #f4f4f4;
+    padding: 10px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    border: 1px solid #ccc;
+  }
+
+  .save-btn {
+    align-self: flex-end;
+    margin: 16px 20px;
+  }
+}
+
+.formviews-layout {
+  display: flex;
+  height: 100vh;
+  font-size: 13px;
+
+  .left-panel {
+    width: 20%;
+    min-width: 240px;
+    background-color: #f8f9fa;
+    padding: 16px;
+    overflow-y: auto;
+
+    .view-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .card {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-body {
+    padding: 8px;
+
+    h6 {
+      font-weight: bold;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p {
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .btn {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+  }
+}
+
+  }
+
+  .center-panel {
+    width: 20%;
+    background-color: #ffffff;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .right-panel {
+    width: 60%;
+    padding: 16px;
+    overflow-y: auto;
+    background-color: #fff;
+  }
+}
+
+
+.left-panel,
+.center-panel,
+.right-panel {
+  h4 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  input,
+  select,
+  .draggable-field {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+
+  .save-btn {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}
+
+.tab-bar button {
+  font-size: 13px;
+  padding: 8px;
+}
+.fullscreen-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-check {
+  margin-bottom: 8px;
+}
+
+.form-check-input {
+  margin-right: 6px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.radio-option input[type="radio"] {
+  transform: scale(1.2);
+}
+
+.data-entry-canvas {
+  position: relative;
+  min-height: 600px;
+}
+
+.data-entry-canvas .mb-3 {
+  margin: 0; /* avoid block-stacking vertical margin */
+}
+
+/* Reset for radio and checkbox sizing */
+input[type="radio"],
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  transform: scale(1); /* undo any zooming */
+  appearance: auto;
+  accent-color: #0d6efd; /* Bootstrap blue */
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+
+
+.radio-group {
+   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 4px;
+
+  label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+
+    input[type="radio"] {
+      margin-right: 6px;
+    }
+  }
+}
+
+
+.fullscreen-content {
+  background: white;
+  width: 98vw;
+  height: 96vh;
+  border-radius: 8px;
+  padding: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+
+//Form Canvas styling
+.form-canvas {
+   position: relative;
+  min-height: 600px;
+  border: 2px dashed #ccc;
+  background-image: 
+    linear-gradient(to right, #eee 1px, transparent 1px),
+    linear-gradient(to bottom, #eee 1px, transparent 1px);
+  background-size: 10px 10px;
+  margin: 20px;
+  padding: 10px;
+  overflow: hidden;
+
+  background-image: 
+    linear-gradient(to right, #f1f1f1 1px, transparent 1px),
+    linear-gradient(to bottom, #f1f1f1 1px, transparent 1px);
+  background-size: 10px 10px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  
+
+
+  .canvas-section {
+    border: 1px dashed #bbb;
+    padding: 10px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .canvas-header,
+  .canvas-footer {
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .canvas-body {
+    position: relative;
+    min-height: 300px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    margin: 10px 0;
+    padding: 10px;
+  }
+
+  .dropped-field {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 6px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+
+  input[type="text"] {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: blue;
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+    border-radius: 2px;
+  }
+}
+
+  .dropped-field select {
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+}
+
+.label-component {
+  font-weight: bold;
+  font-size: 16px;
+  display: block;
+  padding: 4px;
+}
+
+.dropped-field select {
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+}
+
+.label-component {
+  font-weight: bold;
+  font-size: 16px;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+.label-component:focus {
+  outline: none;
+  border-bottom: 1px solid #999;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  transition: 0.2s ease-in-out;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.card-icon {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.card-actions button {
+  margin-top: 6px;
+  font-size: 11px;
+}
+.card-title,
+.card-text {
+  word-break: normal;
+  white-space: normal;
+}
+
+
+
+  .placeholder {
+    color: #aaa;
+    font-size: 14px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+

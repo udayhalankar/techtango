@@ -12,6 +12,7 @@ const approvalsRoutes    = require('./routes/approvals');
 const templatesRoute = require('./routes/templates');
 
 const app = express();
+const formViewsRoute = require("./routes/formViews");
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 // app.use(cors());
@@ -20,7 +21,7 @@ app.use(cors({
   credentials: true, // if using cookies or auth headers
 }));
 app.use(express.json());
-
+app.use("/api/form-views", formViewsRoute);
 
 // ─── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
