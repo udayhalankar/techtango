@@ -13,6 +13,8 @@ const templatesRoute = require('./routes/templates');
 
 const app = express();
 const formViewsRoute = require("./routes/formViews");
+const workflowsRoute = require('./routes/workflows');
+const casesRoute = require('./routes/cases');
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 // app.use(cors());
@@ -28,6 +30,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/approvals', approvalsRoutes);
+app.use('/api/workflows', workflowsRoute);
+app.use('/api/cases', casesRoute);
 
 
 app.use('/api/templates', templatesRoute); // <-- mounts the endpoint

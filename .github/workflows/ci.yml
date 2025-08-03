@@ -80,7 +80,7 @@ jobs:
 
         git add $FILE
         git commit -m "📦 Backup: $TIMESTAMP"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BRANCH
+        git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BRANCH
 
 
     - name: 🧹 Delete ZIPs older than 30 days
@@ -89,6 +89,6 @@ jobs:
         find . -name 'techtango-backup-*.zip' -type f -mtime +30 -print -delete
         git add .
         git commit -m "🧹 Cleanup: Remove zips older than 30 days" || echo "No old zips to delete"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BRANCH
+        git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} $BRANCH
 
 

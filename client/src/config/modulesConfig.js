@@ -10,6 +10,7 @@ import Mrm from "../pages/mrm/Mrm";
 import Dms from "../pages/dms/Dms";
 import Approvals from "../pages/approvals/Approvals";
 import Feedback from "../pages/feedback/Feedback";
+import NewEnquiryForm from "../pages/enquries/NewEnquiryForm";
 import Rms from "../pages/rms/Rms";
 
 // You can add unprotected modules by setting protected: false
@@ -25,6 +26,7 @@ const modulesConfig = {
   RMS: { path: "/Rms", component: Rms, protected: true }, 
   Approvals: { path: "/approvals", component: Approvals, protected: true }, 
   Feedback: { path: "/feedback", component: Feedback, protected: false }, // ✅ unprotected
+  NewEnquiryForm: { path: "/enquiry", component: NewEnquiryForm, protected: false }, // ✅ unprotected
 };
 
 export default modulesConfig;
