@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
   try {
     // 1️⃣ Insert new case with default status "New"
     const insertQuery = `
-      INSERT INTO cases (
+      INSERT INTO enquiries (
         enquiry_no,
         enquiry_details,
         special_instructions,
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
     const caseId = result.rows[0].id;
 
     // 2️⃣ Fetch inserted case to get all email fields
-    const { rows } = await pool.query('SELECT * FROM cases WHERE id = $1', [caseId]);
+    const { rows } = await pool.query('SELECT * FROM enquiries WHERE id = $1', [caseId]);
     const newCase = rows[0];
 
     // 3️⃣ Trigger email notifications based on status & workflow

@@ -12,6 +12,8 @@ import Approvals from "../pages/approvals/Approvals";
 import Feedback from "../pages/feedback/Feedback";
 import NewEnquiryForm from "../pages/enquries/NewEnquiryForm";
 import Rms from "../pages/rms/Rms";
+import WorkflowManager from "../pages/workflow/WorkflowManager";
+import CreateWorkflowModal from "../pages/workflow/CreateWorkflowModal";
 
 // You can add unprotected modules by setting protected: false
 const modulesConfig = {
@@ -26,6 +28,8 @@ const modulesConfig = {
   RMS: { path: "/Rms", component: Rms, protected: true }, 
   Approvals: { path: "/approvals", component: Approvals, protected: true }, 
   Feedback: { path: "/feedback", component: Feedback, protected: false }, // ✅ unprotected
+  WorkflowManager: { path: "/workflowmanager", component: WorkflowManager, protected: false }, // ✅ unprotected
+  CreateWorkflowModal: { path: "/wfmod", component: CreateWorkflowModal, protected: false }, // ✅ unprotected
   NewEnquiryForm: { path: "/enquiry", component: NewEnquiryForm, protected: false }, // ✅ unprotected
 };
 
