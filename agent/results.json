@@ -1,0 +1,164 @@
+{
+  "scannedAt": "2025-08-09T10:47:39.386Z",
+  "results": {
+    "server.js": [
+      {
+        "check": "Audit Logging",
+        "status": "warn",
+        "message": "Audit not found (logAudit)"
+      },
+      {
+        "check": "Authentication",
+        "status": "fail",
+        "message": "Missing auth guard (verifyToken/authMiddleware)"
+      },
+      {
+        "check": "CORS Safety",
+        "status": "fail",
+        "message": "CORS is wide open (origin \"*\"). Use an allowlist and credentials rules."
+      },
+      {
+        "check": "Error Logging",
+        "status": "warn",
+        "message": "No centralized error logging detected"
+      },
+      {
+        "check": "Performance",
+        "status": "warn",
+        "message": "No perf middlewares/headers detected. Consider compression(), response-time, Cache-Control/ETag, or timing logs."
+      },
+      {
+        "check": "Rate Limiting",
+        "status": "warn",
+        "message": "No rate limiting detected"
+      },
+      {
+        "check": "RBAC",
+        "status": "pass"
+      },
+      {
+        "check": "Security Headers (Helmet)",
+        "status": "pass"
+      },
+      {
+        "check": "Session Timeout",
+        "status": "pass"
+      },
+      {
+        "check": "Subscription",
+        "status": "fail",
+        "message": "Missing subscription guard (checkSubscription)"
+      },
+      {
+        "check": "DB Transactions",
+        "status": "pass"
+      },
+      {
+        "check": "Input Validation",
+        "status": "warn",
+        "message": "No validation layer detected"
+      }
+    ],
+    "db.js": [
+      {
+        "check": "Audit Logging",
+        "status": "warn",
+        "message": "Audit not found (logAudit)"
+      },
+      {
+        "check": "Authentication",
+        "status": "fail",
+        "message": "Missing auth guard (verifyToken/authMiddleware)"
+      },
+      {
+        "check": "Error Logging",
+        "status": "warn",
+        "message": "No centralized error logging detected"
+      },
+      {
+        "check": "Rate Limiting",
+        "status": "warn",
+        "message": "No rate limiting detected"
+      },
+      {
+        "check": "Subscription",
+        "status": "fail",
+        "message": "Missing subscription guard (checkSubscription)"
+      },
+      {
+        "check": "Input Validation",
+        "status": "warn",
+        "message": "No validation layer detected"
+      }
+    ]
+  },
+  "summary": {
+    "totals": {
+      "pass": 4,
+      "warn": 9,
+      "fail": 5
+    },
+    "byCheck": {
+      "Audit Logging": {
+        "pass": 0,
+        "warn": 2,
+        "fail": 0
+      },
+      "Authentication": {
+        "pass": 0,
+        "warn": 0,
+        "fail": 2
+      },
+      "CORS Safety": {
+        "pass": 0,
+        "warn": 0,
+        "fail": 1
+      },
+      "Error Logging": {
+        "pass": 0,
+        "warn": 2,
+        "fail": 0
+      },
+      "Performance": {
+        "pass": 0,
+        "warn": 1,
+        "fail": 0
+      },
+      "Rate Limiting": {
+        "pass": 0,
+        "warn": 2,
+        "fail": 0
+      },
+      "RBAC": {
+        "pass": 1,
+        "warn": 0,
+        "fail": 0
+      },
+      "Security Headers (Helmet)": {
+        "pass": 1,
+        "warn": 0,
+        "fail": 0
+      },
+      "Session Timeout": {
+        "pass": 1,
+        "warn": 0,
+        "fail": 0
+      },
+      "Subscription": {
+        "pass": 0,
+        "warn": 0,
+        "fail": 2
+      },
+      "DB Transactions": {
+        "pass": 1,
+        "warn": 0,
+        "fail": 0
+      },
+      "Input Validation": {
+        "pass": 0,
+        "warn": 2,
+        "fail": 0
+      }
+    }
+  }
+}

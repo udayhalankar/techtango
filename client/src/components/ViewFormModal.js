@@ -427,7 +427,7 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
       setErrMsg('Config ID is missing; cannot submit.');
       return;
     }
-    const path = isUpdate ? '/formdata/update' : '/formdata/insert';
+    const path = isUpdate ? '/formdata/update' : '/formviews/formdata/insert';
 
     // (Optional) client-side reserved filter for safety
     const safeData = Object.fromEntries(

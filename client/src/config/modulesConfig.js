@@ -17,9 +17,11 @@ import CreateWorkflowModal from "../pages/workflow/CreateWorkflowModal";
 import Enquiries from "../pages/enquiries/Enquiries";
 import BulkUploader from "../components/BulkUploader";
 import ListFormViews from "../components/ListFormViews"
+import ChowkidarDashboard from "../pages/ChowkidarDashboard";
 
 // You can add unprotected modules by setting protected: false
 const modulesConfig = {
+  ChowkidarDashboard: { path: "/chowkidar", component:  ChowkidarDashboard, protected: false }, // ✅ unprotected
   BPM: { path: "/bpm/*", component: Bpm, protected: true },
   Dashboard: { path: "/dashboard", component: Dashboardmain, protected: true },
   SmartForms: { path: "/sbforms", component: Sbforms, protected: true },
@@ -36,6 +38,8 @@ const modulesConfig = {
   Enquiries: { path: "/enquiry", component: Enquiries, protected: false }, // ✅ unprotected
   BulkUploader: { path: "/bulkuploader", component: BulkUploader, protected: false }, // ✅ unprotected
   ListFormViews: { path: "/forms", component:  ListFormViews, protected: false }, // ✅ unprotected
+ 
+  
  
   //NewEnquiryForm: { path: "/enquiry", component: NewEnquiryForm, protected: false }, // ✅ unprotected
 };
