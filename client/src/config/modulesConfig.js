@@ -10,10 +10,13 @@ import Mrm from "../pages/mrm/Mrm";
 import Dms from "../pages/dms/Dms";
 import Approvals from "../pages/approvals/Approvals";
 import Feedback from "../pages/feedback/Feedback";
-import NewEnquiryForm from "../pages/enquries/NewEnquiryForm";
+import NewEnquiryForm from "../pages/enquiries/NewEnquiryForm";
 import Rms from "../pages/rms/Rms";
 import WorkflowManager from "../pages/workflow/WorkflowManager";
 import CreateWorkflowModal from "../pages/workflow/CreateWorkflowModal";
+import Enquiries from "../pages/enquiries/Enquiries";
+import BulkUploader from "../components/BulkUploader";
+import ListFormViews from "../components/ListFormViews"
 
 // You can add unprotected modules by setting protected: false
 const modulesConfig = {
@@ -30,7 +33,11 @@ const modulesConfig = {
   Feedback: { path: "/feedback", component: Feedback, protected: false }, // ✅ unprotected
   WorkflowManager: { path: "/workflowmanager", component: WorkflowManager, protected: false }, // ✅ unprotected
   CreateWorkflowModal: { path: "/wfmod", component: CreateWorkflowModal, protected: false }, // ✅ unprotected
-  NewEnquiryForm: { path: "/enquiry", component: NewEnquiryForm, protected: false }, // ✅ unprotected
+  Enquiries: { path: "/enquiry", component: Enquiries, protected: false }, // ✅ unprotected
+  BulkUploader: { path: "/bulkuploader", component: BulkUploader, protected: false }, // ✅ unprotected
+  ListFormViews: { path: "/forms", component:  ListFormViews, protected: false }, // ✅ unprotected
+ 
+  //NewEnquiryForm: { path: "/enquiry", component: NewEnquiryForm, protected: false }, // ✅ unprotected
 };
 
 export default modulesConfig;

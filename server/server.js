@@ -14,7 +14,13 @@ const templatesRoute = require('./routes/templates');
 const app = express();
 const formViewsRoute = require("./routes/formViews");
 const workflowsRoute = require('./routes/workflows');
-const casesRoute = require('./routes/cases');
+const enquiriesRoute = require('./routes/enquiries'); // 👈 make sure this matches filename
+const businessPartnerRoutes = require('./routes/businesspartner');
+const tableRoutes = require('./routes/table'); // ✅ Import your route file
+const template = require('./routes/template')
+const uploadRoutes = require('./routes/upload');
+const formRoutes = require('./routes/forms');
+const formviewsRoutes = require('./routes/formviews');
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 // app.use(cors());
@@ -24,22 +30,30 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use("/api/form-views", formViewsRoute);
-
+app.use('/api/businesspartner', businessPartnerRoutes);
 // ─── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/approvals', approvalsRoutes);
 app.use('/api/workflows', workflowsRoute);
-app.use('/api/cases', casesRoute);
+app.use('/api/enquiries', enquiriesRoute);             // 👈 this defines the URL path
 
 
 app.use('/api/templates', templatesRoute); // <-- mounts the endpoint
+app.use('/api/template', template); // <-- mounts the endpoint
+app.use('/api/upload', uploadRoutes);
+app.use('/api/formconfig', formRoutes);
+app.use('/api', formviewsRoutes);
+
 
 // ─── TEST ROUTES ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.send('OK');
 });
+
+// ✅ Register the route under /api/table
+app.use('/api/table', tableRoutes);
 
 // 🔍 Optional: add /api/subscriptions list if still needed
 app.get('/api/subscriptions', async (req, res) => {

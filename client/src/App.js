@@ -14,6 +14,7 @@ import AuthWrapper from "./AuthWrapper";
 import modulesConfig from './config/modulesConfig';
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 const queryClient = new QueryClient();
 
 export default function App() {
