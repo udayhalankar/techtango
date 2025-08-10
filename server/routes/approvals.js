@@ -9,6 +9,11 @@ const { verifyToken } = require('../middleware/authMiddleware');
 require('dotenv').config();
 const sendTaskEmail = require('../utils/sendEmail');
 
+// server/routes/approvals.js (example mutation)
+const { validate } = require('../middleware/validation');
+const { logAudit } = require('../middleware/audit');
+// server/routes/approvals.js (example mutation)
+
 const upload = multer({ dest: 'uploads/' });
 
 const algorithm = 'aes-256-cbc';

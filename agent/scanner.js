@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { globSync } = require('glob');
 
+const ROOT = process.cwd();
+const RULES_DIR = path.join(__dirname, 'rules');
+const RESULTS_FILE = path.join(__dirname, 'results.json');
+
 const GLOBS = [
   'server/**/*.js',
   'client/src/**/*.{js,jsx,ts,tsx}',
@@ -15,7 +19,7 @@ const IGNORE = [
   '**/dist/**',
   'agent/results.json',
 
-  // 🔒 hard exclude formviews
+  // 🔒 hard exclude formviews (per your request)
   '**/formviews.js',
   '**/formviews.jsx',
   '**/routes/formviews.js',
@@ -24,118 +28,149 @@ const IGNORE = [
   'server/routes/formviews.jsx',
 ];
 
-const files = Array.from(new Set(
-  GLOBS.flatMap((pattern) =>
-    globSync(pattern, { ignore: IGNORE, windowsPathsNoEscape: true })
-  )
-)).filter(f => !/formviews\.jsx?$/i.test(f.replace(/\\/g, '/'))); // extra belt-and-suspenders
+// ---------- helper: load rules (index.js preferred) ----------
+function loadRuleEntries() {
+  const indexPath = path.join(RULES_DIR, 'index.js');
 
-const RESULTS_FILE = path.join(__dirname, 'results.json');
+  if (fs.existsSync(indexPath)) {
+    // Prefer centralized rule index
+    const ruleIndex = require(indexPath);
+    const entries =
+      ruleIndex.asList ||
+      Object.entries(ruleIndex).map(([name, check]) => ({ name, check }));
 
-function loadRules() {
-  const rulesDir = path.join(__dirname, 'rules');
-  const files = fs.readdirSync(rulesDir).filter(f => f.endsWith('.js'));
+    // Filter out anything not callable
+    const cleaned = entries
+      .filter(Boolean)
+      .map(({ name, check }) => ({ name, check }))
+      .filter(({ name, check }) => {
+        const ok = typeof check === 'function';
+        if (!ok) console.warn(`⚠️  Rule "${name}" has no callable check(). Skipping.`);
+        return ok;
+      });
 
-  return files.map(file => {
-    const mod = require(path.join(rulesDir, file));
+    return cleaned;
+  }
+
+  // Fallback: scan rules directory for .js files (ignore config/index helpers)
+  const files = fs
+    .readdirSync(RULES_DIR)
+    .filter((f) => f.endsWith('.js'))
+    .filter((f) => !/^config\.js$/i.test(f)) // don't treat config as rule
+    .filter((f) => !/^index\.js$/i.test(f)); // don't loop index
+
+  const entries = files.map((file) => {
+    const mod = require(path.join(RULES_DIR, file));
     const base = path.basename(file, '.js');
 
-    // Support: function export, { check }, or default export
-    let run =
+    const checkFn =
       (typeof mod === 'function' && mod) ||
       (mod && typeof mod.check === 'function' && mod.check) ||
-      (mod && typeof mod.default === 'function' && mod.default);
+      (mod && typeof mod.default === 'function' && mod.default) ||
+      (mod && mod.default && typeof mod.default.check === 'function' && mod.default.check);
 
-    if (!run) {
-      // Last resort: if default is object with .check
-      if (mod && mod.default && typeof mod.default.check === 'function') {
-        run = mod.default.check;
-      }
-    }
-
-    if (!run) {
+    if (!checkFn) {
       console.warn(`⚠️  Rule "${file}" has no callable check(). Skipping.`);
       return null;
     }
+    return { name: base, check: checkFn };
+  });
 
-    // id to use in summary
-    const id =
-      (mod && mod.meta && mod.meta.id) ||
-      (mod && mod.id) ||
-      base;
-
-    // human-friendly label for the card if rule doesn't set "check"
-    const label =
-      (mod && mod.meta && mod.meta.label) ||
-      (mod && mod.label) ||
-      base;
-
-    return { id, label, run };
-  }).filter(Boolean);
+  return entries.filter(Boolean);
 }
 
+// ---------- helper: counters ----------
 function bump(summary, checkKey, status) {
   if (!summary.byCheck[checkKey]) summary.byCheck[checkKey] = { pass: 0, warn: 0, fail: 0 };
   summary.byCheck[checkKey][status] += 1;
   summary.totals[status] += 1;
 }
 
+// ---------- main scan ----------
 async function scanAll() {
-  const rules = loadRules();
+  const ruleEntries = loadRuleEntries();
 
-  const files = Array.from(new Set(
-    GLOBS.flatMap(pattern =>
-      globSync(pattern, {
-        ignore: [
-          '**/node_modules/**',
-          '**/build/**',
-          '**/dist/**',
-          'agent/results.json',
-          '**/formviews.js',         // excluded as requested
-          '**/formviews.jsx',
-          '**/routes/formviews.js',
-        ],
-        windowsPathsNoEscape: true,
-      })
+  const files = Array.from(
+    new Set(
+      GLOBS.flatMap((pattern) =>
+        globSync(pattern, { ignore: IGNORE, windowsPathsNoEscape: true })
+      )
     )
-  ));
+  ).filter((f) => !/formviews\.jsx?$/i.test(f.replace(/\\/g, '/'))); // extra guard
 
-  console.log(`🧭 Chowkidar scanning ${files.length} files…`);
+  console.log(`🛡️  Chowkidar 1.0: starting full scan…`);
+  console.log(`🧭 Scanning ${files.length} files with ${ruleEntries.length} rules…`);
 
   const results = {};
   const summary = { totals: { pass: 0, warn: 0, fail: 0 }, byCheck: {} };
 
-  for (const file of files) {
-    const relPath = path.relative(process.cwd(), file);
-    const code = fs.readFileSync(file, 'utf8');
-    results[relPath] = [];
+  for (const abs of files) {
+    const relPath = path.relative(ROOT, abs).replace(/\\/g, '/');
 
-    for (const rule of rules) {
+    let code = '';
+    try {
+      code = fs.readFileSync(abs, 'utf8');
+    } catch (e) {
+      console.error(`❌ Unable to read ${relPath}: ${e.message}`);
+      continue;
+    }
+
+    const checksForFile = [];
+    for (const { name, check } of ruleEntries) {
       try {
-        const out = await rule.run(code, relPath);
+        const out = await check(code, relPath);
+
+        // Rule can return null/undefined to skip
         if (!out) continue;
 
-        // normalize
+        // Normalize shape
         const status = ['pass', 'warn', 'fail'].includes(out.status) ? out.status : 'pass';
-        const checkKey = out.check || rule.label || rule.id;
+        const checkKey = out.check || name;
 
-        results[relPath].push({ check: checkKey, status, message: out.message });
+        const item = {
+          check: checkKey,
+          status,
+          message: out.message || '',
+        };
+
+        // pass through actions if provided (for the dashboard modal)
+        if (out.actions && Array.isArray(out.actions) && out.actions.length) {
+          item.actions = out.actions;
+        }
+
+        checksForFile.push(item);
         bump(summary, checkKey, status);
       } catch (e) {
-        const checkKey = rule.label || rule.id;
-        results[relPath].push({ check: checkKey, status: 'fail', message: `Rule crashed: ${e.message}` });
+        const checkKey = name;
+        checksForFile.push({
+          check: checkKey,
+          status: 'fail',
+          message: `Rule crashed: ${e.message}`,
+        });
         bump(summary, checkKey, 'fail');
       }
     }
+
+    // Only include files that produced any rule output (optional; comment out if you want empty arrays)
+    if (checksForFile.length > 0) {
+      results[relPath] = checksForFile;
+    }
   }
 
-  fs.writeFileSync(
-    RESULTS_FILE,
-    JSON.stringify({ scannedAt: new Date().toISOString(), results, summary }, null, 2)
-  );
+  const payload = {
+    scannedAt: new Date().toISOString(),
+    results,
+    summary,
+  };
 
-  console.log(`✅ Scan finished. ${Object.keys(results).length} files → agent/results.json`);
-  return { results, summary };
+  try {
+    fs.writeFileSync(RESULTS_FILE, JSON.stringify(payload, null, 2));
+    console.log(`✅ Scan complete. Output: ${path.relative(ROOT, RESULTS_FILE)}`);
+  } catch (e) {
+    console.error(`❌ Failed to write results: ${e.message}`);
+  }
+
+  return payload;
 }
 
 module.exports = { scanAll };

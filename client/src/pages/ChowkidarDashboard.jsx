@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Stack,
@@ -13,14 +13,19 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
-const STATUS_COLORS = {
-  pass: "success",
-  warn: "warning",
-  fail: "error",
-};
+// ---------- UI helpers ----------
+const STATUS_COLORS = { pass: "success", warn: "warning", fail: "error" };
 
 function StatusChip({ status, size = "small" }) {
   const map = { pass: "✅ PASS", warn: "⚠️ WARN", fail: "❌ FAIL" };
@@ -38,6 +43,13 @@ export default function ChowkidarDashboard() {
   const [fetching, setFetching] = useState(false);
   const [filter, setFilter] = useState("all"); // all | pass | warn | fail
   const [q, setQ] = useState("");
+
+  // Actions modal state
+  const [activeCard, setActiveCard] = useState(null); // { file, check, status, message, actions[] }
+  const openActions = useCallback((filePath, checkObj) => {
+    if (checkObj?.actions?.length) setActiveCard({ file: filePath, ...checkObj });
+  }, []);
+  const closeActions = useCallback(() => setActiveCard(null), []);
 
   const fetchData = async () => {
     try {
@@ -82,7 +94,7 @@ export default function ChowkidarDashboard() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Stack spacing={0.5}>
           <Typography variant="h5" fontWeight={700}>
-            Chowkidar Dashboard
+            Cerberus
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Last scan: {data?.scannedAt ? new Date(data.scannedAt).toLocaleString() : "—"}
@@ -131,54 +143,112 @@ export default function ChowkidarDashboard() {
           </Card>
         )}
 
-        {filtered.map(({ file, checks }) => {
-          const worst = worstStatus(checks);
-          return (
-            <Card key={file} variant="outlined">
-              <CardContent>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  alignItems={{ xs: "flex-start", sm: "center" }}
-                  justifyContent="space-between"
-                  spacing={1}
-                  mb={1}
-                >
-                  <Typography variant="subtitle1" sx={{ wordBreak: "break-all" }}>
-                    {file}
-                  </Typography>
-                  <StatusChip status={worst} />
-                </Stack>
+        {filtered.map(({ file, checks, worst }) => (
+          <Card key={file} variant="outlined">
+            <CardContent>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+                justifyContent="space-between"
+                spacing={1}
+                mb={1}
+              >
+                <Typography variant="subtitle1" sx={{ wordBreak: "break-all" }}>
+                  {file}
+                </Typography>
+                <StatusChip status={worst} />
+              </Stack>
 
-                <Divider sx={{ my: 1 }} />
+              <Divider sx={{ my: 1 }} />
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                    gap: 1.5,
-                  }}
-                >
-                  {checks.map((c, idx) => (
-                    <Card key={idx} variant="outlined" sx={{ p: 1 }}>
-                      <Stack spacing={0.5}>
-                        <Typography variant="subtitle2" fontWeight={700}>
-                          {c.check}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                  gap: 1.5,
+                }}
+              >
+                {checks.map((c, idx) => (
+                  <Card
+                    key={`${file}-${idx}`}
+                    variant="outlined"
+                    sx={{ p: 1, cursor: c?.actions?.length ? "pointer" : "default" }}
+                    onClick={() => openActions(file, c)}
+                  >
+                    <Stack spacing={0.5}>
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {c.check}
+                      </Typography>
+                      <StatusChip status={c.status} />
+                      {c.message && (
+                        <Typography variant="caption" color="text.secondary">
+                          {c.message}
                         </Typography>
-                        <StatusChip status={c.status} />
-                        {c.message && (
-                          <Typography variant="caption" color="text.secondary">
-                            {c.message}
+                      )}
+                      {c?.actions?.length > 0 && (
+                        <Typography variant="caption" color="primary">
+                          View actions…
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Card>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+
+      {/* Actions Modal */}
+      <Dialog open={!!activeCard} onClose={closeActions} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {activeCard ? `${activeCard.check} — ${activeCard.file}` : "Actions"}
+        </DialogTitle>
+        <DialogContent dividers>
+          {activeCard?.actions?.length ? (
+            <List dense>
+              {activeCard.actions.map((a, i) => (
+                <ListItem key={i} alignItems="flex-start" sx={{ display: "block" }}>
+                  <ListItemText
+                    primary={<Typography fontWeight={600}>{a.title}</Typography>}
+                    secondary={
+                      <>
+                        {a.description && (
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            {a.description}
                           </Typography>
                         )}
-                      </Stack>
-                    </Card>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </Stack>
+                        {a.snippet && (
+                          <Box
+                            component="pre"
+                            sx={{
+                              bgcolor: "#f6f8fa",
+                              p: 1.5,
+                              borderRadius: 1,
+                              overflow: "auto",
+                              fontSize: "0.8rem",
+                              border: "1px solid #eaecef",
+                            }}
+                          >
+                            <code>{a.snippet}</code>
+                          </Box>
+                        )}
+                      </>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No suggested actions for this check.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeActions}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
