@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/forms/ExperimentalModal.js
+import React, { useEffect, useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Select, MenuItem, FormControl, InputLabel,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Checkbox, Button, TextField, Alert, FormControlLabel
+  Paper, Checkbox, Button, TextField, Alert, FormControlLabel, CircularProgress
 } from '@mui/material';
 import api from '../services/api';
 import ViewFormModal from './ViewFormModal';
 
-const INPUT_TYPES = ['text','textarea','checkbox','radio','image','date','integer','dropdownlist'];
+const INPUT_TYPES = ['text', 'textarea', 'checkbox', 'radio', 'image', 'date', 'integer', 'dropdownlist'];
 const DATE_GRANULARITIES = ['date', 'month', 'year'];
 
 const defaultInputTypeForDataType = (dataType) => {
@@ -19,7 +20,7 @@ const defaultInputTypeForDataType = (dataType) => {
   return 'text';
 };
 
-const ExperimentModal = ({ open, onClose }) => {
+const ExperimentalModal = ({ open, onClose }) => {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState('');
   const [columns, setColumns] = useState([]);
@@ -28,31 +29,53 @@ const ExperimentModal = ({ open, onClose }) => {
   const [viewType, setViewType] = useState('');
   const [message, setMessage] = useState(null);
   const [savedFormId, setSavedFormId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
 
+  const [loadingTables, setLoadingTables] = useState(false);
+  const [loadingColumns, setLoadingColumns] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load table list when dialog opens
   useEffect(() => {
+    if (!open) return;
     const fetchTables = async () => {
+      setLoadingTables(true);
+      setMessage(null);
       try {
+        // baseURL in api already has /api
         const res = await api.get('/table/list');
-        setTables(res.data || []);
+        setTables(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error('Error fetching tables:', err);
+        const status = err?.response?.status;
+        if (status === 401) {
+          setMessage({ type: 'error', text: 'Your session has expired. Please log in again.' });
+        } else if (status === 403) {
+          setMessage({ type: 'error', text: err?.response?.data?.error || 'Access denied (no active subscription).' });
+        } else {
+          setMessage({ type: 'error', text: err?.response?.data?.error || 'Failed to fetch tables.' });
+        }
         setTables([]);
+        console.error('Error fetching tables:', err);
+      } finally {
+        setLoadingTables(false);
       }
     };
-    if (open) fetchTables();
+    fetchTables();
   }, [open]);
 
+  // Reset state when closing
   useEffect(() => {
-    if (!open) {
-      setConfig([]);
-      setSelectedTable('');
-      setFormName('');
-      setViewType('');
-      setMessage(null);
-      setSavedFormId(null);
-    }
+    if (open) return;
+    setSelectedTable('');
+    setColumns([]);
+    setConfig([]);
+    setFormName('');
+    setViewType('');
+    setMessage(null);
+    setSavedFormId(null);
+    setPreviewOpen(false);
+    setSelectedConfig(null);
   }, [open]);
 
   const handleTableChange = async (event) => {
@@ -61,10 +84,14 @@ const ExperimentModal = ({ open, onClose }) => {
     setConfig([]);
     setSavedFormId(null);
     setMessage(null);
+
+    setLoadingColumns(true);
     try {
       const res = await api.get(`/table/columns/${tableName}`);
-      setColumns(res.data || []);
-      const initialConfig = (res.data || []).map(col => ({
+      const cols = Array.isArray(res.data) ? res.data : [];
+      setColumns(cols);
+
+      const initialConfig = cols.map((col) => ({
         columnName: col.column_name,
         dataType: col.data_type,
         dataEntry: false,
@@ -77,19 +104,27 @@ const ExperimentModal = ({ open, onClose }) => {
       }));
       setConfig(initialConfig);
     } catch (err) {
-      console.error('Error fetching columns:', err);
+      const status = err?.response?.status;
+      if (status === 401) {
+        setMessage({ type: 'error', text: 'Your session has expired. Please log in again.' });
+      } else if (status === 403) {
+        setMessage({ type: 'error', text: err?.response?.data?.error || 'Access denied (no active subscription).' });
+      } else {
+        setMessage({ type: 'error', text: err?.response?.data?.error || 'Failed to fetch columns.' });
+      }
       setColumns([]);
+      console.error('Error fetching columns:', err);
+    } finally {
+      setLoadingColumns(false);
     }
   };
 
   const handleToggle = (index, field) => {
-    setConfig(prev =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: !item[field] } : item))
-    );
+    setConfig((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: !c[field] } : c)));
   };
 
   const handleFieldChange = (index, field, value) => {
-    setConfig(prev => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+    setConfig((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
   };
 
   const handleSave = async () => {
@@ -98,24 +133,36 @@ const ExperimentModal = ({ open, onClose }) => {
       setMessage({ type: 'error', text: 'All fields are required.' });
       return;
     }
+
+    setSaving(true);
     try {
-      const res = await api.post('/formconfig', {
+      const payload = {
         templateName: formName,
         tableName: selectedTable,
         fields: config,
         type: viewType, // "Master" | "Update"
+      };
+      const res = await api.post('/formconfig', payload);
+      const savedId = res?.data?.id;
+      setSavedFormId(savedId ?? null);
+      setMessage({
+        type: 'success',
+        text: `Form config saved successfully${savedId ? ` (ID: ${savedId})` : ''}`,
       });
-      const savedId = res.data?.id;
-      setSavedFormId(savedId);
-      setMessage({ type: 'success', text: `Form config saved successfully (ID: ${savedId})` });
     } catch (err) {
-      if (err.response?.status === 409) {
+      if (err?.response?.status === 409) {
         setMessage({ type: 'error', text: 'Form with same name and view type already exists.' });
       } else {
-        const msg = err.response?.data?.error || 'Failed to save form config.';
+        const msg =
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Failed to save form config.';
         setMessage({ type: 'error', text: msg });
       }
-      console.error('Error saving config:', err);
+      console.error('Error saving form config:', err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -130,7 +177,7 @@ const ExperimentModal = ({ open, onClose }) => {
       type: viewType,
       id: savedFormId, // form_configs.id
     });
-    setModalOpen(true);
+    setPreviewOpen(true);
   };
 
   return (
@@ -139,26 +186,56 @@ const ExperimentModal = ({ open, onClose }) => {
         <DialogTitle>🧪 Experimental Form Builder</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <TextField label="Form Name" value={formName} onChange={(e) => setFormName(e.target.value)} fullWidth />
+            <TextField
+              label="Form Name"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              fullWidth
+            />
+
             <FormControl fullWidth>
               <InputLabel>View Type</InputLabel>
-              <Select value={viewType} onChange={(e) => setViewType(e.target.value)} label="View Type">
+              <Select
+                value={viewType}
+                onChange={(e) => setViewType(e.target.value)}
+                label="View Type"
+              >
                 <MenuItem value="Master">Master</MenuItem>
                 <MenuItem value="Update">Update</MenuItem>
               </Select>
             </FormControl>
+
             <FormControl fullWidth>
               <InputLabel>Select Table</InputLabel>
-              <Select value={selectedTable} onChange={handleTableChange} label="Select Table">
-                {tables.map((table, i) => (
-                  <MenuItem key={i} value={table}>{table}</MenuItem>
+              <Select
+                value={selectedTable}
+                onChange={handleTableChange}
+                label="Select Table"
+                disabled={loadingTables}
+              >
+                {tables.map((t, i) => (
+                  <MenuItem key={i} value={t}>
+                    {t}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Box>
 
+          {loadingTables && (
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <CircularProgress size={18} /> Loading tables…
+            </Box>
+          )}
+
+          {loadingColumns && (
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <CircularProgress size={18} /> Loading columns…
+            </Box>
+          )}
+
           {config.length > 0 && (
-            <TableContainer component={Paper} sx={{ mt: 3 }}>
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -190,8 +267,10 @@ const ExperimentModal = ({ open, onClose }) => {
                             onChange={(e) => handleFieldChange(index, 'inputType', e.target.value)}
                             fullWidth
                           >
-                            {INPUT_TYPES.map(t => (
-                              <MenuItem key={t} value={t}>{t}</MenuItem>
+                            {INPUT_TYPES.map((t) => (
+                              <MenuItem key={t} value={t}>
+                                {t}
+                              </MenuItem>
                             ))}
                           </Select>
                         </TableCell>
@@ -202,8 +281,8 @@ const ExperimentModal = ({ open, onClose }) => {
                             placeholder="e.g. Male,Female,Other"
                             value={col.optionsCsv || ''}
                             onChange={(e) => handleFieldChange(index, 'optionsCsv', e.target.value)}
-                            fullWidth
                             disabled={!showOptions}
+                            fullWidth
                           />
                         </TableCell>
 
@@ -212,36 +291,58 @@ const ExperimentModal = ({ open, onClose }) => {
                             size="small"
                             value={col.dateGranularity || 'date'}
                             onChange={(e) => handleFieldChange(index, 'dateGranularity', e.target.value)}
-                            fullWidth
                             disabled={!showDateGran}
+                            fullWidth
                           >
-                            {DATE_GRANULARITIES.map(g => (
-                              <MenuItem key={g} value={g}>{g}</MenuItem>
+                            {DATE_GRANULARITIES.map((g) => (
+                              <MenuItem key={g} value={g}>
+                                {g}
+                              </MenuItem>
                             ))}
                           </Select>
                         </TableCell>
 
                         <TableCell align="center">
                           <FormControlLabel
-                            control={<Checkbox checked={!!col.dataEntry} onChange={() => handleToggle(index, 'dataEntry')} />}
+                            control={
+                              <Checkbox
+                                checked={!!col.dataEntry}
+                                onChange={() => handleToggle(index, 'dataEntry')}
+                              />
+                            }
                             label=""
                           />
                         </TableCell>
                         <TableCell align="center">
                           <FormControlLabel
-                            control={<Checkbox checked={!!col.readOnly} onChange={() => handleToggle(index, 'readOnly')} />}
+                            control={
+                              <Checkbox
+                                checked={!!col.readOnly}
+                                onChange={() => handleToggle(index, 'readOnly')}
+                              />
+                            }
                             label=""
                           />
                         </TableCell>
                         <TableCell align="center">
                           <FormControlLabel
-                            control={<Checkbox checked={!!col.visible} onChange={() => handleToggle(index, 'visible')} />}
+                            control={
+                              <Checkbox
+                                checked={!!col.visible}
+                                onChange={() => handleToggle(index, 'visible')}
+                              />
+                            }
                             label=""
                           />
                         </TableCell>
                         <TableCell align="center">
                           <FormControlLabel
-                            control={<Checkbox checked={!!col.mandatory} onChange={() => handleToggle(index, 'mandatory')} />}
+                            control={
+                              <Checkbox
+                                checked={!!col.mandatory}
+                                onChange={() => handleToggle(index, 'mandatory')}
+                              />
+                            }
                             label=""
                           />
                         </TableCell>
@@ -253,26 +354,37 @@ const ExperimentModal = ({ open, onClose }) => {
             </TableContainer>
           )}
 
-          {message && <Alert severity={message.type} sx={{ mt: 2 }}>{message.text}</Alert>}
+          {message && (
+            <Alert severity={message.type} sx={{ mt: 2 }}>
+              {message.text}
+            </Alert>
+          )}
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleSave} variant="contained">Save</Button>
-          <Button onClick={handleViewForm} variant="outlined">View Form</Button>
-          <Button onClick={onClose} color="error">Close</Button>
+          <Button onClick={handleSave} variant="contained" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+          <Button onClick={handleViewForm} variant="outlined" disabled={!savedFormId}>
+            View Form
+          </Button>
+          <Button onClick={onClose} color="error">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 
       <ViewFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
         formConfig={selectedConfig}
       />
     </>
   );
 };
 
-export default ExperimentModal;
+export default ExperimentalModal;
+
 
 
 // import React, { useState, useEffect } from 'react';
@@ -282,20 +394,10 @@ export default ExperimentModal;
 //   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 //   Paper, Checkbox, Button, TextField, Alert, FormControlLabel
 // } from '@mui/material';
-// import axios from 'axios';
+// import api from '../services/api';
 // import ViewFormModal from './ViewFormModal';
 
-// const INPUT_TYPES = [
-//   'text',
-//   'textarea',
-//   'checkbox',
-//   'radio',
-//   'image',
-//   'date',
-//   'integer',
-//   'dropdownlist',
-// ];
-
+// const INPUT_TYPES = ['text','textarea','checkbox','radio','image','date','integer','dropdownlist'];
 // const DATE_GRANULARITIES = ['date', 'month', 'year'];
 
 // const defaultInputTypeForDataType = (dataType) => {
@@ -321,14 +423,15 @@ export default ExperimentModal;
 //   useEffect(() => {
 //     const fetchTables = async () => {
 //       try {
-//         const res = await axios.get('/api/table/list');
-//         setTables(res.data);
+//         const res = await api.get('/table/list');
+//         setTables(res.data || []);
 //       } catch (err) {
 //         console.error('Error fetching tables:', err);
+//         setTables([]);
 //       }
 //     };
-//     fetchTables();
-//   }, []);
+//     if (open) fetchTables();
+//   }, [open]);
 
 //   useEffect(() => {
 //     if (!open) {
@@ -337,6 +440,7 @@ export default ExperimentModal;
 //       setFormName('');
 //       setViewType('');
 //       setMessage(null);
+//       setSavedFormId(null);
 //     }
 //   }, [open]);
 
@@ -347,42 +451,34 @@ export default ExperimentModal;
 //     setSavedFormId(null);
 //     setMessage(null);
 //     try {
-//       const res = await axios.get(`/api/table/columns/${tableName}`);
-//       setColumns(res.data);
-
-//       const initialConfig = res.data.map(col => ({
+//       const res = await api.get(`/table/columns/${tableName}`);
+//       setColumns(res.data || []);
+//       const initialConfig = (res.data || []).map(col => ({
 //         columnName: col.column_name,
 //         dataType: col.data_type,
 //         dataEntry: false,
 //         readOnly: false,
 //         visible: true,
 //         mandatory: false,
-
-//         // NEW builder fields:
-//         inputType: defaultInputTypeForDataType(col.data_type), // one of INPUT_TYPES
-//         optionsCsv: '',                // used for radio/dropdownlist
-//         dateGranularity: 'date',       // 'date' | 'month' | 'year' (only if inputType === 'date')
+//         inputType: defaultInputTypeForDataType(col.data_type),
+//         optionsCsv: '',
+//         dateGranularity: 'date',
 //       }));
-//       setConfig([...initialConfig]);
+//       setConfig(initialConfig);
 //     } catch (err) {
 //       console.error('Error fetching columns:', err);
+//       setColumns([]);
 //     }
 //   };
 
 //   const handleToggle = (index, field) => {
 //     setConfig(prev =>
-//       prev.map((item, i) =>
-//         i === index ? { ...item, [field]: !item[field] } : item
-//       )
+//       prev.map((item, i) => (i === index ? { ...item, [field]: !item[field] } : item))
 //     );
 //   };
 
 //   const handleFieldChange = (index, field, value) => {
-//     setConfig(prev =>
-//       prev.map((item, i) =>
-//         i === index ? { ...item, [field]: value } : item
-//       )
-//     );
+//     setConfig(prev => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
 //   };
 
 //   const handleSave = async () => {
@@ -392,14 +488,13 @@ export default ExperimentModal;
 //       return;
 //     }
 //     try {
-//       // Save to your existing /api/formconfig as before (fields_json will now include inputType, optionsCsv, dateGranularity)
-//       const res = await axios.post('/api/formconfig', {
+//       const res = await api.post('/formconfig', {
 //         templateName: formName,
 //         tableName: selectedTable,
 //         fields: config,
 //         type: viewType, // "Master" | "Update"
 //       });
-//       const savedId = res.data.id; // this should be form_configs.id
+//       const savedId = res.data?.id;
 //       setSavedFormId(savedId);
 //       setMessage({ type: 'success', text: `Form config saved successfully (ID: ${savedId})` });
 //     } catch (err) {
@@ -422,7 +517,7 @@ export default ExperimentModal;
 //       fields_json: config,
 //       template_name: formName,
 //       type: viewType,
-//       id: savedFormId,           // THIS MUST BE form_configs.id
+//       id: savedFormId, // form_configs.id
 //     });
 //     setModalOpen(true);
 //   };
@@ -433,30 +528,17 @@ export default ExperimentModal;
 //         <DialogTitle>🧪 Experimental Form Builder</DialogTitle>
 //         <DialogContent>
 //           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-//             <TextField
-//               label="Form Name"
-//               value={formName}
-//               onChange={(e) => setFormName(e.target.value)}
-//               fullWidth
-//             />
+//             <TextField label="Form Name" value={formName} onChange={(e) => setFormName(e.target.value)} fullWidth />
 //             <FormControl fullWidth>
 //               <InputLabel>View Type</InputLabel>
-//               <Select
-//                 value={viewType}
-//                 onChange={(e) => setViewType(e.target.value)}
-//                 label="View Type"
-//               >
+//               <Select value={viewType} onChange={(e) => setViewType(e.target.value)} label="View Type">
 //                 <MenuItem value="Master">Master</MenuItem>
 //                 <MenuItem value="Update">Update</MenuItem>
 //               </Select>
 //             </FormControl>
 //             <FormControl fullWidth>
 //               <InputLabel>Select Table</InputLabel>
-//               <Select
-//                 value={selectedTable}
-//                 onChange={handleTableChange}
-//                 label="Select Table"
-//               >
+//               <Select value={selectedTable} onChange={handleTableChange} label="Select Table">
 //                 {tables.map((table, i) => (
 //                   <MenuItem key={i} value={table}>{table}</MenuItem>
 //                 ))}
@@ -530,45 +612,25 @@ export default ExperimentModal;
 
 //                         <TableCell align="center">
 //                           <FormControlLabel
-//                             control={
-//                               <Checkbox
-//                                 checked={!!col.dataEntry}
-//                                 onChange={() => handleToggle(index, 'dataEntry')}
-//                               />
-//                             }
+//                             control={<Checkbox checked={!!col.dataEntry} onChange={() => handleToggle(index, 'dataEntry')} />}
 //                             label=""
 //                           />
 //                         </TableCell>
 //                         <TableCell align="center">
 //                           <FormControlLabel
-//                             control={
-//                               <Checkbox
-//                                 checked={!!col.readOnly}
-//                                 onChange={() => handleToggle(index, 'readOnly')}
-//                               />
-//                             }
+//                             control={<Checkbox checked={!!col.readOnly} onChange={() => handleToggle(index, 'readOnly')} />}
 //                             label=""
 //                           />
 //                         </TableCell>
 //                         <TableCell align="center">
 //                           <FormControlLabel
-//                             control={
-//                               <Checkbox
-//                                 checked={!!col.visible}
-//                                 onChange={() => handleToggle(index, 'visible')}
-//                               />
-//                             }
+//                             control={<Checkbox checked={!!col.visible} onChange={() => handleToggle(index, 'visible')} />}
 //                             label=""
 //                           />
 //                         </TableCell>
 //                         <TableCell align="center">
 //                           <FormControlLabel
-//                             control={
-//                               <Checkbox
-//                                 checked={!!col.mandatory}
-//                                 onChange={() => handleToggle(index, 'mandatory')}
-//                               />
-//                             }
+//                             control={<Checkbox checked={!!col.mandatory} onChange={() => handleToggle(index, 'mandatory')} />}
 //                             label=""
 //                           />
 //                         </TableCell>
@@ -580,21 +642,12 @@ export default ExperimentModal;
 //             </TableContainer>
 //           )}
 
-//           {message && (
-//             <Alert severity={message.type} sx={{ mt: 2 }}>
-//               {message.text}
-//             </Alert>
-//           )}
+//           {message && <Alert severity={message.type} sx={{ mt: 2 }}>{message.text}</Alert>}
 //         </DialogContent>
 
 //         <DialogActions>
 //           <Button onClick={handleSave} variant="contained">Save</Button>
-//           <Button
-//             onClick={handleViewForm}
-//             variant="outlined"
-//           >
-//             View Form
-//           </Button>
+//           <Button onClick={handleViewForm} variant="outlined">View Form</Button>
 //           <Button onClick={onClose} color="error">Close</Button>
 //         </DialogActions>
 //       </Dialog>
@@ -611,288 +664,3 @@ export default ExperimentModal;
 // export default ExperimentModal;
 
 
-
-// // import React, { useState, useEffect } from 'react';
-// // import {
-// //   Dialog, DialogTitle, DialogContent, DialogActions,
-// //   Box, Typography, Select, MenuItem, FormControl, InputLabel,
-// //   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-// //   Paper, Checkbox, Button, TextField, Alert, FormControlLabel
-// // } from '@mui/material';
-// // import axios from 'axios';
-// // import ViewFormModal from './ViewFormModal';
-
-// // const ExperimentModal = ({ open, onClose }) => {
-// //   const [tables, setTables] = useState([]);
-// //   const [selectedTable, setSelectedTable] = useState('');
-// //   const [columns, setColumns] = useState([]);
-// //   const [config, setConfig] = useState([]);
-// //   const [formName, setFormName] = useState('');
-// //   const [viewType, setViewType] = useState('');
-// //   const [message, setMessage] = useState(null);
-// //   const [savedFormId, setSavedFormId] = useState(null);
-// //   const [modalOpen, setModalOpen] = useState(false);
-// //   const [selectedConfig, setSelectedConfig] = useState(null);
-
-// //   useEffect(() => {
-// //     const fetchTables = async () => {
-// //       try {
-// //         const res = await axios.get('/api/table/list');
-// //         setTables(res.data);
-// //       } catch (err) {
-// //         console.error('Error fetching tables:', err);
-// //       }
-// //     };
-// //     fetchTables();
-// //   }, []);
-
-// //   useEffect(() => {
-// //   console.log('Updated config:', config);
-// // }, [config]);
-
-
-
-// // useEffect(() => {
-// //   if (!open) {
-// //     setConfig([]);
-// //     setSelectedTable('');
-// //     setFormName('');
-// //     setViewType('');
-// //     setMessage(null);
-// //   }
-// // }, [open]);
-
-
-// //   const handleTableChange = async (event) => {
-// //     const tableName = event.target.value;
-// //     setSelectedTable(tableName);
-// //     setConfig([]);
-// //     setSavedFormId(null);
-// //     setMessage(null);
-// //     try {
-// //       const res = await axios.get(`/api/table/columns/${tableName}`);
-// //       setColumns(res.data);
-      
-// //       const initialConfig = res.data.map(col => ({
-// //   columnName: col.column_name,
-// //   dataType: col.data_type,
-// //   dataEntry: false,
-// //   readOnly: false,
-// //   visible: true,
-// //   mandatory: false,
-// // }));
-// // setConfig([...initialConfig]); // simple spread — React-friendly
-
-
-// //     } catch (err) {
-// //       console.error('Error fetching columns:', err);
-// //     }
-// //   };
-
-// // const handleToggle = (index, field) => {
-// //   setConfig(prev =>
-// //     prev.map((item, i) =>
-// //       i === index ? { ...item, [field]: !item[field] } : item
-// //     )
-// //   );
-// // };
-
-
-
-
-// //   const handleSave = async () => {
-// //     setMessage(null);
-// //     if (!formName || !selectedTable || !viewType) {
-// //       setMessage({ type: 'error', text: 'All fields are required.' });
-// //       return;
-// //     }
-// //     try {
-// //       const res = await axios.post('/api/formconfig', {
-// //         templateName: formName,
-// //         tableName: selectedTable,
-// //         fields: config,
-// //         type: viewType,
-// //       });
-// //       const savedId = res.data.id;
-// //       setSavedFormId(savedId);
-// //       setMessage({ type: 'success', text: `Form config saved successfully (ID: ${savedId})` });
-// //     } catch (err) {
-// //       if (err.response?.status === 409) {
-// //         setMessage({ type: 'error', text: 'Form with same name and view type already exists.' });
-// //       } else {
-// //         const msg = err.response?.data?.error || 'Failed to save form config.';
-// //         setMessage({ type: 'error', text: msg });
-// //       }
-// //       console.error('Error saving config:', err);
-// //     }
-// //   };
-
-// //   const handleViewForm = () => {
-// //     if (!savedFormId) {
-// //       setMessage({ type: 'error', text: 'Please save the form configuration first.' });
-// //       return;
-// //     }
-// //     setSelectedConfig({
-// //       fields_json: config,
-// //       template_name: formName,
-// //       type: viewType,
-// //       id: savedFormId,
-// //     });
-// //     setModalOpen(true);
-// //   };
-
-// //   useEffect(() => {
-// //     console.log('Current config:', config);
-// //   }, [config]);
-
-// //   return (
-// //     <>
-// //       <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-// //         <DialogTitle>🧪 Experimental Form Builder</DialogTitle>
-// //         <DialogContent>
-// //           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-// //             <TextField
-// //               label="Form Name"
-// //               value={formName}
-// //               onChange={(e) => setFormName(e.target.value)}
-// //               fullWidth
-// //             />
-// //             <FormControl fullWidth>
-// //               <InputLabel>View Type</InputLabel>
-// //               <Select
-// //                 value={viewType}
-// //                 onChange={(e) => setViewType(e.target.value)}
-// //                 label="View Type"
-// //               >
-// //                 <MenuItem value="Master">Master</MenuItem>
-// //                 <MenuItem value="Update">Update</MenuItem>
-// //               </Select>
-// //             </FormControl>
-// //             <FormControl fullWidth>
-// //               <InputLabel>Select Table</InputLabel>
-// //               <Select
-// //                 value={selectedTable}
-// //                 onChange={handleTableChange}
-// //                 label="Select Table"
-// //               >
-// //                 {tables.map((table, i) => (
-// //                   <MenuItem key={i} value={table}>{table}</MenuItem>
-// //                 ))}
-// //               </Select>
-// //             </FormControl>
-// //           </Box>
-
-// //           {config.length > 0 && (
-// //             <TableContainer component={Paper} sx={{ mt: 3 }}>
-// //               <Table>
-// //                 <TableHead>
-// //                   <TableRow>
-// //                     <TableCell><strong>Column</strong></TableCell>
-// //                     <TableCell><strong>Data Type</strong></TableCell>
-// //                     <TableCell align="center">Data Entry</TableCell>
-// //                     <TableCell align="center">Read Only</TableCell>
-// //                     <TableCell align="center">Visible</TableCell>
-// //                     <TableCell align="center">Mandatory</TableCell>
-// //                   </TableRow>
-// //                 </TableHead>
-
-// //                 <TableBody>
-// //                     {config.map((col, index) => (
-// //                         <TableRow key={index}>
-// //                         <TableCell>{col.columnName}</TableCell>
-// //                         <TableCell>{col.dataType}</TableCell>
-                        
-// //                         <TableCell align="center">
-// //                             <FormControlLabel
-// //                             control={
-// //                                 <Checkbox
-// //                                 checked={!!col.dataEntry}
-// //                                 onChange={() => handleToggle(index, 'dataEntry')}
-// //                                 />
-// //                             }
-// //                             label=""
-// //                             />
-// //                         </TableCell>
-// //                         <TableCell align="center">
-// //                             <FormControlLabel
-// //                             control={
-// //                             <Checkbox
-// //                             checked={Boolean(col.readOnly)}
-// //                             onChange={() => handleToggle(index, 'readOnly')}
-// //                             disableRipple
-// //                             />
-// //                             }
-// //                             label=""
-// //                             />
-// //                         </TableCell>
-// //                         <TableCell align="center">
-// //                              <FormControlLabel
-// //                             control={
-// //                             <Checkbox
-// //                             checked={Boolean(col.visible)}
-// //                             onChange={() => handleToggle(index, 'visible')}
-// //                             disableRipple
-// //                             />
-// //                              }
-// //                             label=""
-// //                             />
-// //                         </TableCell>
-// //                         <TableCell align="center">
-// //                             <FormControlLabel
-// //                             control={
-// //                             <Checkbox
-// //                             checked={Boolean(col.mandatory)}
-// //                             onChange={() => handleToggle(index, 'mandatory')}
-// //                             disableRipple
-// //                             />
-// //                             }
-// //                             label=""
-// //                             />
-// //                         </TableCell>
-// //                         </TableRow>
-// //                     ))}
-// //                     </TableBody>
-
-
-// //               </Table>
-// //             </TableContainer>
-// //           )}
-
-// //           {message && (
-// //             <Alert severity={message.type} sx={{ mt: 2 }}>
-// //               {message.text}
-// //             </Alert>
-// //           )}
-// //         </DialogContent>
-
-// //         <DialogActions>
-// //           <Button onClick={handleSave} variant="contained">Save</Button>
-// //           <Button
-// //             onClick={() => {
-// //               setSelectedConfig({
-// //                 fields_json: config,
-// //                 template_name: formName,
-// //                 type: viewType,
-// //                 id: savedFormId || 'temp',
-// //               });
-// //               setModalOpen(true);
-// //             }}
-// //             variant="outlined"
-// //           >
-// //             View Form
-// //           </Button>
-// //           <Button onClick={onClose} color="error">Close</Button>
-// //         </DialogActions>
-// //       </Dialog>
-
-// //       {/* View Form Modal */}
-// //       <ViewFormModal
-// //         open={modalOpen}
-// //         onClose={() => setModalOpen(false)}
-// //         formConfig={selectedConfig}
-// //       />
-// //     </>
-// //   );
-// // };
-
-// // export default ExperimentModal;

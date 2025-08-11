@@ -35,7 +35,14 @@ const modulesConfig = {
   Feedback: { path: "/feedback", component: Feedback, protected: false }, // ✅ unprotected
   WorkflowManager: { path: "/workflowmanager", component: WorkflowManager, protected: false }, // ✅ unprotected
   CreateWorkflowModal: { path: "/wfmod", component: CreateWorkflowModal, protected: false }, // ✅ unprotected
-  Enquiries: { path: "/enquiry", component: Enquiries, protected: false }, // ✅ unprotected
+  // Enquiries: { path: "/enquiries", component: Enquiries, protected: false}, // ✅ unprotected
+  Enquiries: {
+    path: '/enquiry',
+    component: Enquiries,
+    protected: true,
+    moduleId: 12,            // ← use the numeric id
+    moduleName: 'Enquiries', // optional fallback
+  },
   BulkUploader: { path: "/bulkuploader", component: BulkUploader, protected: false }, // ✅ unprotected
   ListFormViews: { path: "/forms", component:  ListFormViews, protected: false }, // ✅ unprotected
  

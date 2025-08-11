@@ -1,5 +1,5 @@
 {
-  "scannedAt": "2025-08-10T16:17:41.708Z",
+  "scannedAt": "2025-08-10T20:37:44.104Z",
   "results": {
     "server/server.js": [
       {
@@ -1181,8 +1181,18 @@
     "server/routes/auth.js": [
       {
         "check": "Authentication",
-        "status": "pass",
-        "message": ""
+        "status": "fail",
+        "message": "Missing auth guard (verifyToken/authMiddleware) in this router.",
+        "actions": [
+          {
+            "title": "Guard the whole router",
+            "snippet": "// routes/someRouter.js\nconst express = require('express');\nconst router = express.Router();\nconst { verifyToken } = require('../middleware/authMiddleware');\n\nrouter.use(verifyToken); // applies to all routes in this router\n\n// router.get('/items', handler)\n// router.post('/items', handler)\n\nmodule.exports = router;"
+          },
+          {
+            "title": "Or guard a single route inline",
+            "snippet": "// routes/someRouter.js\nrouter.post('/items', verifyToken, async (req, res) => {\n  // handler\n});"
+          }
+        ]
       },
       {
         "check": "Subscription",
@@ -1254,7 +1264,7 @@
       {
         "check": "Session Timeout",
         "status": "pass",
-        "message": ""
+        "message": "Out of session scope."
       }
     ],
     "server/routes/approvals.js": [
@@ -2935,15 +2945,15 @@
   },
   "summary": {
     "totals": {
-      "pass": 53,
+      "pass": 52,
       "warn": 114,
-      "fail": 34
+      "fail": 35
     },
     "byCheck": {
       "Authentication": {
-        "pass": 7,
+        "pass": 6,
         "warn": 0,
-        "fail": 10
+        "fail": 11
       },
       "Subscription": {
         "pass": 1,

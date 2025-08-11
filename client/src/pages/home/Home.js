@@ -293,7 +293,7 @@ export default function Home() {
         variant="contained"
         color="primary"
         component={Link}
-        to="/Enquiry"
+        to="/Enquiries"
         sx={{ mt: 2 }}
       >
         Enquiries

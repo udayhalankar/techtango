@@ -28,7 +28,7 @@ async function verifyToken(req, res, next) {
       : sessionStore[userId]?.lastActivity || now;
 
     const inactiveDuration = now - lastSeen;
-    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+    const INACTIVITY_LIMIT = 59 * 60 * 1000; // 59 minutes
 
     if (inactiveDuration > INACTIVITY_LIMIT) {
       return res.status(401).json({ message: 'Session expired due to inactivity' });

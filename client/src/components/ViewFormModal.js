@@ -1,3 +1,4 @@
+// src/pages/forms/ViewFormModal.js
 import React, { useEffect, useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -9,9 +10,9 @@ import api from '../services/api';
 const RESERVED = new Set(['id', 'created_at', 'created_by', 'updated_at', 'updated_by']);
 
 const parseOptions = (csv) =>
-  (csv || '')
+  String(csv || '')
     .split(',')
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean);
 
 const dateInputProps = (gran) => {
@@ -27,23 +28,40 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
   const [recordId, setRecordId] = useState('');
   const [existingIds, setExistingIds] = useState([]);
   const [errMsg, setErrMsg] = useState('');
+  const [okMsg, setOkMsg] = useState('');
 
   const configId = formConfig?.configId ?? formConfig?.id ?? null;
   const rawType = (formConfig?.type || '').toString().toLowerCase();
   const isUpdate = rawType === 'update';
 
+  // Reset local state any time the dialog closes
+  useEffect(() => {
+    if (open) return;
+    setFields([]);
+    setFormData({});
+    setLoading(false);
+    setRecordId('');
+    setExistingIds([]);
+    setErrMsg('');
+    setOkMsg('');
+  }, [open]);
+
+  // Initialize when opened
   useEffect(() => {
     if (!open) return;
 
     if (!configId) {
       setErrMsg('Config ID is missing. Please pass form_configs.id as formConfig.id/configId.');
       return;
-    } else {
-      setErrMsg('');
     }
+    setErrMsg('');
+    setOkMsg('');
 
-    const visibleFields = (formConfig?.fields_json || []).filter(f => f.visible);
-    setFields(visibleFields);
+    // only visible fields render
+    const visible = Array.isArray(formConfig?.fields_json)
+      ? formConfig.fields_json.filter((f) => f.visible)
+      : [];
+    setFields(visible);
     setFormData({});
     setRecordId('');
 
@@ -56,29 +74,42 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
       const res = await api.get(`/formdata/${cid}/ids`);
       setExistingIds(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.warn('Failed to load IDs for update:', err?.response?.status, err?.response?.data);
+      const status = err?.response?.status;
+      if (status === 401) setErrMsg('Your session has expired. Please log in again.');
+      else if (status === 403) setErrMsg(err?.response?.data?.error || 'Access denied.');
+      else setErrMsg('Failed to load record list.');
       setExistingIds([]);
+      console.warn('IDs load error:', err);
     }
   };
 
   const handleIdSelect = async (id) => {
     setLoading(true);
     setRecordId(id);
+    setOkMsg('');
+    setErrMsg('');
     try {
       const res = await api.get(`/formdata/${configId}/${id}`);
-      const row = res.data?.data || {};
+      const row = res?.data?.data || {};
       setFormData(row);
     } catch (err) {
-      console.error('Error loading form data:', err);
+      const status = err?.response?.status;
+      if (status === 401) setErrMsg('Your session has expired. Please log in again.');
+      else if (status === 403) setErrMsg(err?.response?.data?.error || 'Access denied.');
+      else setErrMsg(err?.response?.data?.error || 'Failed to load record.');
+      console.error('Load record error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const setValue = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const setValue = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleFile = async (field, file) => {
-    if (!file) { setValue(field, ''); return; }
+    if (!file) {
+      setValue(field, '');
+      return;
+    }
     const toBase64 = (f) =>
       new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -86,8 +117,12 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
         reader.onerror = reject;
         reader.readAsDataURL(f);
       });
-    const dataUrl = await toBase64(file);
-    setValue(field, dataUrl);
+    try {
+      const dataUrl = await toBase64(file);
+      setValue(field, dataUrl);
+    } catch (e) {
+      setErrMsg('Failed to read file.');
+    }
   };
 
   const handleSubmit = async () => {
@@ -95,29 +130,39 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
       setErrMsg('Config ID is missing; cannot submit.');
       return;
     }
+    setErrMsg('');
+    setOkMsg('');
     const path = isUpdate ? '/formdata/update' : '/formdata/insert';
 
+    // Strip reserved fields
     const safeData = Object.fromEntries(
-      Object.entries(formData).filter(([k]) => !RESERVED.has(k))
+      Object.entries(formData).filter(([k]) => !RESERVED.has(String(k).toLowerCase()))
     );
 
     const payload = isUpdate
       ? { configId, entryId: recordId, formData: safeData }
       : { configId, formData: safeData };
 
+    setLoading(true);
     try {
       await api.post(path, payload);
-      alert('Form submitted successfully!');
-      onClose();
+      setOkMsg('Form submitted successfully!');
+      // optionally close after a short delay
+      // setTimeout(onClose, 600);
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message;
-      setErrMsg(msg || 'Submission failed');
+      const status = err?.response?.status;
+      if (status === 401) setErrMsg('Your session has expired. Please log in again.');
+      else if (status === 403) setErrMsg(err?.response?.data?.error || 'Access denied.');
+      else setErrMsg(err?.response?.data?.error || err?.response?.data?.message || 'Submission failed');
+      console.error('Submit error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const renderField = (f) => {
     const key = f.columnName;
-    const inputType = (f.inputType || '').toLowerCase();
+    const inputType = String(f.inputType || '').toLowerCase();
     const options = parseOptions(f.optionsCsv);
     const value = formData[key] ?? '';
     const commonProps = {
@@ -125,65 +170,114 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
       required: !!f.mandatory,
       disabled: !!f.readOnly,
       label: f.columnName,
+      size: 'small',
     };
 
     switch (inputType) {
       case 'textarea':
         return (
-          <TextField {...commonProps} multiline minRows={3} value={value}
-                     onChange={(e) => setValue(key, e.target.value)} />
+          <TextField
+            {...commonProps}
+            multiline
+            minRows={3}
+            value={value}
+            onChange={(e) => setValue(key, e.target.value)}
+          />
         );
+
       case 'checkbox':
         return (
           <FormControlLabel
             label={f.columnName}
-            control={<Checkbox checked={Boolean(value)} onChange={(e) => setValue(key, e.target.checked)} />}
+            control={
+              <Checkbox
+                checked={Boolean(value)}
+                onChange={(e) => setValue(key, e.target.checked)}
+              />
+            }
           />
         );
+
       case 'radio':
         return (
           <FormControl fullWidth>
             <InputLabel shrink>{f.columnName}</InputLabel>
             <RadioGroup value={value} onChange={(e) => setValue(key, e.target.value)}>
-              {options.map(opt => <FormControlLabel key={opt} value={opt} control={<Radio />} label={opt} />)}
+              {options.map((opt) => (
+                <FormControlLabel key={opt} value={opt} control={<Radio />} label={opt} />
+              ))}
             </RadioGroup>
           </FormControl>
         );
+
       case 'dropdownlist':
         return (
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{f.columnName}</InputLabel>
-            <Select label={f.columnName} value={value} onChange={(e) => setValue(key, e.target.value)}>
-              {options.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+            <Select
+              label={f.columnName}
+              value={value}
+              onChange={(e) => setValue(key, e.target.value)}
+            >
+              {options.map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {opt}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         );
+
       case 'image':
         return (
           <Box>
             <InputLabel shrink>{f.columnName}</InputLabel>
-            <input type="file" accept="image/*" onChange={(e) => handleFile(key, e.target.files?.[0])}/>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFile(key, e.target.files?.[0])}
+            />
             {value && typeof value === 'string' && value.startsWith('data:') && (
-              <Box sx={{ mt: 1 }}><img src={value} alt="preview" style={{ maxWidth: '100%', maxHeight: 160 }} /></Box>
+              <Box sx={{ mt: 1 }}>
+                <img src={value} alt="preview" style={{ maxWidth: '100%', maxHeight: 160 }} />
+              </Box>
             )}
           </Box>
         );
+
       case 'date': {
         const gran = f.dateGranularity || 'date';
         const attrs = dateInputProps(gran);
         return (
-          <TextField {...commonProps} {...attrs} value={value || ''} onChange={(e) => setValue(key, e.target.value)} />
+          <TextField
+            {...commonProps}
+            {...attrs}
+            value={value || ''}
+            onChange={(e) => setValue(key, e.target.value)}
+          />
         );
       }
+
       case 'integer':
         return (
-          <TextField {...commonProps} type="number" value={value}
-                     onChange={(e) => setValue(key, e.target.value === '' ? '' : Number(e.target.value))} />
+          <TextField
+            {...commonProps}
+            type="number"
+            value={value}
+            onChange={(e) =>
+              setValue(key, e.target.value === '' ? '' : Number(e.target.value))
+            }
+          />
         );
+
       default:
         return (
-          <TextField {...commonProps} type="text" value={value}
-                     onChange={(e) => setValue(key, e.target.value)} />
+          <TextField
+            {...commonProps}
+            type="text"
+            value={value}
+            onChange={(e) => setValue(key, e.target.value)}
+          />
         );
     }
   };
@@ -191,11 +285,21 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
-        {(formConfig?.template_name || formConfig?.templateName || 'Form')} ({isUpdate ? 'Update' : 'Master'} View)
+        {(formConfig?.template_name || formConfig?.templateName || 'Form')} (
+        {isUpdate ? 'Update' : 'Master'} View)
       </DialogTitle>
 
       <DialogContent dividers>
-        {errMsg && <Box mb={2}><Alert severity="error">{errMsg}</Alert></Box>}
+        {errMsg && (
+          <Box mb={2}>
+            <Alert severity="error">{errMsg}</Alert>
+          </Box>
+        )}
+        {okMsg && (
+          <Box mb={2}>
+            <Alert severity="success">{okMsg}</Alert>
+          </Box>
+        )}
 
         {isUpdate && (
           <Box mb={2}>
@@ -203,16 +307,23 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
               select
               label="Select Record ID"
               fullWidth
+              size="small"
               value={recordId}
               onChange={(e) => handleIdSelect(e.target.value)}
             >
-              {existingIds.map((id) => <MenuItem key={id} value={id}>{id}</MenuItem>)}
+              {existingIds.map((id) => (
+                <MenuItem key={id} value={id}>
+                  {id}
+                </MenuItem>
+              ))}
             </TextField>
           </Box>
         )}
 
         {loading ? (
-          <CircularProgress />
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress />
+          </Box>
         ) : (
           <Grid container spacing={2}>
             {fields.map((f, idx) => (
@@ -226,7 +337,11 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={isUpdate && !recordId}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading || (isUpdate && !recordId)}
+        >
           {isUpdate ? 'Update' : 'Submit'}
         </Button>
       </DialogActions>
@@ -236,331 +351,6 @@ const ViewFormModal = ({ open, onClose, formConfig }) => {
 
 export default ViewFormModal;
 
-
-// // // //src/components/ViewFormModal.js
-// // // import React, { useEffect, useState } from 'react';
-// // // import {
-// // // Dialog, DialogTitle, DialogContent, DialogActions,
-// // // Button, TextField, MenuItem, Grid, Box, CircularProgress
-// // // } from '@mui/material';
-// // // import axios from 'axios';
-// // // const ViewFormModal = ({ open, onClose, formConfig }) => {
-// // // const [fields, setFields] = useState([]);
-// // // const [formData, setFormData] = useState({});
-// // // const [loading, setLoading] = useState(false);
-// // // const [recordId, setRecordId] = useState('');
-// // // const [existingIds, setExistingIds] = useState([]);
-// // // const isUpdate = formConfig?.type === 'Update';
-
-// // // useEffect(() => {
-
-// // // if (formConfig && open) {
-// // // console.log("Loaded formConfig:", formConfig);
-// // // console.log("fields_json:", formConfig.fields_json);
-// // // const visibleFields = (formConfig.fields_json || []).filter(f => f.visible);
-// // // setFields(visibleFields);
-// // // setFormData({});
-// // // setRecordId('');
-// // // if (isUpdate) fetchExistingIds();
-// // // }
-// // // }, [formConfig, open]);
-
-// // // const fetchExistingIds = async () => {
-
-// // // try {
-// // // const res = await axios.get(`/api/formdata/${formConfig.id}/ids`);
-// // // setExistingIds(res.data);
-// // // } catch (err) {
-// // // console.error('Error loading IDs:', err);
-// // // }
-
-// // // };
-
-// // // const handleIdSelect = async (id) => {
-// // // setLoading(true);
-// // // setRecordId(id);
-// // // try {
-// // // const res = await axios.get(`/api/formdata/${formConfig.id}/${id}`);
-// // // setFormData(res.data);
-// // // } catch (err) {
-// // // console.error('Error loading form data:', err);
-// // // } finally {
-// // // setLoading(false);
-// // // }
-// // // };
-
-// // // const handleChange = (field, value) => {
-// // // setFormData(prev => ({ ...prev, [field]: value }));
-// // // };
-
-
-
-// // // const handleSubmit = async () => {
-// // // console.log("📤 Submitting to /insert with viewId:", formConfig?.id);
-// // // console.log("📝 FormData:", formData);
-// // // const api = isUpdate
-// // // ? '/api/formdata/update'
-// // // : '/api/formdata/insert';
-// // // const payload = {
-// // // viewId: formConfig?.id,
-// // // data: formData,
-// // // ...(isUpdate ? { id: recordId } : {})
-// // // };
-
-// // // try {
-// // // const res = await axios.post(api, payload);
-// // // console.log("✅ Response:", res.data);
-// // // alert("Form submitted successfully!");
-// // // onClose();
-// // // } catch (err) {
-
-// // // console.error("❌ Submission error:", err);
-// // // alert("Error submitting form: " + (err.response?.data?.error || err.message));
-// // // }
-// // // };
-
-// // // return (
-// // // <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-// // // <DialogTitle>
-// // // {formConfig?.template_name} ({formConfig?.type} View)
-// // // </DialogTitle>
-// // // <DialogContent dividers>
-
-
-// // // {isUpdate && (
-// // // <Box mb={2}>
-// // // <TextField
-// // // select
-// // // label="Select Record ID"
-// // // fullWidth
-// // // value={recordId}
-// // // onChange={(e) => handleIdSelect(e.target.value)}
-// // // >
-
-// // // {existingIds.map(id => (
-// // // <MenuItem key={id} value={id}>{id}</MenuItem>
-// // // ))}
-// // // </TextField>
-// // // </Box>
-// // // )}
-
-// // // {loading ? (
-// // // <CircularProgress />
-// // // ) : (
-
-// // // <Grid container spacing={2}>
-// // // {fields.map((field, idx) => (
-// // // <Grid item xs={6} key={idx}>
-// // // <TextField
-// // // label={field.columnName}
-// // // type={
-// // // field.dataType === 'integer' || field.dataType === 'bigint'
-// // // ? 'number'
-// // // : 'text'
-// // // }
-
-// // // fullWidth
-// // // required={field.mandatory}
-// // // value={formData[field.columnName] || ''}
-// // // onChange={(e) => handleChange(field.columnName, e.target.value)}
-// // // disabled={field.readOnly}
-// // // />
-// // // </Grid>
-// // // ))}
-// // // </Grid>
-// // // )}
-// // // </DialogContent>
-// // // <DialogActions>
-
-// // // <Button onClick={onClose}>Cancel</Button>
-// // // <Button
-// // // variant="contained"
-// // // onClick={handleSubmit}
-// // // disabled={isUpdate && !recordId}
-// // // >
-
-// // // {isUpdate ? 'Update' : 'Submit'}
-// // // </Button>
-// // // </DialogActions>
-// // // </Dialog>
-// // // );
-// // // };
-
-// // // export default ViewFormModal;
-
-// // // src/components/ViewFormModal.js
-// // // src/components/ViewFormModal.js
-// // import React, { useEffect, useState } from 'react';
-// // import {
-// //   Dialog, DialogTitle, DialogContent, DialogActions,
-// //   Button, TextField, MenuItem, Grid, Box, CircularProgress, Alert
-// // } from '@mui/material';
-// // import api from '../services/api';
-
-// // const ViewFormModal = ({ open, onClose, formConfig }) => {
-// //   const [fields, setFields] = useState([]);
-// //   const [formData, setFormData] = useState({});
-// //   const [loading, setLoading] = useState(false);
-// //   const [recordId, setRecordId] = useState('');
-// //   const [existingIds, setExistingIds] = useState([]);
-// //   const [errMsg, setErrMsg] = useState('');
-
-// //   // Pull the configId from formConfig (this MUST be form_configs.id)
-// //   const configId = formConfig?.configId ?? formConfig?.id ?? null;
-
-// //   // Normalized type check (Master/Update)
-// //   const rawType = (formConfig?.type || '').toString().toLowerCase();
-// //   const isUpdate = rawType === 'update';
-
-// //   useEffect(() => {
-// //     if (!open) return;
-
-// //     // Basic guard: we need a valid configId
-// //     if (!configId) {
-// //       setErrMsg('Config ID is missing. Please pass form_configs.id as formConfig.id/configId.');
-// //       return;
-// //     } else {
-// //       setErrMsg('');
-// //     }
-
-// //     // Prepare fields from fields_json
-// //     const visibleFields = (formConfig?.fields_json || []).filter(f => f.visible);
-// //     setFields(visibleFields);
-// //     setFormData({});
-// //     setRecordId('');
-
-// //     // Load IDs for Update mode
-// //     if (isUpdate) fetchExistingIds(configId);
-// //     // eslint-disable-next-line react-hooks/exhaustive-deps
-// //   }, [open, formConfig, configId, isUpdate]);
-
-// //   const fetchExistingIds = async (cid) => {
-// //     try {
-// //       const res = await api.get(`/formdata/${cid}/ids`);
-// //       // backend returns array of ids
-// //       setExistingIds(Array.isArray(res.data) ? res.data : []);
-// //     } catch (err) {
-// //       console.warn('Failed to load IDs for update:', err?.response?.status, err?.response?.data);
-// //       setExistingIds([]);
-// //     }
-// //   };
-
-// //   const handleIdSelect = async (id) => {
-// //     setLoading(true);
-// //     setRecordId(id);
-// //     try {
-// //       const res = await api.get(`/formdata/${configId}/${id}`);
-// //       const row = res.data?.data || {};
-// //       setFormData(row);
-// //     } catch (err) {
-// //       console.error('Error loading form data:', err);
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
-// //   const handleChange = (field, value, dataType) => {
-// //     // Optional: number coercion for integer/bigint
-// //     const v =
-// //       dataType === 'integer' || dataType === 'bigint'
-// //         ? (value === '' ? '' : Number(value))
-// //         : value;
-
-// //     setFormData(prev => ({ ...prev, [field]: v }));
-// //   };
-
-// //   const handleSubmit = async () => {
-// //     if (!configId) {
-// //       setErrMsg('Config ID is missing; cannot submit.');
-// //       return;
-// //     }
-
-// //     const path = isUpdate ? '/formdata/update' : '/formdata/insert';
-// //     const payload = isUpdate
-// //       ? { configId, entryId: recordId, formData }
-// //       : { configId, formData };
-
-// //     try {
-// //       const res = await api.post(path, payload);
-// //       console.log('✅ Submit response:', res.data);
-// //       alert('Form submitted successfully!');
-// //       onClose();
-// //     } catch (err) {
-// //       console.error('❌ Submission error:', err);
-// //       const msg = err.response?.data?.error || err.response?.data?.message || err.message;
-// //       setErrMsg(msg || 'Submission failed');
-// //     }
-// //   };
-
-// //   return (
-// //     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-// //       <DialogTitle>
-// //         {formConfig?.template_name || formConfig?.templateName || 'Form'} ({isUpdate ? 'Update' : 'Master'} View)
-// //       </DialogTitle>
-
-// //       <DialogContent dividers>
-// //         {errMsg && (
-// //           <Box mb={2}>
-// //             <Alert severity="error">{errMsg}</Alert>
-// //           </Box>
-// //         )}
-
-// //         {isUpdate && (
-// //           <Box mb={2}>
-// //             <TextField
-// //               select
-// //               label="Select Record ID"
-// //               fullWidth
-// //               value={recordId}
-// //               onChange={(e) => handleIdSelect(e.target.value)}
-// //             >
-// //               {existingIds.map((id) => (
-// //                 <MenuItem key={id} value={id}>{id}</MenuItem>
-// //               ))}
-// //             </TextField>
-// //           </Box>
-// //         )}
-
-// //         {loading ? (
-// //           <CircularProgress />
-// //         ) : (
-// //           <Grid container spacing={2}>
-// //             {fields.map((field, idx) => (
-// //               <Grid item xs={12} sm={6} key={`${field.columnName}-${idx}`}>
-// //                 <TextField
-// //                   label={field.columnName}
-// //                   type={
-// //                     field.dataType === 'integer' || field.dataType === 'bigint'
-// //                       ? 'number'
-// //                       : 'text'
-// //                   }
-// //                   fullWidth
-// //                   required={!!field.mandatory}
-// //                   value={formData[field.columnName] ?? ''}
-// //                   onChange={(e) => handleChange(field.columnName, e.target.value, field.dataType)}
-// //                   disabled={!!field.readOnly}
-// //                 />
-// //               </Grid>
-// //             ))}
-// //           </Grid>
-// //         )}
-// //       </DialogContent>
-
-// //       <DialogActions>
-// //         <Button onClick={onClose}>Cancel</Button>
-// //         <Button
-// //           variant="contained"
-// //           onClick={handleSubmit}
-// //           disabled={isUpdate && !recordId}
-// //         >
-// //           {isUpdate ? 'Update' : 'Submit'}
-// //         </Button>
-// //       </DialogActions>
-// //     </Dialog>
-// //   );
-// // };
-
-// // export default ViewFormModal;
 
 // import React, { useEffect, useState } from 'react';
 // import {
@@ -579,10 +369,9 @@ export default ViewFormModal;
 //     .filter(Boolean);
 
 // const dateInputProps = (gran) => {
-//   // HTML supports date and month; year needs a text select fallback
 //   if (gran === 'month') return { type: 'month' };
 //   if (gran === 'year') return { type: 'number', inputProps: { min: 1900, max: 2100 } };
-//   return { type: 'date' }; // default
+//   return { type: 'date' };
 // };
 
 // const ViewFormModal = ({ open, onClose, formConfig }) => {
@@ -640,20 +429,14 @@ export default ViewFormModal;
 //     }
 //   };
 
-//   const setValue = (field, value) => {
-//     setFormData(prev => ({ ...prev, [field]: value }));
-//   };
+//   const setValue = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
 //   const handleFile = async (field, file) => {
-//     if (!file) {
-//       setValue(field, '');
-//       return;
-//     }
-//     // Quick path: base64 encode (works with your existing JSON route)
+//     if (!file) { setValue(field, ''); return; }
 //     const toBase64 = (f) =>
 //       new Promise((resolve, reject) => {
 //         const reader = new FileReader();
-//         reader.onload = () => resolve(reader.result); // data URL
+//         reader.onload = () => resolve(reader.result);
 //         reader.onerror = reject;
 //         reader.readAsDataURL(f);
 //       });
@@ -666,9 +449,8 @@ export default ViewFormModal;
 //       setErrMsg('Config ID is missing; cannot submit.');
 //       return;
 //     }
-//     const path = isUpdate ? '/formdata/update' : '/formviews/formdata/insert';
+//     const path = isUpdate ? '/formdata/update' : '/formdata/insert';
 
-//     // (Optional) client-side reserved filter for safety
 //     const safeData = Object.fromEntries(
 //       Object.entries(formData).filter(([k]) => !RESERVED.has(k))
 //     );
@@ -678,12 +460,10 @@ export default ViewFormModal;
 //       : { configId, formData: safeData };
 
 //     try {
-//       const res = await api.post(path, payload);
-//       console.log('✅ Submit response:', res.data);
+//       await api.post(path, payload);
 //       alert('Form submitted successfully!');
 //       onClose();
 //     } catch (err) {
-//       console.error('❌ Submission error:', err);
 //       const msg = err.response?.data?.error || err.response?.data?.message || err.message;
 //       setErrMsg(msg || 'Submission failed');
 //     }
@@ -704,113 +484,60 @@ export default ViewFormModal;
 //     switch (inputType) {
 //       case 'textarea':
 //         return (
-//           <TextField
-//             {...commonProps}
-//             multiline
-//             minRows={3}
-//             value={value}
-//             onChange={(e) => setValue(key, e.target.value)}
-//           />
+//           <TextField {...commonProps} multiline minRows={3} value={value}
+//                      onChange={(e) => setValue(key, e.target.value)} />
 //         );
-
 //       case 'checkbox':
 //         return (
 //           <FormControlLabel
 //             label={f.columnName}
-//             control={
-//               <Checkbox
-//                 checked={Boolean(value)}
-//                 onChange={(e) => setValue(key, e.target.checked)}
-//               />
-//             }
+//             control={<Checkbox checked={Boolean(value)} onChange={(e) => setValue(key, e.target.checked)} />}
 //           />
 //         );
-
 //       case 'radio':
 //         return (
 //           <FormControl fullWidth>
 //             <InputLabel shrink>{f.columnName}</InputLabel>
-//             <RadioGroup
-//               value={value}
-//               onChange={(e) => setValue(key, e.target.value)}
-//             >
-//               {options.map(opt => (
-//                 <FormControlLabel key={opt} value={opt} control={<Radio />} label={opt} />
-//               ))}
+//             <RadioGroup value={value} onChange={(e) => setValue(key, e.target.value)}>
+//               {options.map(opt => <FormControlLabel key={opt} value={opt} control={<Radio />} label={opt} />)}
 //             </RadioGroup>
 //           </FormControl>
 //         );
-
 //       case 'dropdownlist':
 //         return (
 //           <FormControl fullWidth>
 //             <InputLabel>{f.columnName}</InputLabel>
-//             <Select
-//               label={f.columnName}
-//               value={value}
-//               onChange={(e) => setValue(key, e.target.value)}
-//             >
-//               {options.map(opt => (
-//                 <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-//               ))}
+//             <Select label={f.columnName} value={value} onChange={(e) => setValue(key, e.target.value)}>
+//               {options.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
 //             </Select>
 //           </FormControl>
 //         );
-
 //       case 'image':
 //         return (
 //           <Box>
 //             <InputLabel shrink>{f.columnName}</InputLabel>
-//             <input
-//               type="file"
-//               accept="image/*"
-//               onChange={(e) => handleFile(key, e.target.files?.[0])}
-//             />
+//             <input type="file" accept="image/*" onChange={(e) => handleFile(key, e.target.files?.[0])}/>
 //             {value && typeof value === 'string' && value.startsWith('data:') && (
-//               <Box sx={{ mt: 1 }}>
-//                 {/* preview */}
-//                 <img src={value} alt="preview" style={{ maxWidth: '100%', maxHeight: 160 }} />
-//               </Box>
+//               <Box sx={{ mt: 1 }}><img src={value} alt="preview" style={{ maxWidth: '100%', maxHeight: 160 }} /></Box>
 //             )}
 //           </Box>
 //         );
-
 //       case 'date': {
 //         const gran = f.dateGranularity || 'date';
 //         const attrs = dateInputProps(gran);
 //         return (
-//           <TextField
-//             {...commonProps}
-//             {...attrs}
-//             value={value || ''}
-//             onChange={(e) => setValue(key, e.target.value)}
-//           />
+//           <TextField {...commonProps} {...attrs} value={value || ''} onChange={(e) => setValue(key, e.target.value)} />
 //         );
 //       }
-
 //       case 'integer':
 //         return (
-//           <TextField
-//             {...commonProps}
-//             type="number"
-//             value={value}
-//             onChange={(e) => {
-//               const v = e.target.value;
-//               setValue(key, v === '' ? '' : Number(v));
-//             }}
-//           />
+//           <TextField {...commonProps} type="number" value={value}
+//                      onChange={(e) => setValue(key, e.target.value === '' ? '' : Number(e.target.value))} />
 //         );
-
-//       // default to text
-//       case 'text':
 //       default:
 //         return (
-//           <TextField
-//             {...commonProps}
-//             type="text"
-//             value={value}
-//             onChange={(e) => setValue(key, e.target.value)}
-//           />
+//           <TextField {...commonProps} type="text" value={value}
+//                      onChange={(e) => setValue(key, e.target.value)} />
 //         );
 //     }
 //   };
@@ -818,15 +545,11 @@ export default ViewFormModal;
 //   return (
 //     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
 //       <DialogTitle>
-//         {formConfig?.template_name || formConfig?.templateName || 'Form'} ({isUpdate ? 'Update' : 'Master'} View)
+//         {(formConfig?.template_name || formConfig?.templateName || 'Form')} ({isUpdate ? 'Update' : 'Master'} View)
 //       </DialogTitle>
 
 //       <DialogContent dividers>
-//         {errMsg && (
-//           <Box mb={2}>
-//             <Alert severity="error">{errMsg}</Alert>
-//           </Box>
-//         )}
+//         {errMsg && <Box mb={2}><Alert severity="error">{errMsg}</Alert></Box>}
 
 //         {isUpdate && (
 //           <Box mb={2}>
@@ -837,9 +560,7 @@ export default ViewFormModal;
 //               value={recordId}
 //               onChange={(e) => handleIdSelect(e.target.value)}
 //             >
-//               {existingIds.map((id) => (
-//                 <MenuItem key={id} value={id}>{id}</MenuItem>
-//               ))}
+//               {existingIds.map((id) => <MenuItem key={id} value={id}>{id}</MenuItem>)}
 //             </TextField>
 //           </Box>
 //         )}
@@ -859,11 +580,7 @@ export default ViewFormModal;
 
 //       <DialogActions>
 //         <Button onClick={onClose}>Cancel</Button>
-//         <Button
-//           variant="contained"
-//           onClick={handleSubmit}
-//           disabled={isUpdate && !recordId}
-//         >
+//         <Button variant="contained" onClick={handleSubmit} disabled={isUpdate && !recordId}>
 //           {isUpdate ? 'Update' : 'Submit'}
 //         </Button>
 //       </DialogActions>
@@ -872,3 +589,5 @@ export default ViewFormModal;
 // };
 
 // export default ViewFormModal;
+
+
