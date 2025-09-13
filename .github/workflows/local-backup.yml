@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 
-# Top-level env: only plain strings allowed (no ${{ ... }})
+# Top-level env: only plain strings allowed (no expressions)
 env:
   PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'
   BRANCH: 'backup'
@@ -20,12 +20,13 @@ jobs:
       run:
         shell: powershell
 
-    # Job-level env: expressions are allowed here
-    env:
-      TMP_REPO: ${{ runner.temp }}\backuprepo
-      TMP_STAGE: ${{ runner.temp }}\stage
-
     steps:
+      - name: Set temp paths
+        run: |
+          $ErrorActionPreference = 'Stop'
+          echo "TMP_REPO=$env:RUNNER_TEMP\backuprepo" >> $env:GITHUB_ENV
+          echo "TMP_STAGE=$env:RUNNER_TEMP\stage" >> $env:GITHUB_ENV
+
       - name: Prepare temp repo (local backup branch)
         run: |
           $ErrorActionPreference = 'Stop'
@@ -33,8 +34,20 @@ jobs:
           New-Item -ItemType Directory -Path $env:TMP_REPO | Out-Null
           Set-Location $env:TMP_REPO
           git init
+
+          # Authenticated remote using the workflow token
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          git checkout -B $env:BRANCH
+
+          # Try to fetch existing backup branch (okay if it doesn't exist yet)
+          git fetch origin $env:BRANCH 2>$null || echo "No remote '$env:BRANCH' branch yet"
+
+          # If remote branch exists, base our local branch on it; else create fresh
+          git show-ref --verify --quiet "refs/remotes/origin/$env:BRANCH"
+          if ($LASTEXITCODE -eq 0) {
+            git checkout -B $env:BRANCH origin/$env:BRANCH
+          } else {
+            git checkout -B $env:BRANCH
+          }
 
       - name: Zip local project (exclude heavy/sensitive)
         run: |
@@ -46,6 +59,7 @@ jobs:
           if (Test-Path $env:TMP_STAGE) { Remove-Item $env:TMP_STAGE -Recurse -Force }
           New-Item -ItemType Directory -Path $env:TMP_STAGE | Out-Null
 
+          # Mirror to a staging dir, excluding big/sensitive bits
           robocopy "$env:PROJECT_DIR" "$env:TMP_STAGE" /MIR /R:1 /W:1 `
             /XD node_modules .git client\build `
             /XF *.env *.log | Out-Null
