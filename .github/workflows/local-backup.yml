@@ -2,60 +2,55 @@ name: Local Project Backup (self-hosted)
 
 on:
   schedule:
-    - cron: '0 20 * * *'        # daily @ 20:00 UTC (23:00 in Saudi UTC+3)
+    - cron: '0 20 * * *'        # daily @ 20:00 UTC (23:00 UTC+3)
   workflow_dispatch:
 
 permissions:
   contents: write
 
 env:
-  PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'   # <-- your local project path
+  PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'
   BRANCH: 'backup'
 
 jobs:
   backup:
-    # Use your runner's labels (from your screenshot): self-hosted, Windows, X64, Techtango-runner
     runs-on: [self-hosted, Windows, X64, Techtango-runner]
+    defaults:
+      run:
+        shell: powershell
 
     steps:
       - name: Prepare a clean temp repo for the backup branch
-        shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $tmp = "$env:RUNNER_TEMP\backuprepo"
           if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
           New-Item -ItemType Directory -Path $tmp | Out-Null
-          cd $tmp
+          Set-Location $tmp
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git fetch origin $env:BRANCH 2>$null || echo "No remote backup branch yet"
           git checkout -B $env:BRANCH
 
       - name: Create ZIP of local project (exclude heavy/sensitive)
-        shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmm'UTC'")
           $file = "techtango-backup-$timestamp.zip"
           $dest = Join-Path $env:RUNNER_TEMP $file
-
-          # Stage to a temp folder so we can exclude things cleanly
           $stage = Join-Path $env:RUNNER_TEMP "stage"
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Path $stage | Out-Null
 
-          robocopy "$env:PROJECT_DIR" "$stage" /MIR `
-            /XD node_modules .git client\build `
-            /XF *.env *.log
+          robocopy "$env:PROJECT_DIR" "$stage" /MIR /XD node_modules .git client\build /XF *.env *.log | Out-Null
 
           if (Test-Path $dest) { Remove-Item $dest -Force }
           Compress-Archive -Path "$stage\*" -DestinationPath $dest -CompressionLevel Optimal
-
-          # Move into the temp repo
           Copy-Item $dest "$env:RUNNER_TEMP\backuprepo\$file"
 
       - name: Commit & push
-        shell: pwsh
         run: |
-          cd "$env:RUNNER_TEMP\backuprepo"
+          Set-Location "$env:RUNNER_TEMP\backuprepo"
           git config user.name "GitHub Actions (self-hosted)"
           git config user.email "actions@github.com"
           git add .
@@ -63,9 +58,8 @@ jobs:
           git push origin $env:BRANCH
 
       - name: Prune ZIPs older than 30 days
-        shell: pwsh
         run: |
-          cd "$env:RUNNER_TEMP\backuprepo"
+          Set-Location "$env:RUNNER_TEMP\backuprepo"
           Get-ChildItem -Filter "techtango-backup-*.zip" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
           git add -A
           git commit -m "🧹 Cleanup old zips" 2>$null || echo "No old zips"
