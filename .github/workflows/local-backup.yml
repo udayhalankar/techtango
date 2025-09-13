@@ -98,15 +98,16 @@ jobs:
           git config user.name  "GitHub Actions (self-hosted)"
           git config user.email "actions@github.com"
           git add -A
-
+      
           $changes = git diff --cached --name-only
           if ($changes) {
-            $msg = "📦 Backup: " + (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmmUTC")
+            $msg = "Backup: " + (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmmUTC")
             git commit -m $msg
             git push origin $env:BRANCH
           } else {
             Write-Host "Nothing to commit"
           }
+
 
       - name: Prune ZIPs older than 30 days
         run: |
