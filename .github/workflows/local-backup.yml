@@ -1,4 +1,15 @@
-name: Local Project Backup (self-hosted)
+- name: Prepare a clean temp repo for the backup branch
+  run: |
+    $ErrorActionPreference = 'Stop'
+    $tmp = "$env:RUNNER_TEMP\backuprepo"
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    New-Item -ItemType Directory -Path $tmp | Out-Null
+    Set-Location $tmp
+    git init
+    git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+    # No fetch needed; just create/switch the local branch
+    git checkout -B $env:BRANCH
+
 
 on:
   schedule:
