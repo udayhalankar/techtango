@@ -53,22 +53,43 @@ jobs:
       - name: Zip local project (exclude heavy/sensitive)
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $ProgressPreference = 'SilentlyContinue'
+      
+          if (-not (Test-Path $env:PROJECT_DIR)) {
+            throw "PROJECT_DIR does not exist: $env:PROJECT_DIR"
+          }
+      
           $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmm'UTC'")
           $file = "techtango-backup-$timestamp.zip"
           $dest = Join-Path $env:RUNNER_TEMP $file
-
+      
+          # fresh staging dir
           if (Test-Path $env:TMP_STAGE) { Remove-Item $env:TMP_STAGE -Recurse -Force }
           New-Item -ItemType Directory -Path $env:TMP_STAGE | Out-Null
-
+      
+          # Mirror to staging; exclude heavy/sensitive bits
           robocopy "$env:PROJECT_DIR" "$env:TMP_STAGE" /MIR /R:1 /W:1 `
             /XD node_modules .git client\build `
-            /XF *.env *.log | Out-Null
+            /XF *.env *.log
           $rc = $LASTEXITCODE
+      
+          # Robocopy success codes: 0–7
           if ($rc -ge 8) { throw "Robocopy failed with exit code $rc" }
-
+      
           if (Test-Path $dest) { Remove-Item $dest -Force }
-          Compress-Archive -Path "$env:TMP_STAGE\*" -DestinationPath $dest -CompressionLevel Optimal
+      
+          # Use tar to make a ZIP (more reliable than Compress-Archive for big/long trees)
+          Push-Location $env:TMP_STAGE
+          tar -a -c -f "$dest" .
+          Pop-Location
+      
+          if (-not (Test-Path $dest)) {
+            throw "Archive not created at $dest"
+          }
+      
           Copy-Item $dest (Join-Path $env:TMP_REPO $file)
+
 
       - name: Commit & push
         run: |
