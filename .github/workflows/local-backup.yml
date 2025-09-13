@@ -8,11 +8,10 @@ on:
 permissions:
   contents: write
 
+# Top-level env: only plain strings allowed (no ${{ ... }})
 env:
   PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'
   BRANCH: 'backup'
-  TMP_REPO: ${{ runner.temp }}\backuprepo
-  TMP_STAGE: ${{ runner.temp }}\stage
 
 jobs:
   backup:
@@ -20,6 +19,11 @@ jobs:
     defaults:
       run:
         shell: powershell
+
+    # Job-level env: expressions are allowed here
+    env:
+      TMP_REPO: ${{ runner.temp }}\backuprepo
+      TMP_STAGE: ${{ runner.temp }}\stage
 
     steps:
       - name: Prepare temp repo (local backup branch)
@@ -56,6 +60,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Set-Location $env:TMP_REPO
+          git config user.name  "GitHub Actions (self-hosted)"
+          git config user.email "actions@github.com"
           git add -A
 
           $changes = git diff --cached --name-only
@@ -71,8 +77,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Set-Location $env:TMP_REPO
-          $old = Get-ChildItem -Filter "techtango-backup-*.zip" |
-                 Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) }
+          $old = Get-ChildItem -Filter "techtango-backup-*.zip" | Where-Object {
+            $_.LastWriteTime -lt (Get-Date).AddDays(-30)
+          }
           if ($old) {
             $old | Remove-Item -Force -ErrorAction SilentlyContinue
             git add -A
