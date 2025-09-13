@@ -1,26 +1,4 @@
-- name: Prepare temp repo (local backup branch)
-  run: |
-    $ErrorActionPreference = 'Stop'
-
-    if (Test-Path $env:TMP_REPO) { Remove-Item $env:TMP_REPO -Recurse -Force }
-    New-Item -ItemType Directory -Path $env:TMP_REPO | Out-Null
-    Set-Location $env:TMP_REPO
-    git init
-
-    # Authenticated remote using the workflow token
-    git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-
-    # Does the remote branch exist?
-    $remote = git ls-remote --heads origin $env:BRANCH
-    if ([string]::IsNullOrWhiteSpace($remote)) {
-      Write-Host "No remote '$env:BRANCH' branch yet; creating fresh branch"
-      git checkout -B $env:BRANCH
-    } else {
-      Write-Host "Remote '$env:BRANCH' branch found; fetching and basing on it"
-      git fetch origin $env:BRANCH
-      git checkout -B $env:BRANCH origin/$env:BRANCH
-    }
-
+name: Local Project Backup (self-hosted)
 
 on:
   schedule:
@@ -30,7 +8,7 @@ on:
 permissions:
   contents: write
 
-# Top-level env: only plain strings allowed (no expressions)
+# Top-level env: only plain strings allowed
 env:
   PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'
   BRANCH: 'backup'
@@ -52,6 +30,7 @@ jobs:
       - name: Prepare temp repo (local backup branch)
         run: |
           $ErrorActionPreference = 'Stop'
+
           if (Test-Path $env:TMP_REPO) { Remove-Item $env:TMP_REPO -Recurse -Force }
           New-Item -ItemType Directory -Path $env:TMP_REPO | Out-Null
           Set-Location $env:TMP_REPO
@@ -60,15 +39,15 @@ jobs:
           # Authenticated remote using the workflow token
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
 
-          # Try to fetch existing backup branch (okay if it doesn't exist yet)
-          git fetch origin $env:BRANCH 2>$null || echo "No remote '$env:BRANCH' branch yet"
-
-          # If remote branch exists, base our local branch on it; else create fresh
-          git show-ref --verify --quiet "refs/remotes/origin/$env:BRANCH"
-          if ($LASTEXITCODE -eq 0) {
-            git checkout -B $env:BRANCH origin/$env:BRANCH
-          } else {
+          # Does the remote branch exist?
+          $remote = git ls-remote --heads origin $env:BRANCH
+          if ([string]::IsNullOrWhiteSpace($remote)) {
+            Write-Host "No remote '$env:BRANCH' branch yet; creating fresh branch"
             git checkout -B $env:BRANCH
+          } else {
+            Write-Host "Remote '$env:BRANCH' branch found; fetching and basing on it"
+            git fetch origin $env:BRANCH
+            git checkout -B $env:BRANCH origin/$env:BRANCH
           }
 
       - name: Zip local project (exclude heavy/sensitive)
@@ -81,7 +60,6 @@ jobs:
           if (Test-Path $env:TMP_STAGE) { Remove-Item $env:TMP_STAGE -Recurse -Force }
           New-Item -ItemType Directory -Path $env:TMP_STAGE | Out-Null
 
-          # Mirror to a staging dir, excluding big/sensitive bits
           robocopy "$env:PROJECT_DIR" "$env:TMP_STAGE" /MIR /R:1 /W:1 `
             /XD node_modules .git client\build `
             /XF *.env *.log | Out-Null
