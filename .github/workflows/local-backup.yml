@@ -29,7 +29,7 @@ jobs:
           Set-Location $tmp
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          git fetch origin $env:BRANCH 2>$null || echo "No remote backup branch yet"
+          git fetch origin $env:BRANCH 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No remote backup branch yet" }
           git checkout -B $env:BRANCH
 
       - name: Create ZIP of local project (exclude heavy/sensitive)
@@ -42,7 +42,12 @@ jobs:
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Path $stage | Out-Null
 
-          robocopy "$env:PROJECT_DIR" "$stage" /MIR /XD node_modules .git client\build /XF *.env *.log | Out-Null
+          # Mirror the project, but ignore heavy/sensitive folders/files
+          robocopy "$env:PROJECT_DIR" "$stage" /MIR /R:1 /W:1 `
+            /XD node_modules .git client\build `
+            /XF *.env *.log | Out-Null
+          $rc = $LASTEXITCODE
+          if ($rc -ge 8) { throw "Robocopy failed with exit code $rc" } else { $global:LASTEXITCODE = 0 }
 
           if (Test-Path $dest) { Remove-Item $dest -Force }
           Compress-Archive -Path "$stage\*" -DestinationPath $dest -CompressionLevel Optimal
@@ -54,7 +59,7 @@ jobs:
           git config user.name "GitHub Actions (self-hosted)"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null || echo "Nothing to commit"
+          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit" }
           git push origin $env:BRANCH
 
       - name: Prune ZIPs older than 30 days
@@ -62,5 +67,6 @@ jobs:
           Set-Location "$env:RUNNER_TEMP\backuprepo"
           Get-ChildItem -Filter "techtango-backup-*.zip" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
           git add -A
-          git commit -m "🧹 Cleanup old zips" 2>$null || echo "No old zips"
+          git commit -m "🧹 Cleanup old zips" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No old zips" }
           git push origin $env:BRANCH
+
