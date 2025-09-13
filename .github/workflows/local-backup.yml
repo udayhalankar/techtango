@@ -9,8 +9,6 @@
     git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
     # No fetch needed; just create/switch the local branch
     git checkout -B $env:BRANCH
-
-
 on:
   schedule:
     - cron: '0 20 * * *'        # daily @ 20:00 UTC (23:00 UTC+3)
