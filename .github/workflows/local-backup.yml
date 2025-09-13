@@ -17,7 +17,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64, Techtango-runner]
     defaults:
       run:
-        shell: powershell
+        shell: pwsh
 
     steps:
       - name: Prepare a clean temp repo for the backup branch
