@@ -1,14 +1,5 @@
-- name: Prepare a clean temp repo for the backup branch
-  run: |
-    $ErrorActionPreference = 'Stop'
-    $tmp = "$env:RUNNER_TEMP\backuprepo"
-    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
-    New-Item -ItemType Directory -Path $tmp | Out-Null
-    Set-Location $tmp
-    git init
-    git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-    # No fetch needed; just create/switch the local branch
-    git checkout -B $env:BRANCH
+name: Local Project Backup (self-hosted)
+
 on:
   schedule:
     - cron: '0 20 * * *'        # daily @ 20:00 UTC (23:00 UTC+3)
@@ -38,7 +29,7 @@ jobs:
           Set-Location $tmp
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          git fetch origin $env:BRANCH 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No remote backup branch yet" }
+          # No fetch; create/switch local branch and push will create remote
           git checkout -B $env:BRANCH
 
       - name: Create ZIP of local project (exclude heavy/sensitive)
@@ -51,7 +42,7 @@ jobs:
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Path $stage | Out-Null
 
-          # Mirror the project, but ignore heavy/sensitive folders/files
+          # Mirror the project but ignore heavy/sensitive bits
           robocopy "$env:PROJECT_DIR" "$stage" /MIR /R:1 /W:1 `
             /XD node_modules .git client\build `
             /XF *.env *.log | Out-Null
@@ -68,7 +59,7 @@ jobs:
           git config user.name "GitHub Actions (self-hosted)"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit" }
+          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit"; $global:LASTEXITCODE = 0 }
           git push origin $env:BRANCH
 
       - name: Prune ZIPs older than 30 days
@@ -76,6 +67,5 @@ jobs:
           Set-Location "$env:RUNNER_TEMP\backuprepo"
           Get-ChildItem -Filter "techtango-backup-*.zip" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
           git add -A
-          git commit -m "🧹 Cleanup old zips" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No old zips" }
+          git commit -m "🧹 Cleanup old zips" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No old zips"; $global:LASTEXITCODE = 0 }
           git push origin $env:BRANCH
-
