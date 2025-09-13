@@ -22,50 +22,48 @@ jobs:
     steps:
       - name: Prepare a clean temp repo for the backup branch
         run: |
-          $ErrorActionPreference = 'Stop'
           $tmp = "$env:RUNNER_TEMP\backuprepo"
           if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
           New-Item -ItemType Directory -Path $tmp | Out-Null
-          Set-Location $tmp
+          cd $tmp
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          # No fetch; create/switch local branch and push will create remote
+          git fetch origin $env:BRANCH 2>$null || echo "No remote backup branch yet"
           git checkout -B $env:BRANCH
-
+          
       - name: Create ZIP of local project (exclude heavy/sensitive)
         run: |
-          $ErrorActionPreference = 'Stop'
           $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmm'UTC'")
           $file = "techtango-backup-$timestamp.zip"
           $dest = Join-Path $env:RUNNER_TEMP $file
+
+          # Stage to a temp folder so we can exclude things cleanly
           $stage = Join-Path $env:RUNNER_TEMP "stage"
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Path $stage | Out-Null
 
-          # Mirror the project but ignore heavy/sensitive bits
-          robocopy "$env:PROJECT_DIR" "$stage" /MIR /R:1 /W:1 `
+          robocopy "$env:PROJECT_DIR" "$stage" /MIR `
             /XD node_modules .git client\build `
-            /XF *.env *.log | Out-Null
-          $rc = $LASTEXITCODE
-          if ($rc -ge 8) { throw "Robocopy failed with exit code $rc" } else { $global:LASTEXITCODE = 0 }
+            /XF *.env *.log
 
           if (Test-Path $dest) { Remove-Item $dest -Force }
           Compress-Archive -Path "$stage\*" -DestinationPath $dest -CompressionLevel Optimal
+
           Copy-Item $dest "$env:RUNNER_TEMP\backuprepo\$file"
 
       - name: Commit & push
         run: |
-          Set-Location "$env:RUNNER_TEMP\backuprepo"
+          cd "$env:RUNNER_TEMP\backuprepo"
           git config user.name "GitHub Actions (self-hosted)"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit"; $global:LASTEXITCODE = 0 }
+          git commit -m "📦 Backup: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd-HHmmUTC')" 2>$null || echo "Nothing to commit"
           git push origin $env:BRANCH
 
       - name: Prune ZIPs older than 30 days
         run: |
-          Set-Location "$env:RUNNER_TEMP\backuprepo"
+          cd "$env:RUNNER_TEMP\backuprepo"
           Get-ChildItem -Filter "techtango-backup-*.zip" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
           git add -A
-          git commit -m "🧹 Cleanup old zips" 2>$null; if ($LASTEXITCODE -ne 0) { Write-Host "No old zips"; $global:LASTEXITCODE = 0 }
+          git commit -m "🧹 Cleanup old zips" 2>$null || echo "No old zips"
           git push origin $env:BRANCH
