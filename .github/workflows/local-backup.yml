@@ -2,7 +2,7 @@ name: Local Project Backup (self-hosted)
 
 on:
   schedule:
-    - cron: '0 20 * * *'        # daily @ 20:00 UTC
+    - cron: '0 20 * * *'        # daily @ 20:00 UTC (23:00 in Saudi UTC+3)
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,9 @@ env:
 
 jobs:
   backup:
-    runs-on: self-hosted   # your Windows self-hosted runner
+    # Use your runner's labels (from your screenshot): self-hosted, Windows, X64, Techtango-runner
+    runs-on: [self-hosted, Windows, X64, Techtango-runner]
+
     steps:
       - name: Prepare a clean temp repo for the backup branch
         shell: pwsh
@@ -47,6 +49,7 @@ jobs:
           if (Test-Path $dest) { Remove-Item $dest -Force }
           Compress-Archive -Path "$stage\*" -DestinationPath $dest -CompressionLevel Optimal
 
+          # Move into the temp repo
           Copy-Item $dest "$env:RUNNER_TEMP\backuprepo\$file"
 
       - name: Commit & push
