@@ -11,6 +11,8 @@ permissions:
 env:
   PROJECT_DIR: 'D:\Uday_Documents\00_TechtangoRJS'
   BRANCH: 'backup'
+  TMP_REPO: ${{ runner.temp }}\backuprepo
+  TMP_STAGE: ${{ runner.temp }}\stage
 
 jobs:
   backup:
@@ -20,63 +22,55 @@ jobs:
         shell: powershell
 
     steps:
-      - name: Prepare a clean temp repo for the backup branch
+      - name: Prepare temp repo (local backup branch)
         run: |
           $ErrorActionPreference = 'Stop'
-          $tmp   = Join-Path $env:RUNNER_TEMP 'backuprepo'
-          if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
-          New-Item -ItemType Directory -Path $tmp | Out-Null
-          Set-Location $tmp
+          if (Test-Path $env:TMP_REPO) { Remove-Item $env:TMP_REPO -Recurse -Force }
+          New-Item -ItemType Directory -Path $env:TMP_REPO | Out-Null
+          Set-Location $env:TMP_REPO
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-          # No fetch needed; create/switch local branch. Remote branch will be created on first push.
           git checkout -B $env:BRANCH
 
-      - name: Create ZIP of local project (exclude heavy/sensitive)
+      - name: Zip local project (exclude heavy/sensitive)
         run: |
           $ErrorActionPreference = 'Stop'
           $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmm'UTC'")
           $file = "techtango-backup-$timestamp.zip"
           $dest = Join-Path $env:RUNNER_TEMP $file
-          $stage = Join-Path $env:RUNNER_TEMP 'stage'
-          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-          New-Item -ItemType Directory -Path $stage | Out-Null
 
-          # Mirror project; ignore heavy/sensitive bits
-          robocopy "$env:PROJECT_DIR" "$stage" /MIR /R:1 /W:1 `
+          if (Test-Path $env:TMP_STAGE) { Remove-Item $env:TMP_STAGE -Recurse -Force }
+          New-Item -ItemType Directory -Path $env:TMP_STAGE | Out-Null
+
+          robocopy "$env:PROJECT_DIR" "$env:TMP_STAGE" /MIR /R:1 /W:1 `
             /XD node_modules .git client\build `
             /XF *.env *.log | Out-Null
           $rc = $LASTEXITCODE
           if ($rc -ge 8) { throw "Robocopy failed with exit code $rc" }
 
           if (Test-Path $dest) { Remove-Item $dest -Force }
-          Compress-Archive -Path "$stage\*" -DestinationPath $dest -CompressionLevel Optimal
-          Copy-Item $dest (Join-Path $tmp $file)
+          Compress-Archive -Path "$env:TMP_STAGE\*" -DestinationPath $dest -CompressionLevel Optimal
+          Copy-Item $dest (Join-Path $env:TMP_REPO $file)
 
       - name: Commit & push
         run: |
           $ErrorActionPreference = 'Stop'
-          $repo = Join-Path $env:RUNNER_TEMP 'backuprepo'
-          Set-Location $repo
+          Set-Location $env:TMP_REPO
           git add -A
 
-          # Commit only if there are staged changes
           $changes = git diff --cached --name-only
           if ($changes) {
             $msg = "📦 Backup: " + (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd-HHmmUTC")
             git commit -m $msg
+            git push origin $env:BRANCH
           } else {
             Write-Host "Nothing to commit"
           }
 
-          git push origin $env:BRANCH
-
       - name: Prune ZIPs older than 30 days
         run: |
           $ErrorActionPreference = 'Stop'
-          $repo = Join-Path $env:RUNNER_TEMP 'backuprepo'
-          Set-Location $repo
-
+          Set-Location $env:TMP_REPO
           $old = Get-ChildItem -Filter "techtango-backup-*.zip" |
                  Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) }
           if ($old) {
