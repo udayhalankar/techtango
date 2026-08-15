@@ -269,51 +269,99 @@ const handleSubmit = async (e) => {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-form" ref={modalRef}>
-            <h3 className="modal-title">Create New Assignment</h3>
-            <form onSubmit={handleSubmit}>
-              <label>Title</label>
-              <input name="title" value={form.title} onChange={handleChange} required />
-              <label>Select Assignee</label>
-              <select
-                name="assignee"
-                value={form.assignee}
-                onChange={handleChange}
-                required
-              >
-                <option value="">-- Select --</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstname} {user.lastname} (ID: {user.id})
-                  </option>
-                ))}
-              </select>
-              <label>Assignment Details</label>
-              <textarea name="details" value={form.details} onChange={handleChange} required />
-              <label>Complete By</label>
-              <input
-                type="date"
-                name="dueDate"
-                value={form.dueDate}
-                onChange={handleChange}
-                required
-              />
-              <label>Attach Documents</label>
-              <input type="file" multiple onChange={handleFileChange} />
-              <div className="attachments">
-                <strong>Attached Documents</strong>
-                <ul>
-                  {form.files.map((file, idx) => (
-                    <li key={idx}>{file.name}</li>
-                  ))}
-                </ul>
+          <div className="modal-form assignment-create-modal" ref={modalRef}>
+            <div className="modal-header-band">
+              <div className="modal-header-icon" aria-hidden="true">🤝</div>
+              <div>
+                <h3 className="modal-title">Create New Assignment</h3>
+                <p className="modal-subtitle">
+                  Create a direct assignment request. Complete the fields below and attach any supporting documents if needed.
+                </p>
               </div>
-              <button type="submit" className="submit-btn">Submit</button>
-              <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="assignment-form-grid">
+                <div className="field-block">
+                  <label htmlFor="assignment-title">Assignment Title</label>
+                  <input
+                    id="assignment-title"
+                    name="title"
+                    value={form.title}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter assignment title"
+                  />
+                </div>
 
-              
+                <div className="field-block">
+                  <label htmlFor="assignment-assignee">Select Assignee</label>
+                  <select
+                    id="assignment-assignee"
+                    name="assignee"
+                    value={form.assignee}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">-- Select user --</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstname} {user.lastname} (ID: {user.id})
+                      </option>
+                    ))}
+                  </select>
+                  <small>Select the person responsible for completing this assignment.</small>
+                </div>
+
+                <div className="field-block field-block-full">
+                  <label htmlFor="assignment-details">Assignment Details</label>
+                  <textarea
+                    id="assignment-details"
+                    name="details"
+                    value={form.details}
+                    onChange={handleChange}
+                    required
+                    placeholder="Describe the task, expected outcome, and any important notes"
+                  />
+                </div>
+
+                <div className="field-block">
+                  <label htmlFor="assignment-due-date">Complete By</label>
+                  <input
+                    id="assignment-due-date"
+                    type="date"
+                    name="dueDate"
+                    value={form.dueDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="field-block">
+                  <label htmlFor="assignment-files">Attach Documents</label>
+                  <input id="assignment-files" type="file" multiple onChange={handleFileChange} />
+                  <small>Add reference files or evidence for the assignee.</small>
+                </div>
+
+                <div className="attachments field-block-full">
+                  <strong>Attached Documents</strong>
+                  {form.files.length > 0 ? (
+                    <ul>
+                      {form.files.map((file, idx) => (
+                        <li key={idx}>{file.name}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No documents selected.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">Submit Assignment</button>
+              </div>
             </form>
           </div>
         </div>
