@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import "../../components/single/single.scss";
 import Axios from 'axios';
 import "./rmsrequest.scss"
+import { apiUrl } from "../../services/urls";
 
   export const Rmsrequest = () => {
 
@@ -15,7 +16,7 @@ import "./rmsrequest.scss"
     
 
     useEffect(() => {
-        fetch("http://localhost:5000/users/" + id).then((res) => {
+        fetch(apiUrl(`/users/${id}`)).then((res) => {
             return res.json();
         }).then((resp) => {
             setsingleUser(resp);

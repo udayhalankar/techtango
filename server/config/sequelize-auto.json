@@ -1,0 +1,21 @@
+{
+  "database": "ttoct23",
+  "host": "localhost",
+  "dialect": "postgres",
+  "port": 5432,
+  "username": "postgres",
+  "password": "Test1234",
+  "directory": "./server/models/autogen",
+  "additional": {
+    "timestamps": false,
+    "underscored": true,
+    "freezeTableName": false
+  },
+  "schema": "public",
+  "views": true,
+  "lang": "es5",
+  "caseModel": "p",
+  "caseFile": "c",
+  "caseProp": "c",
+  "singularize": true
+}

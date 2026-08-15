@@ -4,7 +4,7 @@ import Menu from "../../components/menu/Menu";
 
 import Dashboardmain from "../../pages/dashboardmain/Dashboardmain";
 import Assignments from "../../pages/assignments/Assignments";
-import Users from "../../pages/users/Users";
+import Users from "../admin/users/Users";
 import Sbforms from "../../pages/sbforms/Sbforms";
 
 export default function Bpm() {

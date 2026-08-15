@@ -7,16 +7,69 @@ const router = express.Router();
 
 // Resolve to project root: /server/routes -> ../.. (repo root)
 const ROOT = path.resolve(__dirname, '..', '..');
+const AGENT_DIR    = path.join(ROOT, 'agent');
+const RESULTS_PATH = process.env.SENTINEL_RESULTS_PATH || path.join(AGENT_DIR, 'results.json');
+const GRAPH_PATH   = path.join(AGENT_DIR, 'graph.json');
+const HISTORY_DIR  = process.env.SENTINEL_HISTORY_DIR  || path.join(AGENT_DIR, 'history');
 
-// Where the agent writes the latest results
-const RESULTS_PATH =
-  process.env.SENTINEL_RESULTS_PATH ||
-  path.join(ROOT, 'agent', 'results.json');
+const EMPTY_RESULTS = {
+  scannedAt: null,
+  results: {},
+  summary: { totals: { pass: 0, warn: 0, fail: 0 }, byCheck: {} }
+};
+
+// 👇 helper: disable caching for these endpoints
+const noCache = (_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+};
+
+// GET /api/chowkidar → latest checks
+router.get('/', noCache, (_req, res) => {
+  try {
+    if (!fs.existsSync(RESULTS_PATH)) return res.json(EMPTY_RESULTS);
+    const text = fs.readFileSync(RESULTS_PATH, 'utf8');
+    if (!text.trim()) return res.json(EMPTY_RESULTS);
+    res.json(JSON.parse(text));
+  } catch (e) {
+    console.error('Chowkidar results read error:', e);
+    res.status(500).json({ error: 'Results not available', message: e.message });
+  }
+});
+
+// GET /api/chowkidar/graph → dependency graph
+router.get('/graph', noCache, (_req, res) => {
+  try {
+    if (!fs.existsSync(GRAPH_PATH)) return res.json({ nodes: [], edges: [] });
+    const text = fs.readFileSync(GRAPH_PATH, 'utf8');
+    res.json(JSON.parse(text));
+  } catch (e) {
+    console.error('Chowkidar graph read error:', e);
+    res.status(500).json({ error: 'Graph not available', message: e.message });
+  }
+});
+
+router.get('/', (_req,res)=> {
+  const p = path.join(__dirname,'../../agent/results.json');
+  res.json(fs.existsSync(p) ? JSON.parse(fs.readFileSync(p,'utf8')) : { });
+});
+
+router.get('/graph', (_req,res)=> {
+  const p = path.join(__dirname,'../../agent/graph.json');
+  res.json(fs.existsSync(p) ? JSON.parse(fs.readFileSync(p,'utf8')) : { nodes:[], edges:[] });
+});
+
+// // Where the agent writes the latest results
+// const RESULTS_PATH =
+//   process.env.SENTINEL_RESULTS_PATH ||
+//   path.join(ROOT, 'agent', 'results.json');
 
 // Optional: directory where historical scans are saved
-const HISTORY_DIR =
-  process.env.SENTINEL_HISTORY_DIR ||
-  path.join(ROOT, 'agent', 'history');
+// const HISTORY_DIR =
+//   process.env.SENTINEL_HISTORY_DIR ||
+//   path.join(ROOT, 'agent', 'history');
 
 // Shape used when results.json is missing
 const EMPTY_PAYLOAD = {

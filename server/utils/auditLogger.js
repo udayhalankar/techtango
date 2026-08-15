@@ -7,11 +7,16 @@ const logAudit = async ({ userId, action, tableName = null, recordId = null, det
     return;
   }
 
-  await pool.query(
-    `INSERT INTO audit_log (table_name, action, modified_by, record_id, details, modified_at)
-     VALUES ($1, $2, $3, $4, $5, NOW())`,
-    [tableName, action, userId, recordId, details ? JSON.stringify(details) : null]
-  );
+ try {
+   await pool.query(
+     `INSERT INTO audit_log (table_name, action, modified_by, record_id, details, modified_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [tableName, action, userId, recordId, details ? JSON.stringify(details) : null]
+   );
+ } catch (err) {
+   // Don’t crash auth if audit table is missing or has issues
+   console.warn('⚠️ audit log write failed:', err.message);
+  }
 };
 
 module.exports = { logAudit };

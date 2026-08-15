@@ -1,3 +1,25 @@
+# Rules
+Think before coding
+- State Assumptions Explicitly
+- Ask when confused
+-  Push back on Unclear requests
+
+Simplicity First
+- Minimum code for the problem (do not write 200 lines of code what can be written in 50lines)
+- No speculative features
+- Modular development - Create and use Reuseable components
+
+Surgical Changes
+- Touch only what's ncessary
+- Match existing style
+- Leave unrelated code alone
+
+Goal-Driven Execution
+- Verifiable success criteria
+- Test loops, not vague tasks
+- 'Fix Bugs' - Write test, make it pass
+
+
 # Techtango
 
 All-in-one app for managing proposals, meetings, workflows, and approvals.

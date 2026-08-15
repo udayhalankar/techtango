@@ -100,6 +100,62 @@ router.get('/subscriptions', verifyToken, async (req, res) => {
   }
 });
 
+
+
+
+// 🗑️ Unsubscribe (soft delete): mark as inactive and set end_date
+router.delete('/subscriptions/:moduleId', verifyToken, async (req, res) => {
+  const userId = req.user.id;
+  const moduleId = Number(req.params.moduleId);
+
+  try {
+    const { rows } = await pool.query(
+      `
+      UPDATE subscriptions
+         SET status = 'inactive',
+             end_date = CURRENT_DATE
+       WHERE user_id = $1
+         AND module_id = $2
+         AND status = 'active'
+       RETURNING *
+      `,
+      [userId, moduleId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'No active subscription found.' });
+    }
+
+    // ✅ Audit log
+    try {
+      await logAudit({
+        userId,
+        action: 'module_unsubscribe',
+        tableName: 'subscriptions',
+        recordId: rows[0].id,
+        details: { module_id: moduleId },
+      });
+    } catch (e) {
+      // do not fail request if audit write fails
+      console.warn('audit log failed:', e?.message || e);
+    }
+
+    return res.json({ ok: true, subscription: rows[0] });
+  } catch (err) {
+    console.error('Unsubscribe error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
 // ✅ Admin: Get all subscriptions
 router.get('/all-subscriptions', verifyToken, authorizeRole('admin'), async (req, res) => {
   try {

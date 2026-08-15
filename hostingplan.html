@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Work Plan (14–20 Dec 2025)</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; background:#f7f7fb; color:#1f2933; margin:0; padding:24px; line-height:1.5; }
+    h1 { margin:0 0 8px; }
+    h2 { margin:18px 0 8px; }
+    .note { background:#fff7e6; border:1px solid #f5d69f; padding:12px 14px; border-radius:8px; margin-bottom:16px; }
+    .card { background:#fff; border:1px solid #dfe3ea; border-radius:10px; padding:16px 18px; margin-bottom:18px; }
+    .grid { display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    ul { padding-left:18px; margin:8px 0; }
+    li { margin:4px 0; }
+    .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#4338ca; margin-left:8px; }
+    .day { font-weight:700; }
+    table { border-collapse:collapse; width:100%; margin-top:8px; }
+    th, td { border:1px solid #e5e7eb; padding:6px 8px; text-align:left; }
+    th { background:#f0f4ff; }
+  </style>
+</head>
+<body>
+  <h1>Work Plan (14–20 Dec 2025)</h1>
+  <div class="note">
+    Scope: Mail Content Border, Audit Trail, Simple Workflow Builder design (uniform tabs, button colors), Workflow Map Mode, CRUD enhancements, Provide Access, Hosting. Estimated effort: ~10–14 hours total (excluding approvals).
+  </div>
+
+  <div class="card">
+    <div class="day">Schedule</div>
+    <table>
+      <tr><th>Date</th><th>Focus</th><th>Est. Effort</th></tr>
+      <tr><td>14 Dec</td><td>Mail Content Border fix & persistence; Audit Trail design review</td><td>2–3 hrs</td></tr>
+      <tr><td>15 Dec</td><td>Audit Trail implementation; CRUD enhancements (list/create/update UX polish)</td><td>3 hrs</td></tr>
+      <tr><td>16 Dec</td><td>Simple Workflow Builder design: uniform 3 tabs, button colors</td><td>2 hrs</td></tr>
+      <tr><td>17 Dec</td><td>Workflow Map Mode + Provide Access (roles/permissions UI)</td><td>2–3 hrs</td></tr>
+      <tr><td>18 Dec</td><td>Hosting Day 1 (prep/build/envs/db free tier)</td><td>3 hrs</td></tr>
+      <tr><td>19 Dec</td><td>Hosting Day 2 (deploy to GCP Cloud Run/Storage + tests)</td><td>3–4 hrs</td></tr>
+      <tr><td>20 Dec</td><td>Buffer/testing & handover</td><td>1–2 hrs</td></tr>
+    </table>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="day">Mail Content Border</div>
+      <ul>
+        <li>Persist wrap/border flag in <code>mail_content</code> and ensure the mail composer uses it (1px border, 5px radius, max-width ~640px).</li>
+        <li>Verify formatting and images are preserved in sent emails (Gmail/Outlook).</li>
+        <li>Fix editor behavior (typing order/caret) as needed to ensure correct saved HTML.</li>
+      </ul>
+      <div class="note">Deps: working SMTP creds (.env: SMTP_HOST/PORT/SECURE/USER/PASS).</div>
+    </div>
+
+    <div class="card">
+      <div class="day">Audit Trail</div>
+      <ul>
+        <li>Define events: create/update/assign/status change/mail sent/PDF generated.</li>
+        <li>DB: audit table (who/when/what, old/new snapshot or diff).</li>
+        <li>UI: per-record timeline; filters by user/event.</li>
+      </ul>
+      <div class="note">Deps: DB migration access; user context from JWT; table name/columns agreement.</div>
+    </div>
+
+    <div class="card">
+      <div class="day">Simple Workflow Builder Design</div>
+      <ul>
+        <li>Uniform layout across the 3 tabs (Step/Form/Preview); consistent spacing/typography.</li>
+        <li>Button color system (primary/secondary/destructive) applied across tabs.</li>
+        <li>Lightweight CSS refactor only (no backend changes).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="day">Workflow Map Mode</div>
+      <ul>
+        <li>Visual map of steps/transitions; clickable nodes to edit step config.</li>
+        <li>Legend for statuses/actions; basic zoom/pan.</li>
+      </ul>
+      <div class="note">Deps: workflow schema (steps/transitions); pick rendering approach (SVG/HTML lightweight).</div>
+    </div>
+
+    <div class="card">
+      <div class="day">CRUD Enhancements</div>
+      <ul>
+        <li>Improve list/create/update: loading states, disable double-submit, better validation messages.</li>
+        <li>Optimistic UI where safe; add busy indicators.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="day">Provide Access</div>
+      <ul>
+        <li>Role/permission UI to grant access to workflows/steps.</li>
+        <li>Tie to existing auth model (JWT claims); enforce tenant scoping.</li>
+      </ul>
+      <div class="note">Deps: clarity on roles/tenant rules; endpoints for assignment.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="day">Hosting (GCP low-cost launch)</div>
+    <ul>
+      <li>Backend: Cloud Run (min instances=0, 1 vCPU, 512–1024MB, us-central1).</li>
+      <li>Frontend: static build to Cloud Storage (≤5GB free); optional Cloudflare proxy for HTTPS/CDN (free).</li>
+      <li>Database: start with free Postgres (Railway/Supabase); plan move to Cloud SQL later (~$20–$40/mo smallest).</li>
+      <li>Email: SendGrid/Mailgun free tier via SMTP env vars.</li>
+      <li>Budget alerts in GCP; avoid Cloud SQL until ready to pay.</li>
+    </ul>
+    <div class="note">Month-1 est. with free DB: ~$0–$10 (egress/overages). With Cloud SQL: ~$20–$40/mo DB; Cloud Run/Storage likely near $0 at modest traffic.</div>
+  </div>
+
+  <div class="card">
+    <div class="day">Dependencies Checklist</div>
+    <ul>
+      <li>SMTP: host/port/secure/user/pass (working creds for live mail tests).</li>
+      <li>DB: Postgres URL for free tier (Railway/Supabase) and migration scripts.</li>
+      <li>Domain (if using custom) & DNS access; Cloudflare account (optional free CDN/SSL).</li>
+      <li>Env vars inventory for backend/frontend (API keys, secrets).</li>
+      <li>Docker locally and gcloud CLI with project access.</li>
+      <li>Design tokens/colors for uniform buttons/tabs.</li>
+    </ul>
+  </div>
+</body>
+</html>

@@ -9,8 +9,6 @@ const Approvals = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState(null);
  
-
-
   const modalRef = useRef();
   const previewRef = useRef();
 
@@ -177,8 +175,8 @@ const handleSubmit = async (e) => {
     <div className="approvals-container">
       <header className="module-header">
         <div>
-          <h1>ASSIGNMENTS</h1>
-          <h6 className="section-label">ASSIGNMENTS {activeTab.toUpperCase()}</h6>
+          <h1>DIRECT ASSIGNMENTS</h1>
+          <h6 className="section-label">DIRECT ASSIGNMENTS {activeTab.toUpperCase()}</h6>
         </div>
         <div className="tab-toggle">
           <button className={activeTab === "inbox" ? "active" : ""} onClick={() => setActiveTab("inbox")}>INBOX</button>

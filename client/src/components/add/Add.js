@@ -3,6 +3,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import "./add.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Mutation, useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
+import { apiUrl } from "../../services/urls";
 
 
 type Props = {
@@ -30,7 +31,7 @@ const Add = (props: Props) => {
     const mutation = useMutation({
       
       mutationFn: () => {
-      return fetch(`http://localhost:5000/${props.slug}`, {
+      return fetch(apiUrl(`/${props.slug}`), {
         method: "post",
    headers: {
           Accept: "application/json",

@@ -18,8 +18,8 @@ import { RiDatabaseLine } from "react-icons/ri";
 import { TbReportSearch } from "react-icons/tb";
 import { MdAssignmentTurnedIn } from "react-icons/md";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
-import Tenant from './pages/tenant/Tenant';
-import Tenants from './pages/tenant/Tenants';
+import Tenant from './pages/admin/tenant/Tenant';
+import Tenants from './pages/admin/tenant/Tenants';
 import Rmsrequest from './pages/rmsrequest/Rmsrequest';
 
 

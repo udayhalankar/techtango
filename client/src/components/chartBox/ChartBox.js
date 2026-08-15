@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { apiUrl } from "../../services/urls";
 // import ChartBox from "./xChartBox"
 import { Link } from "react-router-dom";
 import "./chartBox.scss";
@@ -11,7 +12,7 @@ export default function ChartBox() {
   
     useEffect(() => {
       const fetchDatas = async () => {
-        const res = await fetch("http://localhost:5000/api/todos");
+        const res = await fetch(apiUrl("/todos"));
         const todo = await res.json();
         console.log(todo);
         //used below site for reference and in the example the ?.data referers to 

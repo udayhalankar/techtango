@@ -1,17 +1,39 @@
 # dependencies
 node_modules/
+client/node_modules/
+server/node_modules/
 
-# production
+# production / generated
 build/
 dist/
+coverage/
+client/build/
+server/uploads/
+backups/
 
-# environment variables
+# environment variables / secrets
 .env
+.env.*
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+.aws/
 
-# logs
+# archives / office docs
+*.zip
+*.pdf
+*.doc
+*.docx
+
+# logs / temp
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+temp.txt
+tmp_show.txt
+changed_files.txt
 
 # system
 .DS_Store

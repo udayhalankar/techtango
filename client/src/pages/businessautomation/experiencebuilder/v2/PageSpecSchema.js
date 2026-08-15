@@ -1,0 +1,573 @@
+export const PAGE_SPEC_SCHEMA_VERSION = "v2.0";
+
+export const PAGE_STYLE_OPTIONS = [
+  "modern",
+  "business",
+  "professional",
+  "it",
+  "minimal",
+  "dashboard",
+  "landing",
+  "editorial",
+];
+
+export const SHELL_COLLAPSE_TRIGGER_OPTIONS = ["arrow", "ellipsis", "icon"];
+
+export const CONTENT_WIDTH_OPTIONS = ["full", "centered", "fixed"];
+
+export const SECTION_LAYOUT_OPTIONS = ["hero", "content", "sidebar", "dashboard", "form", "gallery", "footer"];
+export const COMPOSITION_MODE_OPTIONS = [
+  "balanced",
+  "hero-led",
+  "split-screen",
+  "dashboard-led",
+  "content-led",
+  "form-led",
+  "editorial",
+];
+
+export const COMPOSITION_VARIANT_OPTIONS = [
+  "insight-led",
+  "executive-summary",
+  "split-proof",
+  "report-style",
+  "hero-led",
+  "workflow-led",
+  "landing-led",
+  "editorial",
+];
+
+export const VISUAL_WEIGHT_OPTIONS = ["low", "medium", "high"];
+export const SURFACE_OPTIONS = ["flat", "tinted", "elevated", "gradient"];
+export const ALIGNMENT_OPTIONS = ["left", "center", "split"];
+export const EMPHASIS_OPTIONS = ["primary", "secondary", "supporting"];
+
+export const WIDGET_TYPES = ["chart", "table", "text", "image", "icon", "kpi", "form", "syncedBlock", "templatePart"];
+
+export const CHART_TYPES = ["bar", "horizontalBar", "line", "pie", "doughnut"];
+
+export const AGGREGATIONS = ["actual", "count", "avg", "sum"];
+
+export const IMAGE_FIT_OPTIONS = ["contain", "cover"];
+
+export const IMAGE_POSITION_OPTIONS = [
+  "center",
+  "top-left",
+  "top-center",
+  "top-right",
+  "left",
+  "right",
+  "bottom-left",
+  "bottom-center",
+  "bottom-right",
+];
+
+export const DENSITY_OPTIONS = ["compact", "normal", "spacious"];
+
+export const PREVIEW_DEVICE_OPTIONS = ["desktop", "tablet", "mobile"];
+
+const buildDefaultSections = (sectionCount = 3, overrides = {}) =>
+  Array.from({ length: Math.max(1, Number(sectionCount) || 1) }, (_item, index) => ({
+    id: `section_${index + 1}`,
+    title: index === 0 ? "Header / Hero" : index === Math.max(1, Number(sectionCount) || 1) - 1 ? "Footer / Support" : `Section ${index + 1}`,
+    type: index === 0 ? "hero" : index === Math.max(1, Number(sectionCount) || 1) - 1 ? "footer" : "content",
+    columns: 1,
+    rows: 1,
+    width: "full",
+    padding: 0,
+    gap: 0,
+    border: false,
+    borderColor: "#d7deea",
+    backgroundColor: "#ffffff",
+    radius: 0,
+    widgetIds: [],
+    ...overrides,
+  }));
+
+const shellPanelSchema = (properties, required = Object.keys(properties)) => ({
+  type: "object",
+  additionalProperties: false,
+  required,
+  properties,
+});
+
+export const DEFAULT_DESIGNER_INPUT = {
+  pageMeta: {
+    name: "",
+    purpose: "",
+    audience: "",
+    domain: "",
+    tone: "professional",
+    style: "modern",
+  },
+  shell: {
+    showTopNavbar: false,
+    showHeader: false,
+    showFooter: false,
+    showBottomBar: false,
+    showLeftMenu: false,
+    showRightMenu: false,
+    leftMenuCollapsible: false,
+    rightMenuCollapsible: false,
+    collapseTriggerStyle: "arrow",
+    headerBehavior: "fixed",
+    footerBehavior: "static",
+    leftMenuBehavior: "static",
+    rightMenuBehavior: "static",
+    showBreadcrumbs: false,
+    showUtilityIcons: false,
+    showPageTitle: false,
+    showHeaderActions: false,
+    brandName: "Tymebound",
+    tagline: "Manage Information Effortlessly",
+    logoText: "Tymebound",
+    logoImageUrl: "",
+    pageTitle: "",
+    contentWidth: "full",
+    contentMaxWidth: 1440,
+    shellPadding: 0,
+  },
+  layout: {
+    layoutPreset: "custom",
+    compositionMode: "balanced",
+    compositionVariant: "insight-led",
+    visualWeight: "high",
+    surface: "elevated",
+    alignment: "split",
+    emphasis: "primary",
+    designSeed: "enterprise-insight-001",
+    sectionCount: 3,
+    columnsPerSection: 1,
+    rowsPerSection: 1,
+    sectionGap: 0,
+    sectionPadding: 0,
+    sectionRadius: 0,
+    sectionBorder: false,
+    fullWidthCanvas: true,
+    density: "normal",
+    sections: buildDefaultSections(3),
+  },
+  theme: {
+    primaryColor: "#1f5fd1",
+    accentColor: "#4f87ff",
+    backgroundColor: "#f7f9fc",
+    neutralColor: "#eef2f7",
+    borderColor: "#d7deea",
+    fontFamily: "Inter, system-ui, sans-serif",
+    iconStyle: "outlined",
+    density: "normal",
+  },
+  widgets: [],
+  behaviors: {
+    responsive: true,
+    previewDevice: "desktop",
+    stickyHeader: true,
+    stickyFooter: false,
+    collapsibleMenus: false,
+    scrollBehavior: "page",
+    animateEntry: false,
+  },
+};
+
+const widgetConfigSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "dataTable",
+    "chartType",
+    "xAxis",
+    "yAxis",
+    "aggregation",
+    "legendPosition",
+    "seriesName",
+    "tableName",
+    "rowLimit",
+    "columns",
+    "sortOrder",
+    "emptyStateText",
+    "compact",
+    "textContent",
+    "textSource",
+    "fontSize",
+    "textColor",
+    "bold",
+    "italic",
+    "underline",
+    "imageUrl",
+    "imageFit",
+    "imagePosition",
+    "alt",
+    "iconKey",
+    "iconColor",
+    "iconSize",
+    "label",
+    "kpiLabel",
+    "kpiValue",
+    "trend",
+    "trendDirection",
+    "subtext",
+    "formName",
+    "action",
+    "blockName",
+    "sync",
+  ],
+  properties: {
+    dataTable: { type: "string" },
+    chartType: { type: "string", enum: CHART_TYPES },
+    xAxis: { type: "string" },
+    yAxis: { type: "string" },
+    aggregation: { type: "string", enum: AGGREGATIONS },
+    legendPosition: { type: "string" },
+    seriesName: { type: "string" },
+    tableName: { type: "string" },
+    rowLimit: { type: "integer", minimum: 1 },
+    columns: { type: "array", items: { type: "string" } },
+    sortOrder: { type: "string" },
+    emptyStateText: { type: "string" },
+    compact: { type: "boolean" },
+    textContent: { type: "string" },
+    textSource: { type: "string", enum: ["manual", "ai"] },
+    fontSize: { type: "integer", minimum: 1 },
+    textColor: { type: "string" },
+    bold: { type: "boolean" },
+    italic: { type: "boolean" },
+    underline: { type: "boolean" },
+    imageUrl: { type: "string" },
+    imageFit: { type: "string", enum: IMAGE_FIT_OPTIONS },
+    imagePosition: { type: "string", enum: IMAGE_POSITION_OPTIONS },
+    alt: { type: "string" },
+    iconKey: { type: "string" },
+    iconColor: { type: "string" },
+    iconSize: { type: "number", minimum: 1 },
+    label: { type: "string" },
+    kpiLabel: { type: "string" },
+    kpiValue: { type: "string" },
+    trend: { type: "string" },
+    trendDirection: { type: "string" },
+    subtext: { type: "string" },
+    formName: { type: "string" },
+    action: { type: "string" },
+    blockName: { type: "string" },
+    sync: { type: "boolean" },
+  },
+};
+
+const widgetSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id", "type", "sectionId", "title", "order", "width", "height", "visible", "config"],
+  properties: {
+    id: { type: "string" },
+    type: { type: "string", enum: WIDGET_TYPES },
+    sectionId: { type: "string" },
+    title: { type: "string" },
+    order: { type: "integer", minimum: 0 },
+    width: { type: "number", minimum: 0 },
+    height: { type: "number", minimum: 0 },
+    visible: { type: "boolean" },
+    config: widgetConfigSchema,
+  },
+};
+
+const sectionSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "id",
+    "title",
+    "type",
+    "columns",
+    "rows",
+    "width",
+    "padding",
+    "gap",
+    "border",
+    "borderColor",
+    "backgroundColor",
+    "radius",
+    "widgetIds",
+  ],
+  properties: {
+    id: { type: "string" },
+    title: { type: "string" },
+    type: { type: "string", enum: SECTION_LAYOUT_OPTIONS },
+    columns: { type: "integer", minimum: 1 },
+    rows: { type: "integer", minimum: 1 },
+    width: { type: "string" },
+    padding: { type: "integer", minimum: 0 },
+    gap: { type: "integer", minimum: 0 },
+    border: { type: "boolean" },
+    borderColor: { type: "string" },
+    backgroundColor: { type: "string" },
+    radius: { type: "integer", minimum: 0 },
+    widgetIds: { type: "array", items: { type: "string" } },
+  },
+};
+
+export const PAGE_SPEC_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "pageMeta", "theme", "shell", "layout", "widgets", "behaviors", "generation"],
+  properties: {
+    schemaVersion: { type: "string", enum: [PAGE_SPEC_SCHEMA_VERSION] },
+    pageMeta: {
+      type: "object",
+      additionalProperties: false,
+      required: ["name", "purpose", "audience", "domain", "tone", "style"],
+      properties: {
+        name: { type: "string" },
+        purpose: { type: "string" },
+        audience: { type: "string" },
+        domain: { type: "string" },
+        tone: { type: "string" },
+        style: { type: "string", enum: PAGE_STYLE_OPTIONS },
+      },
+    },
+    theme: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "brandName",
+        "tagline",
+        "logoText",
+        "primaryColor",
+        "accentColor",
+        "backgroundColor",
+        "neutralColor",
+        "borderColor",
+        "fontFamily",
+        "iconStyle",
+        "density",
+      ],
+      properties: {
+        brandName: { type: "string" },
+        tagline: { type: "string" },
+        logoText: { type: "string" },
+        primaryColor: { type: "string" },
+        accentColor: { type: "string" },
+        backgroundColor: { type: "string" },
+        neutralColor: { type: "string" },
+        borderColor: { type: "string" },
+        fontFamily: { type: "string" },
+        iconStyle: { type: "string" },
+        density: { type: "string", enum: DENSITY_OPTIONS },
+      },
+    },
+    shell: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "topNavbar",
+        "header",
+        "footer",
+        "bottomBar",
+        "leftMenu",
+        "rightMenu",
+        "showTopNavbar",
+        "showHeader",
+        "showFooter",
+        "showBottomBar",
+        "showLeftMenu",
+        "showRightMenu",
+        "leftMenuCollapsible",
+        "rightMenuCollapsible",
+        "collapseTriggerStyle",
+        "headerBehavior",
+        "footerBehavior",
+        "leftMenuBehavior",
+        "rightMenuBehavior",
+        "showBreadcrumbs",
+        "showUtilityIcons",
+        "showPageTitle",
+        "showHeaderActions",
+        "brandName",
+        "tagline",
+        "logoText",
+        "logoImageUrl",
+        "pageTitle",
+        "contentWidth",
+        "contentMaxWidth",
+        "shellPadding",
+      ],
+      properties: {
+        showTopNavbar: { type: "boolean" },
+        showHeader: { type: "boolean" },
+        showFooter: { type: "boolean" },
+        showBottomBar: { type: "boolean" },
+        showLeftMenu: { type: "boolean" },
+        showRightMenu: { type: "boolean" },
+        leftMenuCollapsible: { type: "boolean" },
+        rightMenuCollapsible: { type: "boolean" },
+        collapseTriggerStyle: { type: "string" },
+        headerBehavior: { type: "string" },
+        footerBehavior: { type: "string" },
+        leftMenuBehavior: { type: "string" },
+        rightMenuBehavior: { type: "string" },
+        showBreadcrumbs: { type: "boolean" },
+        showUtilityIcons: { type: "boolean" },
+        showPageTitle: { type: "boolean" },
+        showHeaderActions: { type: "boolean" },
+        brandName: { type: "string" },
+        tagline: { type: "string" },
+        logoText: { type: "string" },
+        logoImageUrl: { type: "string" },
+        pageTitle: { type: "string" },
+        topNavbar: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            sticky: { type: "boolean" },
+            brandName: { type: "string" },
+            tagline: { type: "string" },
+            logoText: { type: "string" },
+            logoImageUrl: { type: "string" },
+            showUtilityIcons: { type: "boolean" },
+            showBreadcrumbs: { type: "boolean" },
+            showHeaderActions: { type: "boolean" },
+          },
+          ["visible", "sticky", "brandName", "tagline", "logoText", "logoImageUrl", "showUtilityIcons", "showBreadcrumbs", "showHeaderActions"]
+        ),
+        header: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            behavior: { type: "string" },
+            showPageTitle: { type: "boolean" },
+            pageTitle: { type: "string" },
+          },
+          ["visible", "behavior", "showPageTitle", "pageTitle"]
+        ),
+        footer: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            behavior: { type: "string" },
+          },
+          ["visible", "behavior"]
+        ),
+        bottomBar: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            behavior: { type: "string" },
+          },
+          ["visible", "behavior"]
+        ),
+        leftMenu: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            collapsible: { type: "boolean" },
+            behavior: { type: "string" },
+            collapseTriggerStyle: { type: "string" },
+          },
+          ["visible", "collapsible", "behavior", "collapseTriggerStyle"]
+        ),
+        rightMenu: shellPanelSchema(
+          {
+            visible: { type: "boolean" },
+            collapsible: { type: "boolean" },
+            behavior: { type: "string" },
+            collapseTriggerStyle: { type: "string" },
+          },
+          ["visible", "collapsible", "behavior", "collapseTriggerStyle"]
+        ),
+        contentWidth: { type: "string", enum: CONTENT_WIDTH_OPTIONS },
+        contentMaxWidth: { type: "integer", minimum: 0 },
+        shellPadding: { type: "integer", minimum: 0 },
+      },
+    },
+    layout: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "layoutPreset",
+        "compositionMode",
+        "compositionVariant",
+        "visualWeight",
+        "surface",
+        "alignment",
+        "emphasis",
+        "designSeed",
+        "sectionCount",
+        "columnsPerSection",
+        "rowsPerSection",
+        "sectionGap",
+        "sectionPadding",
+        "sectionRadius",
+        "sectionBorder",
+        "fullWidthCanvas",
+        "density",
+        "sections",
+      ],
+      properties: {
+        layoutPreset: { type: "string" },
+        compositionMode: { type: "string", enum: COMPOSITION_MODE_OPTIONS },
+        compositionVariant: { type: "string", enum: COMPOSITION_VARIANT_OPTIONS },
+        visualWeight: { type: "string", enum: VISUAL_WEIGHT_OPTIONS },
+        surface: { type: "string", enum: SURFACE_OPTIONS },
+        alignment: { type: "string", enum: ALIGNMENT_OPTIONS },
+        emphasis: { type: "string", enum: EMPHASIS_OPTIONS },
+        designSeed: { type: "string" },
+        sectionCount: { type: "integer", minimum: 1 },
+        columnsPerSection: { type: "integer", minimum: 1 },
+        rowsPerSection: { type: "integer", minimum: 1 },
+        sectionGap: { type: "integer", minimum: 0 },
+        sectionPadding: { type: "integer", minimum: 0 },
+        sectionRadius: { type: "integer", minimum: 0 },
+        sectionBorder: { type: "boolean" },
+        fullWidthCanvas: { type: "boolean" },
+        density: { type: "string", enum: DENSITY_OPTIONS },
+        sections: {
+          type: "array",
+          minItems: 1,
+          items: sectionSchema,
+        },
+      },
+    },
+    widgets: {
+      type: "array",
+      items: widgetSchema,
+    },
+    behaviors: {
+      type: "object",
+      additionalProperties: false,
+      required: ["responsive", "previewDevice", "stickyHeader", "stickyFooter", "collapsibleMenus", "scrollBehavior", "animateEntry"],
+      properties: {
+        responsive: { type: "boolean" },
+        previewDevice: { type: "string", enum: PREVIEW_DEVICE_OPTIONS },
+        stickyHeader: { type: "boolean" },
+        stickyFooter: { type: "boolean" },
+        collapsibleMenus: { type: "boolean" },
+        scrollBehavior: { type: "string" },
+        animateEntry: { type: "boolean" },
+      },
+    },
+    generation: {
+      type: "object",
+      additionalProperties: false,
+      required: ["createdAt", "source", "model", "promptVersion", "revisionId", "notes"],
+      properties: {
+        createdAt: { type: "string", format: "date-time" },
+        source: { type: "string" },
+        model: { type: "string" },
+        promptVersion: { type: "string" },
+        revisionId: { type: "string" },
+        notes: { type: "string" },
+      },
+    },
+  },
+};
+
+export const createDefaultDesignerInput = (overrides = {}) => {
+  const sectionCount = Number(overrides?.layout?.sectionCount) || DEFAULT_DESIGNER_INPUT.layout.sectionCount;
+  const sections = Array.isArray(overrides?.layout?.sections) && overrides.layout.sections.length > 0
+    ? overrides.layout.sections
+    : buildDefaultSections(sectionCount);
+  const next = {
+    ...DEFAULT_DESIGNER_INPUT,
+    ...overrides,
+    pageMeta: { ...DEFAULT_DESIGNER_INPUT.pageMeta, ...(overrides.pageMeta || {}) },
+    shell: { ...DEFAULT_DESIGNER_INPUT.shell, ...(overrides.shell || {}) },
+    layout: { ...DEFAULT_DESIGNER_INPUT.layout, ...(overrides.layout || {}), sections },
+    theme: { ...DEFAULT_DESIGNER_INPUT.theme, ...(overrides.theme || {}) },
+    behaviors: { ...DEFAULT_DESIGNER_INPUT.behaviors, ...(overrides.behaviors || {}) },
+    widgets: Array.isArray(overrides.widgets) ? overrides.widgets : [],
+  };
+  return next;
+};

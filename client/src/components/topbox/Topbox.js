@@ -1,12 +1,13 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import "./topbox.scss";
+import { apiUrl } from "../../services/urls";
 
 const Topbox = () => {
   const [todos, setTodos] = useState([]);
 
   const getTodos = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/todos");
+      const response = await fetch(apiUrl("/todos"));
 
       const contentType = response.headers.get("content-type");
 

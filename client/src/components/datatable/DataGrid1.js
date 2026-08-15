@@ -3,6 +3,7 @@ import { DataGrid, GridToolbar, GridColDef, GridValueGetterParams} from "@mui/x-
 import Box from '@mui/material/Box';
 import { red } from '@mui/material/colors';
 import "./datatable.scss";
+import { apiUrl } from "../../services/urls";
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'ID', width: 20 },
   { field: 'tenantname', headerName: 'tenantname'},
@@ -31,7 +32,7 @@ const DataGrid1 = () => {
   const [users, setUsers] = useState([])
 
   useEffect(() => {
-    fetch("http://localhost:5000/tenants")
+    fetch(apiUrl("/tenants"))
       .then((data) => data.json())
       .then((data) => setUsers(data))
 

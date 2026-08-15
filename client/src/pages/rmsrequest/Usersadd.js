@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from 'react';
+import { apiUrl } from "../../services/urls";
 
 
 const Usersadd = () => {
@@ -11,7 +12,7 @@ e.preventDefault();
   try {
     
     const body = {firstname, email};
-    const response = await fetch ("http://localhost:5000/users",{
+    const response = await fetch(apiUrl("/users"),{
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)

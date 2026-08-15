@@ -49,8 +49,30 @@ async function uploadEncryptedFiles(parentId, userId, files) {
   }
 }
 
+async function uploadEnquiryFiles(enquiryId, userId, files = []) {
+  const saved = [];
+  for (const file of files) {
+    const iv = crypto.randomBytes(ivLength);
+    const encryptedPath = `${file.path}.enc`;
+    await encryptFile(file.path, encryptedPath, iv);
+    fs.unlinkSync(file.path);
+
+    const { rows } = await pool.query(
+      `INSERT INTO enquiry_files
+         (enquiry_id, original_name, stored_path, uploaded_by, created_at, iv_hex)
+       VALUES ($1, $2, $3, $4, NOW(), $5)
+       RETURNING id, enquiry_id, original_name, stored_path, uploaded_by, created_at, iv_hex`,
+      [enquiryId, file.originalname, encryptedPath, userId || null, iv.toString('hex')]
+    );
+    saved.push(rows[0]);
+  }
+  return saved;
+}
+
+
 module.exports = {
-  uploadEncryptedFiles,
+  uploadEncryptedFiles,      // existing (writes to approval_files)
+  uploadEnquiryFiles,        // new (writes to enquiry_files)
   encryptFile,
   decryptFile
 };

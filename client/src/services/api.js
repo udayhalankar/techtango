@@ -1,27 +1,24 @@
-// src/services/api.js
 import axios from "axios";
-import React from "react";
-import { createRoot } from "react-dom/client";
-import SessionExpiredModal from "../components/SessionExpiredModal";
+import {
+  getAuthToken,
+  handleAuthError,
+  markSessionActivity,
+} from "../auth/sessionManager";
 
-// Use relative '/api' so dev proxy forwards to 5000; env can override.
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "/api",
-  timeout: 30000,
+  timeout: 180000,
 });
-
-let isModalShown = false;
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-
-    // Inactivity heartbeat header
-    const nowMs = Date.now().toString();
-    localStorage.setItem("lastActivity", nowMs);
-    config.headers["x-last-activity"] = nowMs;
-
+    config.headers = config.headers || {};
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    markSessionActivity();
+    config.headers["x-last-activity"] = Date.now().toString();
     return config;
   },
   (error) => Promise.reject(error)
@@ -29,176 +26,8 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
-    const status = error?.response?.status;
-    if (status === 401 || status === 403) {
-      if (!isModalShown) {
-        isModalShown = true;
-        const container = document.createElement("div");
-        container.id = "session-expired-modal";
-        document.body.appendChild(container);
-
-        const root = createRoot(container);
-        root.render(
-          <SessionExpiredModal
-            onConfirm={() => {
-              try {
-                localStorage.removeItem("token");
-                localStorage.removeItem("subscriptions");
-              } catch {}
-              isModalShown = false;
-              window.location.href = "/login";
-            }}
-          />
-        );
-      }
-    }
-    return Promise.reject(error);
-  }
+  (error) => handleAuthError(error)
 );
 
 export default api;
-
-
-// import React from 'react';
-// import axios from 'axios';
-// import ReactDOM from 'react-dom';
-// import SessionExpiredModal from '../components/SessionExpiredModal';
-
-// // const api = axios.create({
-// //   baseURL: process.env.REACT_APP_API_URL,
-// // });
-
-// const api = axios.create({
-//   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-//   // withCredentials: true,
-//   // …other defaults
-// });
-
-// // ✅ Attach token to every request
-// api.interceptors.request.use(
-//   (config) => {
-//     const token = localStorage.getItem('token');
-
-//     //START added by UH
-
-//      const lastActivity = localStorage.getItem('lastActivity');
-//   if (token) config.headers.Authorization = `Bearer ${token}`;
-//   if (lastActivity) config.headers['x-last-activity'] = lastActivity;
-
-//     //END added by UH
-
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => Promise.reject(error)
-// );
-
-// // ✅ Handle session expiration globally
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (
-//       error.response &&
-//       (error.response.status === 401 || error.response.status === 403)
-//     ) {
-//       // Avoid showing multiple modals
-//       if (!document.getElementById('session-expired-modal')) {
-//         const container = document.createElement('div');
-//         container.id = 'session-expired-modal';
-//         document.body.appendChild(container);
-
-//         ReactDOM.render(
-//           <SessionExpiredModal
-//             onConfirm={() => {
-//               localStorage.removeItem('token');
-//               localStorage.removeItem('subscriptions');
-//               window.location.href = '/login';
-//             }}
-//           />,
-//           container
-//         );
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   }
-// );
-
-// export default api;
-
-// // import axios from 'axios';
-// // import React from 'react';
-// // import { createRoot } from 'react-dom/client';
-// // import SessionExpiredModal from '../components/SessionExpiredModal';
-
-// // // Axios instance
-// // const api = axios.create({
-// //   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-// // });
-
-// // // Attach token to every request
-// // api.interceptors.request.use(
-// //   (config) => {
-// //     const token = localStorage.getItem('token');
-// //     if (token) {
-// //       config.headers.Authorization = `Bearer ${token}`;
-// //     }
-// //     return config;
-// //   },
-// //   (error) => Promise.reject(error)
-// // );
-
-// // // Avoid showing multiple modals
-// // let isModalShown = false;
-
-// // // Handle session expiration globally
-// // api.interceptors.response.use(
-// //   (response) => response,
-// //   (error) => {
-// //     if (
-// //       error.response &&
-// //       (error.response.status === 401 || error.response.status === 403)
-// //     ) {
-// //       if (!isModalShown) {
-// //         isModalShown = true;
-
-// //         const container = document.createElement('div');
-// //         container.id = 'session-expired-modal';
-// //         document.body.appendChild(container);
-
-// //         const root = createRoot(container);
-// //         root.render(
-// //           <SessionExpiredModal
-// //             onConfirm={() => {
-// //               localStorage.removeItem('token');
-// //               localStorage.removeItem('subscriptions');
-// //               isModalShown = false;
-// //               window.location.href = '/login';
-// //             }}
-// //           />
-// //         );
-// //       }
-// //     }
-
-// //     return Promise.reject(error);
-// //   }
-// // );
-
-// // export default api;
-
-
-
-
-
-
-
-
-
-
-
-
-
 

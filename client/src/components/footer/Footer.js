@@ -3,12 +3,9 @@ import "./footer.scss"
 
 const Footer = () => {
   return (
-   
-       <div className='footer'>
-       <span>@Techtango</span>
-       <span> Design Origins</span>
-       </div>
-    
+    <footer className="footer" aria-label="Copyright footer">
+      <span>Copyright @Tymebound 2026</span>
+    </footer>
   )
 }
 

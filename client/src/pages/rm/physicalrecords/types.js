@@ -1,0 +1,11 @@
+export const REQUEST_TYPES = {
+SERVICE: "SERVICE",
+MATERIAL: "MATERIAL",
+};
+
+
+export const STATUS = {
+IN: "IN",
+OUT: "OUT",
+CIRCULATION: "CIRCULATION",
+};

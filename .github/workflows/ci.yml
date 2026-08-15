@@ -3,8 +3,6 @@ name: Node.js CI + Backup
 on:
   push:
     branches: [ master, main ]
-  schedule:
-    - cron: '0 20 * * *'  # every day at 8:00 PM UTC
 
 permissions:
   contents: write

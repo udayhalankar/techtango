@@ -1,15 +1,27 @@
 // src/components/Layout.js
 import React from "react";
 import Navbar from "./navbar/Navbar";
-import { Outlet } from "react-router-dom";
+import Footer from "./footer/Footer";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function Layout() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search || "");
+  const embedded = params.get("embedded") === "1";
+  const preview = params.get("preview") === "1";
+  const standalonePublishedExperiencePage =
+    location.pathname === "/experiencebuilder" && Boolean(params.get("pagepub"));
+
+  if (embedded || preview || standalonePublishedExperiencePage) {
+    return <Outlet />;
+  }
   return (
     <>
       <Navbar />
-      <div className="page-content">
+      <div className="page-content" style={{ paddingTop: "65px", paddingBottom: "45px" }}>
         <Outlet />
       </div>
+      <Footer />
     </>
   );
 }

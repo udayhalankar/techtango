@@ -15,6 +15,7 @@ import Usersadd from './Usersadd';
 import { GridColDef } from "@mui/x-data-grid";
 import Topbox from '../../components/topbox/Topbox';
 import ListTodos from '../../components/ListTodos';
+import { apiUrl } from "../../services/urls";
 
 
 
@@ -41,7 +42,7 @@ const Users = () => {
     
     queryKey: ["allusers"],
     queryFn: () =>
-      fetch("http://localhost:5000/users").then(
+      fetch(apiUrl("/users")).then(
         (res) => res.json()
       ),
   });

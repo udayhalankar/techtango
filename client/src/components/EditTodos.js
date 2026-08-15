@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from "react";
+import { apiUrl } from "../services/urls";
 
 const EditTodo = ({ todo }) => {
     const [description, setDescription] = useState(todo.description);
@@ -12,7 +13,7 @@ const updateDescription = async e => {
   try {
 
     const body = { description, assignto };
-    const response = await fetch ( `http://localhost:5000/todos/${todo.todo_id}`, {
+    const response = await fetch(apiUrl(`/todos/${todo.todo_id}`), {
       method: "PUT",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(body)

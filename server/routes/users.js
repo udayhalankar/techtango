@@ -24,15 +24,15 @@ router.get("/org", verifyToken, async (req, res) => {
       ? `
         SELECT id, firstname, lastname
         FROM users
-        WHERE organization_id = (
-          SELECT organization_id FROM users WHERE id = $1
+        WHERE tenant_id = (
+          SELECT tenant_id FROM users WHERE id = $1
         )
       `
       : `
         SELECT id, firstname, lastname
         FROM users
-        WHERE organization_id = (
-          SELECT organization_id FROM users WHERE id = $1
+        WHERE tenant_id = (
+          SELECT tenant_id FROM users WHERE id = $1
         ) AND id != $1
       `;
 

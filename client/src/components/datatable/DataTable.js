@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import "./datatable.scss";
 import EditTodo from '../EditTodos';
 import { Mutation, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiUrl } from "../../services/urls";
 
 type Props = {
     columns: GridColDef[];
@@ -24,7 +25,7 @@ const DataTable = (props: Props) => {
   const mutation = useMutation({
     mutationFn: (id: number) => {
       // return fetch(`http://localhost:5000/${props.slug}/${id}`, {
-        return fetch(`http://localhost:5000/${props.slug}/${id}`, {
+        return fetch(apiUrl(`/${props.slug}/${id}`), {
         method: "delete",
       });
     },

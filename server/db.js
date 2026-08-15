@@ -1,41 +1,31 @@
-require('dotenv').config(); // Make sure to import dotenv here too
+// server/db.js
+const { Pool } = require('pg');
 
-const { Pool } = require("pg");
+const cfg = {
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT || 5432),
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD,        // e.g., "Test1234?"
+  database: process.env.DB_NAME || 'ttoct23',
+  ssl: String(process.env.DB_SSL || 'false').toLowerCase() === 'true',
+};
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  max: 5,
-  min: 0,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 30000
+console.log('[pg-config]', {
+  host: cfg.host,
+  port: cfg.port,
+  user: cfg.user,
+  database: cfg.database,
+  pw_len: (cfg.password || '').length,
+  ssl: cfg.ssl,
 });
 
-module.exports = pool;
+console.log('[pg-config b64]', Buffer.from(cfg.password || '').toString('base64'));
+
+module.exports = new Pool(cfg);
 
 
-//Below is old DB setting
-// const Pool = require("pg").Pool;
 
-// const pool = new Pool ({
-//         user: "postgres",
-//         port: 5432,
-//         password: "Test1234?",
-//         host: "localhost",
-//         database: "ttoct23",
-//         dialect: "postgres",
-//         pool: {
-//             max: 5,
-//             min: 0,
-//             acquire: 30000,
-//             idle: 10000
-//         }
-//     });
 
-//     module.exports = pool;
 
 
 

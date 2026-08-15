@@ -24,9 +24,9 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-left">
-          <img src="/logo192.png" alt="TechTango Logo" className="login-logo" />
+          <img src="/logo192.png" alt="Tymebound Logo" className="login-logo" />
           <h1>Hello!</h1>
-          <p className="subtitle">Welcome to TechTango</p>
+          <p className="subtitle">Welcome to Tymebound</p>
           <form onSubmit={handleSubmit}>
             <input
               name="email"

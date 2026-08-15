@@ -8,7 +8,10 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // Optional in-memory session store (not persistent across restarts)
 const sessionStore = {};
 
+
 async function verifyToken(req, res, next) {
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
 
@@ -18,47 +21,143 @@ async function verifyToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const userId = decoded.userId || decoded.id;
-    const now = Date.now();
+    // --- normalize ids from common claim names ---
+    const userId = Number(decoded.userId ?? decoded.id ?? decoded.sub ?? decoded.uid ?? NaN);
+    let tenantId = Number(decoded.tenant_id ?? decoded.tenantId ?? decoded.tid ?? decoded.tenant ?? decoded.tenantid ?? NaN);
 
-    // Check if last activity header is provided from frontend
+    // --- inactivity window (keeps your existing logic) ---
+    const now = Date.now();
     const lastActivityHeader = parseInt(req.headers['x-last-activity'], 10);
     const lastSeen = !isNaN(lastActivityHeader)
       ? lastActivityHeader
-      : sessionStore[userId]?.lastActivity || now;
+      : (userId && sessionStore[userId]?.lastActivity) || now;
 
-    const inactiveDuration = now - lastSeen;
     const INACTIVITY_LIMIT = 59 * 60 * 1000; // 59 minutes
-
-    if (inactiveDuration > INACTIVITY_LIMIT) {
+    if (now - lastSeen > INACTIVITY_LIMIT) {
       return res.status(401).json({ message: 'Session expired due to inactivity' });
     }
+    if (userId) sessionStore[userId] = { lastActivity: now };
 
-    // Store activity timestamp server-side
-    if (userId) {
-      sessionStore[userId] = { lastActivity: now };
-    }
-
-    req.user = {
-      ...decoded,
-      userId,
-    };
-
-    // Attach PostgreSQL session variable
-    if (userId) {
+    // --- DB fallback for tenant if token didn't include one ---
+    if (!Number.isFinite(tenantId) && Number.isFinite(userId)) {
       try {
-        await pool.query(`SET session "app.current_user_id" = '${userId}'`);
-      } catch (dbErr) {
-        console.warn('⚠️ Could not set session user ID:', dbErr.message);
+        let r = await pool.query('SELECT tenant_id FROM users WHERE id = $1 LIMIT 1', [userId]);
+        tenantId = Number(r.rows?.[0]?.tenant_id);
+        if (!Number.isFinite(tenantId)) {
+          r = await pool.query(
+            `SELECT tenant_id
+               FROM user_tenants
+              WHERE user_id = $1
+              ORDER BY is_primary DESC NULLS LAST, created_at DESC
+              LIMIT 1`,
+            [userId]
+          );
+          tenantId = Number(r.rows?.[0]?.tenant_id);
+        }
+      } catch (e) {
+        console.warn('⚠️ tenant lookup failed:', e.message);
       }
     }
 
-    next();
+    // --- attach to req.user (normalized) ---
+     req.user = {
+      ...decoded,
+      id: userId || null,
+      userId: userId || null,
+      tenant_id: Number.isFinite(tenantId) ? tenantId : null,
+      roles: decoded.roles || []
+    };
+    req.user.userId = userId || null;
+    req.user.id = userId || null;
+    req.user.tenant_id = Number.isFinite(tenantId) ? tenantId : null;
+
+    // --- optional: set Postgres session vars (useful for RLS/audit) ---
+    req.user = {
+      ...decoded,
+      id: userId || null,
+      userId: userId || null,
+      tenant_id: Number.isFinite(tenantId) ? tenantId : null,
+      roles: decoded.roles || []
+    };
+
+    // 5) (Fixed) set session vars for optional RLS/audit
+    try {
+      if (Number.isFinite(userId)) {
+        await pool.query('SELECT set_config($1, $2::text, true)', ['app.current_user_id', String(userId)]);
+      }
+      if (Number.isFinite(tenantId)) {
+        await pool.query('SELECT set_config($1, $2::text, true)', ['app.tenant_id', String(tenantId)]);
+      }
+    } catch (e) {
+      console.warn('⚠️ Could not set session vars:', e.message);
+    }
+
+    return next();
   } catch (err) {
-    console.error("❌ Token verification failed:", err.message);
+    console.error('❌ Token verification failed:', err.message);
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 }
+
+
+// async function verifyToken(req, res, next) {
+//   if (req.method === 'OPTIONS') return res.sendStatus(204);
+
+//   const authHeader = req.headers['authorization'];
+//   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+
+//   const token = authHeader.split(' ')[1];
+//   if (!token) return res.status(401).json({ message: 'Token missing' });
+
+//   try {
+//     const decoded = jwt.verify(token, JWT_SECRET);
+
+//     const userId = decoded.userId || decoded.id;
+//     const now = Date.now();
+
+//     // Check if last activity header is provided from frontend
+//     const lastActivityHeader = parseInt(req.headers['x-last-activity'], 10);
+//     const lastSeen = !isNaN(lastActivityHeader)
+//       ? lastActivityHeader
+//       : sessionStore[userId]?.lastActivity || now;
+
+//     const inactiveDuration = now - lastSeen;
+//     const INACTIVITY_LIMIT = 59 * 60 * 1000; // 59 minutes
+
+//     if (inactiveDuration > INACTIVITY_LIMIT) {
+//       return res.status(401).json({ message: 'Session expired due to inactivity' });
+//     }
+
+//     // Store activity timestamp server-side
+//     if (userId) {
+//       sessionStore[userId] = { lastActivity: now };
+//     }
+
+//     // req.user = {
+//     //   ...decoded,
+//     //   userId,
+//     // };
+
+//     req.user = { ...decoded, userId };
+//    // Normalize common fields so downstream code can rely on them
+//     req.user.id         = req.user.id ?? req.user.userId ?? null;
+//     req.user.tenant_id  = req.user.tenant_id ?? req.user.tenantId ?? req.user.tenant ?? null;
+
+//     // Attach PostgreSQL session variable
+//     if (userId) {
+//       try {
+//         await pool.query(`SET session "app.current_user_id" = '${userId}'`);
+//       } catch (dbErr) {
+//         console.warn('⚠️ Could not set session user ID:', dbErr.message);
+//       }
+//     }
+
+//     next();
+//   } catch (err) {
+//     console.error("❌ Token verification failed:", err.message);
+//     return res.status(403).json({ message: 'Invalid or expired token' });
+//   }
+// }
 
 async function logAudit({ userId, action, tableName = null, recordId = null, details = null }) {
   try {

@@ -4,7 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import { useGoogleLogin } from "@react-oauth/google";
 import api from "../../services/api";
-import logo from "../../logo.svg";
+import logo from "../../components/navbar/ttlogo.png";
+import heroImage from "./loginpage.png";
 import "./Login.scss";
 import { jwtDecode } from "jwt-decode";  // make sure it's installed
 
@@ -28,7 +29,8 @@ export default function Login() {
       const subs = await api.get("/subscription/subscriptions");
       localStorage.setItem("subscriptions", JSON.stringify(subs.data));
 
-      navigate("/");
+      // navigate("/");
+      navigate("/home", { replace: true });   // ⬅️ go to the new post-login home
     } catch (err) {
       console.error("Login error:", err);
       alert(err.response?.data?.message || "Login failed");
@@ -78,9 +80,9 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-left">
-          <img src={logo} alt="TechTango Logo" className="login-logo" />
+          <img src={logo} alt="Tymebound Logo" className="login-logo" />
           <h1>Hello!</h1>
-          <p className="subtitle">Welcome to TechTango</p>
+          <p className="subtitle">Welcome to Tymebound</p>
 
           <form onSubmit={handleSubmit}>
             <input
@@ -126,7 +128,9 @@ export default function Login() {
             Don’t have an Account? <Link to="/register">Signup</Link>
           </div>
         </div>
-        <div className="login-right" />
+        <div className="login-right" aria-hidden="true">
+          <img src={heroImage} alt="" className="login-hero-image" />
+        </div>
       </div>
     </div>
   );

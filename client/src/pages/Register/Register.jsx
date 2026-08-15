@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import logo from "../../logo.svg";
+import logo from "../../components/navbar/ttlogo.png";
+import heroImage from "../Login/loginpage.png";
 import api from "../../services/api";
 import "./Register.scss";
 
@@ -12,7 +13,6 @@ export default function Register() {
     password: "",
   });
   const navigate = useNavigate();
-  const apiBase = process.env.REACT_APP_API_URL;
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,21 +20,12 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${apiBase}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Registration failed");
-        return;
-      }
+      const res = await api.post("/auth/register", form);
       alert("Registration successful! Please check your email to activate.");
       navigate("/login");
     } catch (err) {
       console.error("Register error:", err);
-      alert("Something went wrong");
+      alert(err.response?.data?.message || "Registration failed");
     }
   };
 
@@ -42,9 +33,9 @@ export default function Register() {
     <div className="register-container">
       <div className="register-card">
         <div className="register-left">
-          <img src={logo} alt="TechTango Logo" className="register-logo" />
+          <img src={logo} alt="Tymebound Logo" className="register-logo" />
           <h1>Welcome!</h1>
-          <p className="subtitle">Create your TechTango account</p>
+          <p className="subtitle">Create your Tymebound account</p>
           <form onSubmit={handleSubmit}>
             <input
               name="firstname"
@@ -90,7 +81,9 @@ export default function Register() {
             Already have an account? <Link to="/login">Log In</Link>
           </div>
         </div>
-        <div className="register-right" />
+        <div className="register-right" aria-hidden="true">
+          <img src={heroImage} alt="" className="register-hero-image" />
+        </div>
       </div>
     </div>
   );

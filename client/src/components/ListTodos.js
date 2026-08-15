@@ -1,5 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import EditTodo from "./EditTodos";
+import { apiUrl } from "../services/urls";
 
 const ListTodos = () => {
 
@@ -9,7 +10,7 @@ const ListTodos = () => {
     const deleteTodo = async (id) => {
         try {
             
-            const deleteTodo = await fetch(`http://localhost:5000/todos/${id}`, {
+            const deleteTodo = await fetch(apiUrl(`/todos/${id}`), {
                 method: "DELETE"
             });
             
@@ -25,7 +26,7 @@ const ListTodos = () => {
     const getTodos = async() => {
         try {
 
-            const response = await fetch ("http://localhost:5000/todos");
+            const response = await fetch(apiUrl("/todos"));
             const jsonData = await response.json();
 
             setTodos (jsonData);
