@@ -372,115 +372,121 @@ const handleSubmit = async (e) => {
 
       {showPreview && selectedApproval && (
         <div className="modal-overlay">
-          <div className="modal-form" ref={previewRef}>
-            <h3 className="modal-title">Assignment Details</h3>
-            <div><strong>Title:</strong> {selectedApproval.title}</div>
-            <div><strong>Details:</strong> {selectedApproval.details}</div>
-            <div><strong>From:</strong> {selectedApproval.assigned_by_firstname}</div>
-            <div><strong>To:</strong> {selectedApproval.assignee_firstname}</div>
-            <div><strong>Due Date:</strong> {new Date(selectedApproval.due_date).toLocaleDateString()}</div>
-
-            {activeTab === "inbox" ? (
-              <>
-                <label>Status</label>
-                <select name="status" value={updateForm.status} onChange={handleUpdateChange}>
-                  <option>New</option>
-                  <option>In-Progress</option>
-                  <option>Completed</option>
-                </select>
-                <label>Assignee Comments</label>
-                <textarea name="assignee_comments" value={updateForm.assignee_comments} onChange={handleUpdateChange} />
-                <label>Upload New Files</label>
-                <input type="file" multiple onChange={handleUpdateFileChange} />
-                <button onClick={handleAssigneeUpdate}>Submit Update</button>
-              </>
-            ) : selectedApproval.status === "Completed" ? (
-              <>
-                <label>Final Status <span style={{ color: "red" }}>*</span></label>
-                <select
-                  name="status"
-                  value={updateForm.status}
-                  onChange={handleUpdateChange}
-                  required
-                >
-                  <option value="">-- Select --</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Closed">Closed</option>
-                </select>
-                <button
-                  onClick={() => {
-                    if (!updateForm.status) {
-                      alert("⚠️ Please select a final status before submitting.");
-                      return;
-                    }
-                    handleAssigneeUpdate();
-                  }}
-                >
-                  Submit Final Status
-                </button>
-              </>
-            ) : null}
-
-            <div style={{ marginTop: "1rem" }}>
-              <strong>Uploaded Files</strong>
-              {selectedApproval.files?.length > 0 ? (
-                <ul>
-                  {selectedApproval.files.map((file) => (
-                    <li key={file.id}>
-                      {file.original_filename} by {file.uploaded_by_name} at{" "}
-                      {new Date(file.uploaded_at).toLocaleString()}
-                      <button
-                        onClick={() => downloadFile(file.id, file.original_filename)}
-                        style={{ marginLeft: "10px" }}
-                      >
-                        Download
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No attachments</p>
-              )}
+          <div className="modal-form assignment-preview-modal" ref={previewRef}>
+            <div className="modal-header-band">
+              <div className="modal-header-icon" aria-hidden="true">📋</div>
+              <div>
+                <h3 className="modal-title">Assignment Details</h3>
+                <p className="modal-subtitle">
+                  Review assignment information, uploaded files, and the full audit trail in one place.
+                </p>
+              </div>
             </div>
 
-              <div style={{
-                  marginTop: "1rem",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                  backgroundColor: "#f5f5f5",
-                  border: "1px solid #ccc",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  fontSize: "14px"
-                }}>
-                  <strong style={{ display: "block", marginBottom: "8px" }}>🕵️‍♂️ Audit Trail</strong>
+            <div className="preview-body">
+              <div className="preview-summary-grid">
+                <div className="preview-field"><strong>Title:</strong> {selectedApproval.title}</div>
+                <div className="preview-field"><strong>Due Date:</strong> {new Date(selectedApproval.due_date).toLocaleDateString()}</div>
+                <div className="preview-field"><strong>From:</strong> {selectedApproval.assigned_by_firstname}</div>
+                <div className="preview-field"><strong>To:</strong> {selectedApproval.assignee_firstname}</div>
+                <div className="preview-field preview-field-full"><strong>Details:</strong> {selectedApproval.details}</div>
+              </div>
 
-                  
+              {activeTab === "inbox" ? (
+                <div className="preview-section">
+                  <div className="preview-section-title">Update Assignment</div>
+                  <div className="assignment-form-grid preview-form-grid">
+                    <div className="field-block">
+                      <label>Status</label>
+                      <select name="status" value={updateForm.status} onChange={handleUpdateChange}>
+                        <option>New</option>
+                        <option>In-Progress</option>
+                        <option>Completed</option>
+                      </select>
+                    </div>
+                    <div className="field-block">
+                      <label>Upload New Files</label>
+                      <input type="file" multiple onChange={handleUpdateFileChange} />
+                    </div>
+                    <div className="field-block field-block-full">
+                      <label>Assignee Comments</label>
+                      <textarea name="assignee_comments" value={updateForm.assignee_comments} onChange={handleUpdateChange} />
+                    </div>
+                  </div>
+                  <div className="modal-actions">
+                    <button className="submit-btn" onClick={handleAssigneeUpdate}>Submit Update</button>
+                  </div>
+                </div>
+              ) : selectedApproval.status === "Completed" ? (
+                <div className="preview-section">
+                  <div className="preview-section-title">Final Review</div>
+                  <div className="assignment-form-grid preview-form-grid">
+                    <div className="field-block field-block-full">
+                      <label>Final Status <span className="required-indicator">*</span></label>
+                      <select
+                        name="status"
+                        value={updateForm.status}
+                        onChange={handleUpdateChange}
+                        required
+                      >
+                        <option value="">-- Select --</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Closed">Closed</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="modal-actions">
+                    <button
+                      className="submit-btn"
+                      onClick={() => {
+                        if (!updateForm.status) {
+                          alert("⚠️ Please select a final status before submitting.");
+                          return;
+                        }
+                        handleAssigneeUpdate();
+                      }}
+                    >
+                      Submit Final Status
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
-                  {auditLogs.length > 0 && (
-                    <div style={{
-                      marginTop: "1.5rem",
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                      backgroundColor: "#f9f9f9",
-                      border: "1px solid #ccc",
-                      padding: "10px",
-                      borderRadius: "8px",
-                      fontSize: "14px"
-                    }}>
-                      <strong style={{ display: "block", marginBottom: "10px" }}>🕵️ Audit Trail</strong>
+              <div className="preview-section">
+                <div className="preview-section-title">Uploaded Files</div>
+                {selectedApproval.files?.length > 0 ? (
+                  <ul className="preview-file-list">
+                    {selectedApproval.files.map((file) => (
+                      <li key={file.id}>
+                        <div className="preview-file-meta">
+                          <strong>{file.original_filename}</strong>
+                          <span>by {file.uploaded_by_name} at {new Date(file.uploaded_at).toLocaleString()}</span>
+                        </div>
+                        <button
+                          className="download-btn"
+                          onClick={() => downloadFile(file.id, file.original_filename)}
+                        >
+                          Download
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-state">No attachments</p>
+                )}
+              </div>
 
-                      <ul style={{ listStyle: "none", paddingLeft: 0, margin: 0 }}>
+              <div className="preview-section audit-section">
+                <div className="preview-section-title">Audit Trail</div>
+                {auditLogs.length > 0 ? (
+                    <div className="audit-log-panel">
+                      <ul className="audit-log-list-plain">
                         {auditLogs.map((log) => {
                           const actionText = log.action === "Insert" ? "Created" : "Modified";
-
-                          // const status = log.changed_data?.status || log.after_change?.status;
-                          // const comments = log.changed_data?.assignee_comments || log.after_change?.assignee_comments;
-
                           const { status, comments } = log;
 
                           return (
-                            <li key={log.id} style={{ marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px dashed #ccc" }}>
+                            <li key={log.id}>
                               <div>🗓️ <strong>Date:</strong> {new Date(log.modified_at).toLocaleString()}</div>
                               <div>🔧 <strong>Action:</strong> {actionText}</div>
                               <div>👤 <strong>By:</strong> {log.modified_by_name}</div>
@@ -491,18 +497,15 @@ const handleSubmit = async (e) => {
                         })}
                       </ul>
                     </div>
+                  ) : (
+                    <p className="empty-state">No audit trail entries available.</p>
                   )}
+              </div>
 
-                </div>
-
-
-
-
-
-
-
-
-            <button className="cancel-btn" onClick={() => setShowPreview(false)}>Close</button>
+              <div className="modal-actions">
+                <button className="cancel-btn" onClick={() => setShowPreview(false)}>Close</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
