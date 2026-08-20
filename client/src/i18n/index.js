@@ -8,7 +8,7 @@ const resources = {
   en: { common: {
     headline_line1: "Manage your Business Effortlessly.",
     headline_line2:
-      "Your core competence is what keeps you ahead of your competition. So while you focus on your core competence, experience the effortless ease of doing business by using Tymebound",
+      "Your core competence is what keeps you ahead of your competition. So while you focus on your core competence, experience the effortless ease of doing business by using Augmis",
     applications: "Applications",
     search: "Search",
     login: "Log in",
@@ -18,7 +18,7 @@ const resources = {
   ar: { common: {
     headline_line1: "أدِر عملك بسهولة وبدون عناء.",
     headline_line2:
-      "كفاءتك الجوهرية هي ما يبقيك متقدمًا على المنافسين. وبينما تركز على جوهر تميّزك، اختبر سهولة إدارة الأعمال باستخدام Tymebound",
+      "كفاءتك الجوهرية هي ما يبقيك متقدمًا على المنافسين. وبينما تركز على جوهر تميّزك، اختبر سهولة إدارة الأعمال باستخدام Augmis",
     applications: "التطبيقات",
     search: "بحث",
     login: "تسجيل الدخول",
@@ -28,7 +28,7 @@ const resources = {
   hi: { common: {
     headline_line1: "अपने व्यवसाय को बिना मेहनत के प्रबंधित करें।",
     headline_line2:
-      "आपकी मुख्य दक्षता ही आपको प्रतिस्पर्धा से आगे रखती है। इसलिए जब आप अपनी मूल दक्षता पर ध्यान दें, तो Tymebound के साथ कारोबार करना कितना सहज है—इसे महसूस करें।",
+      "आपकी मुख्य दक्षता ही आपको प्रतिस्पर्धा से आगे रखती है। इसलिए जब आप अपनी मूल दक्षता पर ध्यान दें, तो Augmis के साथ कारोबार करना कितना सहज है—इसे महसूस करें।",
     applications: "एप्लिकेशन",
     search: "खोज",
     login: "लॉगिन",
@@ -38,7 +38,7 @@ const resources = {
   ta: { common: {
     headline_line1: "உங்கள் வணிகத்தை எளிதாக நிர்வகிக்கவும்.",
     headline_line2:
-      "உங்கள் முக்கிய திறனே உங்களை போட்டியாளர்களை விட முன்னிலையில் வைத்திருக்கிறது. ஆகவே நீங்கள் உங்கள் மூல திறனில் கவனம் செலுத்தும் போது, Tymebound மூலம் வணிகத்தை நடத்துவதின் எளிமையை அனுபவிக்கவும்.",
+      "உங்கள் முக்கிய திறனே உங்களை போட்டியாளர்களை விட முன்னிலையில் வைத்திருக்கிறது. ஆகவே நீங்கள் உங்கள் மூல திறனில் கவனம் செலுத்தும் போது, Augmis மூலம் வணிகத்தை நடத்துவதின் எளிமையை அனுபவிக்கவும்.",
     applications: "பயன்பாடுகள்",
     search: "தேடல்",
     login: "உள்நுழை",
@@ -48,7 +48,7 @@ const resources = {
   fr: { common: {
     headline_line1: "Gérez votre entreprise sans effort.",
     headline_line2:
-      "Votre compétence clé vous maintient devant la concurrence. Pendant que vous vous concentrez sur votre cœur de métier, découvrez la simplicité de faire des affaires avec Tymebound.",
+      "Votre compétence clé vous maintient devant la concurrence. Pendant que vous vous concentrez sur votre cœur de métier, découvrez la simplicité de faire des affaires avec Augmis.",
     applications: "Applications",
     search: "Recherche",
     login: "Connexion",
@@ -58,7 +58,7 @@ const resources = {
   es: { common: {
     headline_line1: "Gestiona tu negocio sin esfuerzo.",
     headline_line2:
-      "Tu competencia clave te mantiene por delante de la competencia. Mientras te concentras en tu actividad principal, experimenta la facilidad de hacer negocios con Tymebound.",
+      "Tu competencia clave te mantiene por delante de la competencia. Mientras te concentras en tu actividad principal, experimenta la facilidad de hacer negocios con Augmis.",
     applications: "Aplicaciones",
     search: "Buscar",
     login: "Iniciar sesión",
@@ -68,7 +68,7 @@ const resources = {
   mr: { common: {
     headline_line1: "आपला व्यवसाय सहजपणे व्यवस्थापित करा.",
     headline_line2:
-      "आपली मूळ कौशल्येच तुम्हाला स्पर्धेपेक्षा पुढे ठेवतात. त्यामुळे तुम्ही आपल्या मूलभूत कौशल्यांवर लक्ष केंद्रित करत असताना, Tymebound चा वापर करून व्यवसाय करणे किती सोपे आहे ते अनुभवा.",
+      "आपली मूळ कौशल्येच तुम्हाला स्पर्धेपेक्षा पुढे ठेवतात. त्यामुळे तुम्ही आपल्या मूलभूत कौशल्यांवर लक्ष केंद्रित करत असताना, Augmis चा वापर करून व्यवसाय करणे किती सोपे आहे ते अनुभवा.",
     applications: "अनुप्रयोग",
     search: "शोधा",
     login: "लॉगिन",
@@ -78,7 +78,7 @@ const resources = {
   bn: { common: {
     headline_line1: "আপনার ব্যবসা অনায়াসে পরিচালনা করুন।",
     headline_line2:
-      "আপনার মূল দক্ষতাই আপনাকে প্রতিযোগিতায় এগিয়ে রাখে। তাই যখন আপনি আপনার মূল দক্ষতার উপর মনোযোগ দেন, Tymebound ব্যবহার করে ব্যবসা করার অনায়াস সুবিধা অনুভব করুন।",
+      "আপনার মূল দক্ষতাই আপনাকে প্রতিযোগিতায় এগিয়ে রাখে। তাই যখন আপনি আপনার মূল দক্ষতার উপর মনোযোগ দেন, Augmis ব্যবহার করে ব্যবসা করার অনায়াস সুবিধা অনুভব করুন।",
     applications: "অ্যাপ্লিকেশনসমূহ",
     search: "অনুসন্ধান",
     login: "লগইন",
@@ -88,7 +88,7 @@ const resources = {
   gu: { common: {
     headline_line1: "તમારો વ્યવસાય સહેલાઈથી સંચાલિત કરો.",
     headline_line2:
-      "તમારી મુખ્ય કુશળતા જ તમને સ્પર્ધકોથી આગળ રાખે છે. તેથી તમે તમારી કોર કંપિટન્સ પર ધ્યાન કેન્દ્રિત કરતા હો ત્યારે Tymebound સાથે બિઝનેસ કરવાની સહજ સરળતા અનુભવો.",
+      "તમારી મુખ્ય કુશળતા જ તમને સ્પર્ધકોથી આગળ રાખે છે. તેથી તમે તમારી કોર કંપિટન્સ પર ધ્યાન કેન્દ્રિત કરતા હો ત્યારે Augmis સાથે બિઝનેસ કરવાની સહજ સરળતા અનુભવો.",
     applications: "ઍપ્લિકેશનો",
     search: "શોધ",
     login: "લૉગિન",
@@ -98,7 +98,7 @@ const resources = {
   kn: { common: {
     headline_line1: "ನಿಮ್ಮ ವ್ಯವಹಾರವನ್ನು ಸುಲಭವಾಗಿ ನಿರ್ವಹಿಸಿ.",
     headline_line2:
-      "ನಿಮ್ಮ ಮೂಲ ದಕ್ಷತೆಯೇ ನಿಮ್ಮನ್ನು ಸ್ಪರ್ಧೆಯಿಂದ ಮುಂದೆ ಇಡುತ್ತದೆ. ಆದ್ದರಿಂದ ನೀವು ನಿಮ್ಮ ಮೂಲ ಸಾಮರ್ಥ್ಯಕ್ಕೆ ಗಮನಕೊಡುತ್ತಿರುವಾಗ, Tymebound ಬಳಸಿ ವ್ಯವಹಾರ ಮಾಡುವ ಸುಗಮತೆಯನ್ನು ಅನುಭವಿಸಿ.",
+      "ನಿಮ್ಮ ಮೂಲ ದಕ್ಷತೆಯೇ ನಿಮ್ಮನ್ನು ಸ್ಪರ್ಧೆಯಿಂದ ಮುಂದೆ ಇಡುತ್ತದೆ. ಆದ್ದರಿಂದ ನೀವು ನಿಮ್ಮ ಮೂಲ ಸಾಮರ್ಥ್ಯಕ್ಕೆ ಗಮನಕೊಡುತ್ತಿರುವಾಗ, Augmis ಬಳಸಿ ವ್ಯವಹಾರ ಮಾಡುವ ಸುಗಮತೆಯನ್ನು ಅನುಭವಿಸಿ.",
     applications: "ಅನ್ವಯಗಳು",
     search: "ಹುಡುಕಿ",
     login: "ಲಾಗಿನ್",
@@ -108,7 +108,7 @@ const resources = {
   te: { common: {
     headline_line1: "మీ వ్యాపారాన్ని సులభంగా నిర్వహించండి.",
     headline_line2:
-      "మీ కోర్ నైపుణ్యమే మిమ్మల్ని పోటీదారుల కంటే ముందుంచుతుంది. కాబట్టి మీరు మీ మూల నైపుణ్యంపై దృష్టి పెట్టినప్పుడే, Tymebound తో వ్యాపారం చేయడం ఎంత సులభమో అనుభవించండి.",
+      "మీ కోర్ నైపుణ్యమే మిమ్మల్ని పోటీదారుల కంటే ముందుంచుతుంది. కాబట్టి మీరు మీ మూల నైపుణ్యంపై దృష్టి పెట్టినప్పుడే, Augmis తో వ్యాపారం చేయడం ఎంత సులభమో అనుభవించండి.",
     applications: "అనువర్తనాలు",
     search: "శోధించండి",
     login: "లాగిన్",
@@ -118,7 +118,7 @@ const resources = {
   ml: { common: {
     headline_line1: "നിങ്ങളുടെ ബിസിനസ് എളുപ്പത്തിൽ നിയന്ത്രിക്കുക.",
     headline_line2:
-      "നിങ്ങളുടെ മുഖ്യ പ്രാവീണ്യമാണ് നിങ്ങളെ മത്സരത്തിൽ മുന്നിൽ നിലനിർത്തുന്നത്. അതിനാൽ നിങ്ങൾ നിങ്ങളുടെ കോർ കംപറ്റൻസിലേക്കു ശ്രദ്ധ കേന്ദ്രീകരിക്കുമ്പോൾ, Tymebound ഉപയോഗിച്ച് ബിസിനസ് നടത്താനുള്ള എളുപ്പം അനുഭവിക്കുക.",
+      "നിങ്ങളുടെ മുഖ്യ പ്രാവീണ്യമാണ് നിങ്ങളെ മത്സരത്തിൽ മുന്നിൽ നിലനിർത്തുന്നത്. അതിനാൽ നിങ്ങൾ നിങ്ങളുടെ കോർ കംപറ്റൻസിലേക്കു ശ്രദ്ധ കേന്ദ്രീകരിക്കുമ്പോൾ, Augmis ഉപയോഗിച്ച് ബിസിനസ് നടത്താനുള്ള എളുപ്പം അനുഭവിക്കുക.",
     applications: "ആപ്ലിക്കേഷനുകൾ",
     search: "തിരയുക",
     login: "ലോഗിൻ",

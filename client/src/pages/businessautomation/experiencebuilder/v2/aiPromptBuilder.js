@@ -214,7 +214,7 @@ const buildNaturalLanguagePrompt = (designerInput) => {
     enabledShellParts.length ? `Include these shell areas: ${joinList(enabledShellParts)}.` : "Do not include any shell areas unless required for the design.",
     disabledShellParts.length ? `Avoid these shell areas: ${joinList(disabledShellParts)} unless the design specifically needs them.` : null,
     shell.showTopNavbar
-      ? `The top navbar should use brand text "${shell.brandName || "Tymebound"}" and tagline "${shell.tagline || "Manage Information Effortlessly"}".`
+      ? `The top navbar should use brand text "${shell.brandName || "Augmis"}" and tagline "${shell.tagline || "Manage Information Effortlessly"}".`
       : null,
     shell.showHeader && shell.pageTitle ? `Show the header title "${shell.pageTitle}".` : null,
     shell.leftMenuCollapsible ? `The left menu should be collapsible using a ${shell.collapseTriggerStyle || "arrow"} trigger.` : null,

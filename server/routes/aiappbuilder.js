@@ -1872,6 +1872,40 @@ router.patch("/:appSlug/schema", async (req, res) => {
   }
 });
 
+router.delete("/:appSlug", async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await ensureTables();
+    const appSlug = String(req.params.appSlug || "").trim();
+    if (!appSlug) {
+      return res.status(400).json({ error: "appSlug is required" });
+    }
+
+    const app = await getAppBySlug(appSlug);
+    if (!app) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    await client.query("BEGIN");
+    await client.query(
+      `DELETE FROM aiappbuilder_applications WHERE app_slug = $1`,
+      [appSlug]
+    );
+
+    if (IDENT.test(app.table_name)) {
+      await client.query(`DROP TABLE IF EXISTS "${app.table_name}"`);
+    }
+
+    await client.query("COMMIT");
+    res.json({ success: true });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: error.message || "Failed to delete application." });
+  } finally {
+    client.release();
+  }
+});
+
 router.get("/:appSlug/schema", async (req, res) => {
   try {
     await ensureTables();

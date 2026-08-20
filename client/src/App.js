@@ -75,7 +75,10 @@ export default function App() {
                     path={config.path}
                     element={
                       config.protected ? (
-                        <ProtectedModuleRoute moduleId={config.moduleId} moduleName={moduleName}>
+                        <ProtectedModuleRoute
+                          moduleId={config.moduleId}
+                          moduleName={config.moduleName || moduleName}
+                        >
                           <C />
                         </ProtectedModuleRoute>
                       ) : (

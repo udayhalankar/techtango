@@ -1,0 +1,3806 @@
+{
+  "nodes": [
+    {
+      "id": "agent/chowkidar.js",
+      "label": "agent/chowkidar.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/fileWatcher.js",
+      "label": "agent/fileWatcher.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/graphBuilder.js",
+      "label": "agent/graphBuilder.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/scanner.js",
+      "label": "agent/scanner.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/db.js",
+      "label": "server/db.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/sequelize.js",
+      "label": "server/sequelize.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server.js",
+      "label": "server/server.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/App copy.js",
+      "label": "client/src/App copy.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/App.js",
+      "label": "client/src/App.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/AuthWrapper.js",
+      "label": "client/src/AuthWrapper.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/data-oldMenu.js",
+      "label": "client/src/data-oldMenu.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/data.js",
+      "label": "client/src/data.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/datarms.js",
+      "label": "client/src/datarms.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/index.js",
+      "label": "client/src/index.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/reportWebVitals.js",
+      "label": "client/src/reportWebVitals.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/config/db.js",
+      "label": "server/config/db.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/config/dbManager.js",
+      "label": "server/config/dbManager.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/config/sequelize.js",
+      "label": "server/config/sequelize.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/audit.js",
+      "label": "agent/rules/audit.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/auth.js",
+      "label": "agent/rules/auth.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/config.js",
+      "label": "agent/rules/config.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/corsSafety.js",
+      "label": "agent/rules/corsSafety.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/db-transactions.js",
+      "label": "agent/rules/db-transactions.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/errorLogging.js",
+      "label": "agent/rules/errorLogging.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/helmet.js",
+      "label": "agent/rules/helmet.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/index.js",
+      "label": "agent/rules/index.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/performance.js",
+      "label": "agent/rules/performance.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/rateLimit.js",
+      "label": "agent/rules/rateLimit.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/rbac.js",
+      "label": "agent/rules/rbac.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/securityHeaders.js",
+      "label": "agent/rules/securityHeaders.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/sessionTimeout.js",
+      "label": "agent/rules/sessionTimeout.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/subscription.js",
+      "label": "agent/rules/subscription.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/transactions.js",
+      "label": "agent/rules/transactions.js",
+      "kind": "file"
+    },
+    {
+      "id": "agent/rules/validation.js",
+      "label": "agent/rules/validation.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/controllers/assignments.js",
+      "label": "server/controllers/assignments.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/controllers/canvasConfigs.js",
+      "label": "server/controllers/canvasConfigs.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/controllers/formdataController.js",
+      "label": "server/controllers/formdataController.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/controllers/tasks.js",
+      "label": "server/controllers/tasks.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/controllers/UploadController.js",
+      "label": "server/controllers/UploadController.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/controllers/workflows.js",
+      "label": "server/controllers/workflows.js",
+      "kind": "controller"
+    },
+    {
+      "id": "server/db/sequelize.js",
+      "label": "server/db/sequelize.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/helpers/notifyNextUser.js",
+      "label": "server/helpers/notifyNextUser.js",
+      "kind": "helper"
+    },
+    {
+      "id": "server/helpers/triggerEmailOnStatusChange.js",
+      "label": "server/helpers/triggerEmailOnStatusChange.js",
+      "kind": "helper"
+    },
+    {
+      "id": "server/middleware/audit.js",
+      "label": "server/middleware/audit.js",
+      "kind": "middleware"
+    },
+    {
+      "id": "server/middleware/authMiddleware.js",
+      "label": "server/middleware/authMiddleware.js",
+      "kind": "middleware"
+    },
+    {
+      "id": "server/middleware/checkSubscription.js",
+      "label": "server/middleware/checkSubscription.js",
+      "kind": "middleware"
+    },
+    {
+      "id": "server/middleware/validation.js",
+      "label": "server/middleware/validation.js",
+      "kind": "middleware"
+    },
+    {
+      "id": "server/middleware/withTx.js",
+      "label": "server/middleware/withTx.js",
+      "kind": "middleware"
+    },
+    {
+      "id": "server/models/sequelize.js",
+      "label": "server/models/sequelize.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/routes/approvals.js",
+      "label": "server/routes/approvals.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/assignments.js",
+      "label": "server/routes/assignments.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/auth.js",
+      "label": "server/routes/auth.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/businesspartner.js",
+      "label": "server/routes/businesspartner.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/canvasConfigs.js",
+      "label": "server/routes/canvasConfigs.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/catalog.js",
+      "label": "server/routes/catalog.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/chartConfigs.js",
+      "label": "server/routes/chartConfigs.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/chowkidar.js",
+      "label": "server/routes/chowkidar.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/db-settings.js",
+      "label": "server/routes/db-settings.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/dbdiag.js",
+      "label": "server/routes/dbdiag.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/dbmeta.js",
+      "label": "server/routes/dbmeta.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/enquiries.js",
+      "label": "server/routes/enquiries.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/formConfigs.js",
+      "label": "server/routes/formConfigs.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/formdata.js",
+      "label": "server/routes/formdata.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/forms.js",
+      "label": "server/routes/forms.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/formViews.js",
+      "label": "server/routes/formViews.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/health.js",
+      "label": "server/routes/health.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/seq-demo.js",
+      "label": "server/routes/seq-demo.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/seq.js",
+      "label": "server/routes/seq.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/subscription.js",
+      "label": "server/routes/subscription.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/table.js",
+      "label": "server/routes/table.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/tableConfigs.js",
+      "label": "server/routes/tableConfigs.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/tasks.js",
+      "label": "server/routes/tasks.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/template.js",
+      "label": "server/routes/template.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/templates.js",
+      "label": "server/routes/templates.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/uicreator.js",
+      "label": "server/routes/uicreator.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/upload.js",
+      "label": "server/routes/upload.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/users.js",
+      "label": "server/routes/users.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/workflows.js",
+      "label": "server/routes/workflows.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/routes/workflows.sequelize.js",
+      "label": "server/routes/workflows.sequelize.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/utils/auditLogger.js",
+      "label": "server/utils/auditLogger.js",
+      "kind": "util"
+    },
+    {
+      "id": "server/utils/excelParser.js",
+      "label": "server/utils/excelParser.js",
+      "kind": "util"
+    },
+    {
+      "id": "server/utils/sendEmail.js",
+      "label": "server/utils/sendEmail.js",
+      "kind": "util"
+    },
+    {
+      "id": "server/utils/stringUtils.js",
+      "label": "server/utils/stringUtils.js",
+      "kind": "util"
+    },
+    {
+      "id": "server/utils/uploadEncryptedFiles.js",
+      "label": "server/utils/uploadEncryptedFiles.js",
+      "kind": "util"
+    },
+    {
+      "id": "client/src/config/modulesConfig.js",
+      "label": "client/src/config/modulesConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/components/AdminFormBuilder.js",
+      "label": "client/src/components/AdminFormBuilder.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/AdminFormModal.js",
+      "label": "client/src/components/AdminFormModal.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/BulkUploader.js",
+      "label": "client/src/components/BulkUploader.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/CanvasList.jsx",
+      "label": "client/src/components/CanvasList.jsx",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ChartBuilder.js",
+      "label": "client/src/components/ChartBuilder.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ChartRenderer.js",
+      "label": "client/src/components/ChartRenderer.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/EditTodos.js",
+      "label": "client/src/components/EditTodos.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ExperimentModal.js",
+      "label": "client/src/components/ExperimentModal.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/FormBuilderModal.js",
+      "label": "client/src/components/FormBuilderModal.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/InputTodo.js",
+      "label": "client/src/components/InputTodo.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/Layout.js",
+      "label": "client/src/components/Layout.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ListFormViews.js",
+      "label": "client/src/components/ListFormViews.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ListTodos.js",
+      "label": "client/src/components/ListTodos.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/LoginForm.js",
+      "label": "client/src/components/LoginForm.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ProtectedModuleRoute.js",
+      "label": "client/src/components/ProtectedModuleRoute.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ProtectedRoute.js",
+      "label": "client/src/components/ProtectedRoute.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/RegisterForm.js",
+      "label": "client/src/components/RegisterForm.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/SecureFileUploader.js",
+      "label": "client/src/components/SecureFileUploader.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/SessionExpiredModal.js",
+      "label": "client/src/components/SessionExpiredModal.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/SimpleModalWithCheckboxes.js",
+      "label": "client/src/components/SimpleModalWithCheckboxes.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/TableCreator.js",
+      "label": "client/src/components/TableCreator.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/UiCreator.js",
+      "label": "client/src/components/UiCreator.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/UiDashboard.js",
+      "label": "client/src/components/UiDashboard.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/ViewFormModal.js",
+      "label": "client/src/components/ViewFormModal.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/layout/HomeLayout.jsx",
+      "label": "client/src/layout/HomeLayout.jsx",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/pages/ChowkidarDashboard.jsx",
+      "label": "client/src/pages/ChowkidarDashboard.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/DbSchemaExplorer.jsx",
+      "label": "client/src/pages/DbSchemaExplorer.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/DynamicReportCreator.js",
+      "label": "client/src/pages/DynamicReportCreator.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/Logout.js",
+      "label": "client/src/pages/Logout.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/services/api.js",
+      "label": "client/src/services/api.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/routes/workflows/assignmentsWf.js",
+      "label": "server/routes/workflows/assignmentsWf.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/models/autogen/app.js",
+      "label": "server/models/autogen/app.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/approval.js",
+      "label": "server/models/autogen/approval.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/approvalFile.js",
+      "label": "server/models/autogen/approvalFile.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/auditLog.js",
+      "label": "server/models/autogen/auditLog.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/authLog.js",
+      "label": "server/models/autogen/authLog.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/businesspartner.js",
+      "label": "server/models/autogen/businesspartner.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/canvasConfig.js",
+      "label": "server/models/autogen/canvasConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/chartConfig.js",
+      "label": "server/models/autogen/chartConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormAcasdcasca.js",
+      "label": "server/models/autogen/custFormAcasdcasca.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormDdl2.js",
+      "label": "server/models/autogen/custFormDdl2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormDdltemplate.js",
+      "label": "server/models/autogen/custFormDdltemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormDirtydelete1.js",
+      "label": "server/models/autogen/custFormDirtydelete1.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormUdaytest2.js",
+      "label": "server/models/autogen/custFormUdaytest2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/custFormUserdatum.js",
+      "label": "server/models/autogen/custFormUserdatum.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/dept.js",
+      "label": "server/models/autogen/dept.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/emailTemplate.js",
+      "label": "server/models/autogen/emailTemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/enquiry.js",
+      "label": "server/models/autogen/enquiry.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/enquiryFile.js",
+      "label": "server/models/autogen/enquiryFile.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/facility.js",
+      "label": "server/models/autogen/facility.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formConfig.js",
+      "label": "server/models/autogen/formConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formCustTable.js",
+      "label": "server/models/autogen/formCustTable.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formCustTable2.js",
+      "label": "server/models/autogen/formCustTable2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formField.js",
+      "label": "server/models/autogen/formField.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formMaster.js",
+      "label": "server/models/autogen/formMaster.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formRecord.js",
+      "label": "server/models/autogen/formRecord.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formTemplate.js",
+      "label": "server/models/autogen/formTemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/formView.js",
+      "label": "server/models/autogen/formView.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/init-models.js",
+      "label": "server/models/autogen/init-models.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/module.js",
+      "label": "server/models/autogen/module.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/organization.js",
+      "label": "server/models/autogen/organization.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/product.js",
+      "label": "server/models/autogen/product.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/request.js",
+      "label": "server/models/autogen/request.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/review.js",
+      "label": "server/models/autogen/review.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/salesInvoice.js",
+      "label": "server/models/autogen/salesInvoice.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/subscription.js",
+      "label": "server/models/autogen/subscription.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/subtenant.js",
+      "label": "server/models/autogen/subtenant.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/tableConfig.js",
+      "label": "server/models/autogen/tableConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/tenant.js",
+      "label": "server/models/autogen/tenant.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/todo.js",
+      "label": "server/models/autogen/todo.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/user.js",
+      "label": "server/models/autogen/user.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/users2.js",
+      "label": "server/models/autogen/users2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflow.js",
+      "label": "server/models/autogen/workflow.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowAudit.js",
+      "label": "server/models/autogen/workflowAudit.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowEdge.js",
+      "label": "server/models/autogen/workflowEdge.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowFormStep.js",
+      "label": "server/models/autogen/workflowFormStep.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowInstance.js",
+      "label": "server/models/autogen/workflowInstance.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowNode.js",
+      "label": "server/models/autogen/workflowNode.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowStep.js",
+      "label": "server/models/autogen/workflowStep.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/models/autogen/workflowTask.js",
+      "label": "server/models/autogen/workflowTask.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/components/add/Add.js",
+      "label": "client/src/components/add/Add.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/chartBox/ChartBox.js",
+      "label": "client/src/components/chartBox/ChartBox.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/chartBox/xChartrender.js",
+      "label": "client/src/components/chartBox/xChartrender.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/datatable/DataGrid1.js",
+      "label": "client/src/components/datatable/DataGrid1.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/datatable/DataTable.js",
+      "label": "client/src/components/datatable/DataTable.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/footer/Footer.js",
+      "label": "client/src/components/footer/Footer.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/navbar/Navbar.js",
+      "label": "client/src/components/navbar/Navbar.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/menu/Menu.js",
+      "label": "client/src/components/menu/Menu.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/rmsMenu/RmsMenu.js",
+      "label": "client/src/components/rmsMenu/RmsMenu.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/single/Single.js",
+      "label": "client/src/components/single/Single.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/topbox/Topbox.js",
+      "label": "client/src/components/topbox/Topbox.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/pages/approvals/Approvals.js",
+      "label": "client/src/pages/approvals/Approvals.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/admin/AdminPanel.jsx",
+      "label": "client/src/pages/admin/AdminPanel.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/admin/DatabaseSettings.jsx",
+      "label": "client/src/pages/admin/DatabaseSettings.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/assignments/Assignments.js",
+      "label": "client/src/pages/assignments/Assignments.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/bpm/Bpm.js",
+      "label": "client/src/pages/bpm/Bpm.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/ccm/Ccm.js",
+      "label": "client/src/pages/ccm/Ccm.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/chowkidar/ChowkidarGraph.jsx",
+      "label": "client/src/pages/chowkidar/ChowkidarGraph.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/cm/Cm.js",
+      "label": "client/src/pages/cm/Cm.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/dak/Dak.js",
+      "label": "client/src/pages/dak/Dak.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "label": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/dms/Dms.js",
+      "label": "client/src/pages/dms/Dms.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/docucontrol/Docucontrol.js",
+      "label": "client/src/pages/docucontrol/Docucontrol.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/enquiries/Enquiries.js",
+      "label": "client/src/pages/enquiries/Enquiries.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "label": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/enquiries/ViewEnquiry.js",
+      "label": "client/src/pages/enquiries/ViewEnquiry.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/feedback/Feedback.js",
+      "label": "client/src/pages/feedback/Feedback.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/home/Home.js",
+      "label": "client/src/pages/home/Home.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/home/ModuleModal.js",
+      "label": "client/src/pages/home/ModuleModal.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/Login/Login.jsx",
+      "label": "client/src/pages/Login/Login.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/mrm/Mrm.js",
+      "label": "client/src/pages/mrm/Mrm.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/Register/Register.jsx",
+      "label": "client/src/pages/Register/Register.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rms/Rms.js",
+      "label": "client/src/pages/rms/Rms.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "label": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rmsrequest/Users.js",
+      "label": "client/src/pages/rmsrequest/Users.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rmsrequest/Usersadd.js",
+      "label": "client/src/pages/rmsrequest/Usersadd.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/sbforms/FormViewsTab.js",
+      "label": "client/src/pages/sbforms/FormViewsTab.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/sbforms/Sbforms.js",
+      "label": "client/src/pages/sbforms/Sbforms.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/sbforms/xxFormViewsTab.js",
+      "label": "client/src/pages/sbforms/xxFormViewsTab.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenant/Subtenant.js",
+      "label": "client/src/pages/subtenant/Subtenant.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenant/Subtenantadd.js",
+      "label": "client/src/pages/subtenant/Subtenantadd.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenant/Subtenants.js",
+      "label": "client/src/pages/subtenant/Subtenants.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenants/Subtenant.js",
+      "label": "client/src/pages/subtenants/Subtenant.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenants/Subtenantadd.js",
+      "label": "client/src/pages/subtenants/Subtenantadd.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenants/Subtenants.js",
+      "label": "client/src/pages/subtenants/Subtenants.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/tenant/Tenant.js",
+      "label": "client/src/pages/tenant/Tenant.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/tenant/Tenantadd.js",
+      "label": "client/src/pages/tenant/Tenantadd.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/tenant/Tenants.js",
+      "label": "client/src/pages/tenant/Tenants.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/users/User.js",
+      "label": "client/src/pages/users/User.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/users/Users.js",
+      "label": "client/src/pages/users/Users.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/users/Usersadd.js",
+      "label": "client/src/pages/users/Usersadd.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/api.js",
+      "label": "client/src/pages/workflows/api.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/CreateWorkflowModal.js",
+      "label": "client/src/pages/workflows/CreateWorkflowModal.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/FormRunner.jsx",
+      "label": "client/src/pages/workflows/FormRunner.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/WorkflowAssignments.jsx",
+      "label": "client/src/pages/workflows/WorkflowAssignments.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/WorkflowDesigner.jsx",
+      "label": "client/src/pages/workflows/WorkflowDesigner.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/WorkflowLibrary.jsx",
+      "label": "client/src/pages/workflows/WorkflowLibrary.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/WorkflowManager.jsx",
+      "label": "client/src/pages/workflows/WorkflowManager.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/WorkflowProperties.jsx",
+      "label": "client/src/pages/workflows/WorkflowProperties.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "server/server/models/autogen/app.js",
+      "label": "server/server/models/autogen/app.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/approval.js",
+      "label": "server/server/models/autogen/approval.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/approvalFile.js",
+      "label": "server/server/models/autogen/approvalFile.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/auditLog.js",
+      "label": "server/server/models/autogen/auditLog.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/authLog.js",
+      "label": "server/server/models/autogen/authLog.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/businesspartner.js",
+      "label": "server/server/models/autogen/businesspartner.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/canvasConfig.js",
+      "label": "server/server/models/autogen/canvasConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/chartConfig.js",
+      "label": "server/server/models/autogen/chartConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormAcasdcasca.js",
+      "label": "server/server/models/autogen/custFormAcasdcasca.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormDdl2.js",
+      "label": "server/server/models/autogen/custFormDdl2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormDdltemplate.js",
+      "label": "server/server/models/autogen/custFormDdltemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormDirtydelete1.js",
+      "label": "server/server/models/autogen/custFormDirtydelete1.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormUdaytest2.js",
+      "label": "server/server/models/autogen/custFormUdaytest2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/custFormUserdatum.js",
+      "label": "server/server/models/autogen/custFormUserdatum.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/dept.js",
+      "label": "server/server/models/autogen/dept.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/emailTemplate.js",
+      "label": "server/server/models/autogen/emailTemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/enquiry.js",
+      "label": "server/server/models/autogen/enquiry.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/enquiryFile.js",
+      "label": "server/server/models/autogen/enquiryFile.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/facility.js",
+      "label": "server/server/models/autogen/facility.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formConfig.js",
+      "label": "server/server/models/autogen/formConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formCustTable.js",
+      "label": "server/server/models/autogen/formCustTable.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formCustTable2.js",
+      "label": "server/server/models/autogen/formCustTable2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formField.js",
+      "label": "server/server/models/autogen/formField.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formMaster.js",
+      "label": "server/server/models/autogen/formMaster.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formRecord.js",
+      "label": "server/server/models/autogen/formRecord.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formTemplate.js",
+      "label": "server/server/models/autogen/formTemplate.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/formView.js",
+      "label": "server/server/models/autogen/formView.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/init-models.js",
+      "label": "server/server/models/autogen/init-models.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/module.js",
+      "label": "server/server/models/autogen/module.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/organization.js",
+      "label": "server/server/models/autogen/organization.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/product.js",
+      "label": "server/server/models/autogen/product.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/request.js",
+      "label": "server/server/models/autogen/request.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/review.js",
+      "label": "server/server/models/autogen/review.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/salesInvoice.js",
+      "label": "server/server/models/autogen/salesInvoice.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/subscription.js",
+      "label": "server/server/models/autogen/subscription.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/subtenant.js",
+      "label": "server/server/models/autogen/subtenant.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/tableConfig.js",
+      "label": "server/server/models/autogen/tableConfig.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/tenant.js",
+      "label": "server/server/models/autogen/tenant.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/todo.js",
+      "label": "server/server/models/autogen/todo.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/user.js",
+      "label": "server/server/models/autogen/user.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/users2.js",
+      "label": "server/server/models/autogen/users2.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflow.js",
+      "label": "server/server/models/autogen/workflow.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowAudit.js",
+      "label": "server/server/models/autogen/workflowAudit.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowEdge.js",
+      "label": "server/server/models/autogen/workflowEdge.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowFormStep.js",
+      "label": "server/server/models/autogen/workflowFormStep.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowInstance.js",
+      "label": "server/server/models/autogen/workflowInstance.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowNode.js",
+      "label": "server/server/models/autogen/workflowNode.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowStep.js",
+      "label": "server/server/models/autogen/workflowStep.js",
+      "kind": "file"
+    },
+    {
+      "id": "server/server/models/autogen/workflowTask.js",
+      "label": "server/server/models/autogen/workflowTask.js",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "label": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/pages/workflows/components/NodeShell.jsx",
+      "label": "client/src/pages/workflows/components/NodeShell.jsx",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/pages/workflows/designer/WorkflowDesigner.jsx",
+      "label": "client/src/pages/workflows/designer/WorkflowDesigner.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/utils/bpmn.js",
+      "label": "client/src/pages/workflows/utils/bpmn.js",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/utils/helpers.js",
+      "label": "client/src/pages/workflows/utils/helpers.js",
+      "kind": "helper"
+    },
+    {
+      "id": "client/src/pages/workflows/modals/EvaluateModal.jsx",
+      "label": "client/src/pages/workflows/modals/EvaluateModal.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/modals/FormStepModal.jsx",
+      "label": "client/src/pages/workflows/modals/FormStepModal.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/modals/InitiatorModal.jsx",
+      "label": "client/src/pages/workflows/modals/InitiatorModal.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/modals/ProcessStepModal.jsx",
+      "label": "client/src/pages/workflows/modals/ProcessStepModal.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/modals/WorkflowPropertiesModal.jsx",
+      "label": "client/src/pages/workflows/modals/WorkflowPropertiesModal.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/nodes/CompactStepNode.jsx",
+      "label": "client/src/pages/workflows/nodes/CompactStepNode.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/nodes/EvaluateNode.jsx",
+      "label": "client/src/pages/workflows/nodes/EvaluateNode.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/nodes/FormNode.jsx",
+      "label": "client/src/pages/workflows/nodes/FormNode.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/nodes/InitiatorNode.jsx",
+      "label": "client/src/pages/workflows/nodes/InitiatorNode.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/workflows/nodes/ProcessNode.jsx",
+      "label": "client/src/pages/workflows/nodes/ProcessNode.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "server/routes/formviews.js",
+      "label": "server/routes/formviews.js",
+      "kind": "route"
+    },
+    {
+      "id": "client/src/App.css",
+      "label": "client/src/App.css",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/pages/login/Login.jsx",
+      "label": "client/src/pages/login/Login.jsx",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/styles/global.scss",
+      "label": "client/src/styles/global.scss",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/index.css",
+      "label": "client/src/index.css",
+      "kind": "file"
+    },
+    {
+      "id": "server/routes/UICreator.js",
+      "label": "server/routes/UICreator.js",
+      "kind": "route"
+    },
+    {
+      "id": "server/controllers/uploadController.js",
+      "label": "server/controllers/uploadController.js",
+      "kind": "controller"
+    },
+    {
+      "id": "client/src/components/Login.scss",
+      "label": "client/src/components/Login.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/SessionExpiredModal.scss",
+      "label": "client/src/components/SessionExpiredModal.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/UICreator.js",
+      "label": "client/src/components/UICreator.js",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/add/add.scss",
+      "label": "client/src/components/add/add.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/chartBox/chartBox.scss",
+      "label": "client/src/components/chartBox/chartBox.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/datatable/datatable.scss",
+      "label": "client/src/components/datatable/datatable.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/footer/footer.scss",
+      "label": "client/src/components/footer/footer.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/navbar/navbar.scss",
+      "label": "client/src/components/navbar/navbar.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/navbar/ttlogo.png",
+      "label": "client/src/components/navbar/ttlogo.png",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/menu/menu.scss",
+      "label": "client/src/components/menu/menu.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/rmsMenu/rmsmenu.scss",
+      "label": "client/src/components/rmsMenu/rmsmenu.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/single/single.scss",
+      "label": "client/src/components/single/single.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/components/topbox/topbox.scss",
+      "label": "client/src/components/topbox/topbox.scss",
+      "kind": "component"
+    },
+    {
+      "id": "client/src/pages/approvals/approvals.scss",
+      "label": "client/src/pages/approvals/approvals.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/assignments/assignments.scss",
+      "label": "client/src/pages/assignments/assignments.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/ccm/ccm.scss",
+      "label": "client/src/pages/ccm/ccm.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/cm/cm.scss",
+      "label": "client/src/pages/cm/cm.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/dak/dak.scss",
+      "label": "client/src/pages/dak/dak.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/dashboardmain/dashboardmain.scss",
+      "label": "client/src/pages/dashboardmain/dashboardmain.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/docucontrol/docucontrol.scss",
+      "label": "client/src/pages/docucontrol/docucontrol.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/home/home.scss",
+      "label": "client/src/pages/home/home.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/home/moduleModal.scss",
+      "label": "client/src/pages/home/moduleModal.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/logo.svg",
+      "label": "client/src/logo.svg",
+      "kind": "file"
+    },
+    {
+      "id": "client/src/pages/Login/Login.scss",
+      "label": "client/src/pages/Login/Login.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/mrm/mrm.scss",
+      "label": "client/src/pages/mrm/mrm.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/Register/Register.scss",
+      "label": "client/src/pages/Register/Register.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rms/rms.scss",
+      "label": "client/src/pages/rms/rms.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rmsrequest/rmsrequest.scss",
+      "label": "client/src/pages/rmsrequest/rmsrequest.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/rmsrequest/users.scss",
+      "label": "client/src/pages/rmsrequest/users.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/sbforms/formviews.scss",
+      "label": "client/src/pages/sbforms/formviews.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/sbforms/sbforms.scss",
+      "label": "client/src/pages/sbforms/sbforms.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/subtenants/subtenants.scss",
+      "label": "client/src/pages/subtenants/subtenants.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/tenant/tenants.scss",
+      "label": "client/src/pages/tenant/tenants.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/users/user.scss",
+      "label": "client/src/pages/users/user.scss",
+      "kind": "page"
+    },
+    {
+      "id": "client/src/pages/users/users.scss",
+      "label": "client/src/pages/users/users.scss",
+      "kind": "page"
+    }
+  ],
+  "edges": [
+    {
+      "source": "agent/chowkidar.js",
+      "target": "agent/scanner.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/chowkidar.js",
+      "target": "agent/graphBuilder.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/fileWatcher.js",
+      "target": "agent/scanner.js",
+      "type": "require"
+    },
+    {
+      "source": "server/sequelize.js",
+      "target": "server/config/dbManager.js",
+      "type": "require"
+    },
+    {
+      "source": "server/sequelize.js",
+      "target": "server/models/autogen/init-models.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/middleware/checkSubscription.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/auth.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/subscription.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/users.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/approvals.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/templates.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/formViews.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/workflows.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/enquiries.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/businesspartner.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/table.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/template.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/upload.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/forms.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/formviews.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/chowkidar.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/formdata.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/tableConfigs.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/formConfigs.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/canvasConfigs.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/dbmeta.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "server/routes/chartConfigs.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "agent/chowkidar.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server.js",
+      "target": "agent/fileWatcher.js",
+      "type": "require"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/App.css",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/components/InputTodo.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/components/ListTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/components/navbar/Navbar.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/components/footer/Footer.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/components/menu/Menu.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/home/Home.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/users/Users.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/users/User.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/assignments/Assignments.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/tenant/Tenants.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/subtenants/Subtenants.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/login/Login.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/dms/Dms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/styles/global.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/rms/Rms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/bpm/Bpm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/mrm/Mrm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/sbforms/Sbforms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/cm/Cm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/dak/Dak.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/ccm/Ccm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/docucontrol/Docucontrol.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App copy.js",
+      "target": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/components/ProtectedRoute.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/components/ProtectedModuleRoute.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/components/Layout.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/pages/home/Home.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/pages/Login/Login.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/pages/Register/Register.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/pages/Logout.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/AuthWrapper.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/App.js",
+      "target": "client/src/config/modulesConfig.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/data-oldMenu.js",
+      "target": "client/src/pages/tenant/Tenant.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/data-oldMenu.js",
+      "target": "client/src/pages/tenant/Tenants.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/data.js",
+      "target": "client/src/pages/tenant/Tenant.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/data.js",
+      "target": "client/src/pages/tenant/Tenants.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/datarms.js",
+      "target": "client/src/pages/tenant/Tenant.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/datarms.js",
+      "target": "client/src/pages/tenant/Tenants.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/datarms.js",
+      "target": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/index.js",
+      "target": "client/src/App.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/index.js",
+      "target": "client/src/index.css",
+      "type": "import"
+    },
+    {
+      "source": "client/src/index.js",
+      "target": "client/src/reportWebVitals.js",
+      "type": "import"
+    },
+    {
+      "source": "agent/rules/audit.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/auth.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/corsSafety.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/errorLogging.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/auth.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/subscription.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/audit.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/errorLogging.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/validation.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/rateLimit.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/securityHeaders.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/corsSafety.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/transactions.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/rbac.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/sessionTimeout.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/index.js",
+      "target": "agent/rules/performance.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/performance.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/rateLimit.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/rbac.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/securityHeaders.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/sessionTimeout.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/subscription.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/transactions.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "agent/rules/validation.js",
+      "target": "agent/rules/config.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/assignments.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/canvasConfigs.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/formdataController.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/tasks.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/UploadController.js",
+      "target": "server/utils/excelParser.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/UploadController.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/controllers/workflows.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/helpers/triggerEmailOnStatusChange.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/helpers/triggerEmailOnStatusChange.js",
+      "target": "server/utils/sendEmail.js",
+      "type": "require"
+    },
+    {
+      "source": "server/middleware/audit.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/middleware/authMiddleware.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/middleware/checkSubscription.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/middleware/validation.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/middleware/withTx.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/approvals.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/approvals.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/approvals.js",
+      "target": "server/utils/sendEmail.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/approvals.js",
+      "target": "server/middleware/validation.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/approvals.js",
+      "target": "server/middleware/audit.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/assignments.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/assignments.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/auth.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/auth.js",
+      "target": "server/utils/auditLogger.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/businesspartner.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/businesspartner.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/canvasConfigs.js",
+      "target": "server/controllers/canvasConfigs.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/catalog.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/chartConfigs.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/chowkidar.js",
+      "target": "agent/scanner.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/db-settings.js",
+      "target": "server/config/dbManager.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/db-settings.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/dbdiag.js",
+      "target": "server/config/dbManager.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/dbmeta.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/dbmeta.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/enquiries.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/enquiries.js",
+      "target": "server/helpers/triggerEmailOnStatusChange.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/enquiries.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/enquiries.js",
+      "target": "server/utils/uploadEncryptedFiles.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/formConfigs.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/formdata.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/formdata.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/forms.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/forms.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/formViews.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/formViews.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/health.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/seq.js",
+      "target": "server/sequelize.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/subscription.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/subscription.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/subscription.js",
+      "target": "server/utils/auditLogger.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/table.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/tableConfigs.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/tasks.js",
+      "target": "server/controllers/tasks.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/template.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/templates.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/templates.js",
+      "target": "server/utils/stringUtils.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/uicreator.js",
+      "target": "server/routes/UICreator.js",
+      "type": "import"
+    },
+    {
+      "source": "server/routes/upload.js",
+      "target": "server/controllers/uploadController.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/users.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/users.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/workflows.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/workflows.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/workflows.sequelize.js",
+      "target": "server/sequelize.js",
+      "type": "require"
+    },
+    {
+      "source": "server/utils/auditLogger.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/utils/uploadEncryptedFiles.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/bpm/Bpm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/sbforms/Sbforms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/dak/Dak.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/cm/Cm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/ccm/Ccm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/mrm/Mrm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/dms/Dms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/approvals/Approvals.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/feedback/Feedback.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/rms/Rms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/WorkflowManager.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/CreateWorkflowModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/enquiries/Enquiries.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/components/BulkUploader.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/components/ListFormViews.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/ChowkidarDashboard.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/components/UiCreator.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/layout/HomeLayout.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/components/TableCreator.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/components/ChartBuilder.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/admin/DatabaseSettings.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/admin/AdminPanel.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/DbSchemaExplorer.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/WorkflowAssignments.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/WorkflowDesigner.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/WorkflowLibrary.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/config/modulesConfig.js",
+      "target": "client/src/pages/workflows/FormRunner.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/AdminFormBuilder.js",
+      "target": "client/src/components/ViewFormModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/AdminFormModal.js",
+      "target": "client/src/components/ViewFormModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/AdminFormModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/BulkUploader.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/CanvasList.jsx",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ChartBuilder.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ChartBuilder.js",
+      "target": "client/src/components/ChartRenderer.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ExperimentModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ExperimentModal.js",
+      "target": "client/src/components/ViewFormModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/FormBuilderModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/FormBuilderModal.js",
+      "target": "client/src/components/ViewFormModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/Layout.js",
+      "target": "client/src/components/navbar/Navbar.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListFormViews.js",
+      "target": "client/src/components/FormBuilderModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListFormViews.js",
+      "target": "client/src/components/ViewFormModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListFormViews.js",
+      "target": "client/src/components/ExperimentModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListFormViews.js",
+      "target": "client/src/components/SimpleModalWithCheckboxes.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListFormViews.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ListTodos.js",
+      "target": "client/src/components/EditTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/LoginForm.js",
+      "target": "client/src/components/Login.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/RegisterForm.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/SessionExpiredModal.js",
+      "target": "client/src/components/SessionExpiredModal.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/UiCreator.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/UiDashboard.js",
+      "target": "client/src/components/CanvasList.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/UiDashboard.js",
+      "target": "client/src/components/UICreator.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/ViewFormModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/ChowkidarDashboard.jsx",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/DynamicReportCreator.js",
+      "target": "client/src/components/TableCreator.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/services/api.js",
+      "target": "client/src/components/SessionExpiredModal.js",
+      "type": "import"
+    },
+    {
+      "source": "server/routes/workflows/assignmentsWf.js",
+      "target": "server/db.js",
+      "type": "require"
+    },
+    {
+      "source": "server/routes/workflows/assignmentsWf.js",
+      "target": "server/middleware/authMiddleware.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/approvalFile.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/approval.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/app.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/auditLog.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/authLog.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/businesspartner.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/canvasConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/chartConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormAcasdcasca.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormDdl2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormDdltemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormDirtydelete1.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormUdaytest2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/custFormUserdatum.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/dept.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/emailTemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/enquiry.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/enquiryFile.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/facility.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formCustTable.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formCustTable2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formField.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formMaster.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formRecord.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formTemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/formView.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/module.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/organization.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/product.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/request.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/review.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/salesInvoice.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/subscription.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/subtenant.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/tableConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/tenant.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/todo.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/user.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/users2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowAudit.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowEdge.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowFormStep.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowInstance.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowNode.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowStep.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflowTask.js",
+      "type": "require"
+    },
+    {
+      "source": "server/models/autogen/init-models.js",
+      "target": "server/models/autogen/workflow.js",
+      "type": "require"
+    },
+    {
+      "source": "client/src/components/add/Add.js",
+      "target": "client/src/components/add/add.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/chartBox/ChartBox.js",
+      "target": "client/src/components/chartBox/chartBox.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/chartBox/xChartrender.js",
+      "target": "client/src/components/chartBox/chartBox.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/datatable/DataGrid1.js",
+      "target": "client/src/components/datatable/datatable.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/datatable/DataTable.js",
+      "target": "client/src/components/datatable/datatable.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/datatable/DataTable.js",
+      "target": "client/src/components/EditTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/footer/Footer.js",
+      "target": "client/src/components/footer/footer.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/navbar/Navbar.js",
+      "target": "client/src/components/navbar/navbar.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/navbar/Navbar.js",
+      "target": "client/src/components/navbar/ttlogo.png",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/menu/Menu.js",
+      "target": "client/src/components/menu/menu.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/menu/Menu.js",
+      "target": "client/src/data.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/rmsMenu/RmsMenu.js",
+      "target": "client/src/components/rmsMenu/rmsmenu.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/rmsMenu/RmsMenu.js",
+      "target": "client/src/datarms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/single/Single.js",
+      "target": "client/src/components/single/single.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/single/Single.js",
+      "target": "client/src/components/chartBox/ChartBox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/components/topbox/Topbox.js",
+      "target": "client/src/components/topbox/topbox.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/approvals/Approvals.js",
+      "target": "client/src/pages/approvals/approvals.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/approvals/Approvals.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/assignments/Assignments.js",
+      "target": "client/src/pages/assignments/assignments.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/bpm/Bpm.js",
+      "target": "client/src/components/menu/Menu.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/bpm/Bpm.js",
+      "target": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/bpm/Bpm.js",
+      "target": "client/src/pages/assignments/Assignments.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/bpm/Bpm.js",
+      "target": "client/src/pages/users/Users.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/bpm/Bpm.js",
+      "target": "client/src/pages/sbforms/Sbforms.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/ccm/Ccm.js",
+      "target": "client/src/pages/ccm/ccm.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/cm/Cm.js",
+      "target": "client/src/pages/cm/cm.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/dak/Dak.js",
+      "target": "client/src/pages/dak/dak.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "target": "client/src/pages/dashboardmain/dashboardmain.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/dashboardmain/Dashboardmain.js",
+      "target": "client/src/components/chartBox/ChartBox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/dms/Dms.js",
+      "target": "client/src/components/chartBox/ChartBox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/docucontrol/Docucontrol.js",
+      "target": "client/src/pages/docucontrol/docucontrol.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/Enquiries.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/Enquiries.js",
+      "target": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/Enquiries.js",
+      "target": "client/src/pages/enquiries/ViewEnquiry.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "target": "client/src/components/SecureFileUploader.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/ViewEnquiry.js",
+      "target": "client/src/pages/enquiries/NewEnquiryForm.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/enquiries/ViewEnquiry.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/Home.js",
+      "target": "client/src/pages/home/ModuleModal.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/Home.js",
+      "target": "client/src/pages/home/home.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/Home.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/Home.js",
+      "target": "client/src/pages/enquiries/Enquiries.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/Home.js",
+      "target": "client/src/layout/HomeLayout.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/ModuleModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/home/ModuleModal.js",
+      "target": "client/src/pages/home/moduleModal.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Login/Login.jsx",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Login/Login.jsx",
+      "target": "client/src/logo.svg",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Login/Login.jsx",
+      "target": "client/src/pages/Login/Login.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/mrm/Mrm.js",
+      "target": "client/src/pages/mrm/mrm.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/mrm/Mrm.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/mrm/Mrm.js",
+      "target": "client/src/components/chartBox/ChartBox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Register/Register.jsx",
+      "target": "client/src/logo.svg",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Register/Register.jsx",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/Register/Register.jsx",
+      "target": "client/src/pages/Register/Register.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/pages/rms/rms.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/ListTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/InputTodo.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/navbar/Navbar.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/footer/Footer.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/chartBox/ChartBox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rms/Rms.js",
+      "target": "client/src/components/rmsMenu/RmsMenu.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "target": "client/src/components/single/Single.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "target": "client/src/components/single/single.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Rmsrequest.js",
+      "target": "client/src/pages/rmsrequest/rmsrequest.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/components/datatable/DataTable.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/pages/rmsrequest/users.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/components/InputTodo.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/components/EditTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/pages/rmsrequest/Usersadd.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/rmsrequest/Users.js",
+      "target": "client/src/components/ListTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/FormViewsTab.js",
+      "target": "client/src/pages/sbforms/formviews.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/FormViewsTab.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/Sbforms.js",
+      "target": "client/src/pages/sbforms/sbforms.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/Sbforms.js",
+      "target": "client/src/components/footer/Footer.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/Sbforms.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/Sbforms.js",
+      "target": "client/src/pages/sbforms/FormViewsTab.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/sbforms/xxFormViewsTab.js",
+      "target": "client/src/pages/sbforms/formviews.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/components/datatable/DataTable.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/pages/subtenants/subtenants.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/components/InputTodo.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/components/EditTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/pages/users/Usersadd.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/subtenants/Subtenants.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/components/datatable/DataTable.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/pages/tenant/tenants.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/components/InputTodo.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/components/EditTodos.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/pages/users/Usersadd.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/tenant/Tenants.js",
+      "target": "client/src/components/topbox/Topbox.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/User.js",
+      "target": "client/src/components/single/Single.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/User.js",
+      "target": "client/src/components/single/single.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/User.js",
+      "target": "client/src/pages/users/user.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/Users.js",
+      "target": "client/src/components/datatable/DataTable.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/Users.js",
+      "target": "client/src/pages/users/users.scss",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/users/Users.js",
+      "target": "client/src/pages/users/Usersadd.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/CreateWorkflowModal.js",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/WorkflowDesigner.jsx",
+      "target": "client/src/pages/workflows/WorkflowProperties.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/WorkflowDesigner.jsx",
+      "target": "client/src/pages/workflows/api.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/WorkflowManager.jsx",
+      "target": "client/src/services/api.js",
+      "type": "import"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/approvalFile.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/approval.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/app.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/auditLog.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/authLog.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/businesspartner.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/canvasConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/chartConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormAcasdcasca.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormDdl2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormDdltemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormDirtydelete1.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormUdaytest2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/custFormUserdatum.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/dept.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/emailTemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/enquiry.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/enquiryFile.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/facility.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formCustTable.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formCustTable2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formField.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formMaster.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formRecord.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formTemplate.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/formView.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/module.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/organization.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/product.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/request.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/review.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/salesInvoice.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/subscription.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/subtenant.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/tableConfig.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/tenant.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/todo.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/user.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/users2.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowAudit.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowEdge.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowFormStep.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowInstance.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowNode.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowStep.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflowTask.js",
+      "type": "require"
+    },
+    {
+      "source": "server/server/models/autogen/init-models.js",
+      "target": "server/server/models/autogen/workflow.js",
+      "type": "require"
+    },
+    {
+      "source": "client/src/pages/workflows/components/NodeShell.jsx",
+      "target": "client/src/pages/workflows/utils/helpers.js",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/modals/EvaluateModal.jsx",
+      "target": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/modals/FormStepModal.jsx",
+      "target": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/modals/InitiatorModal.jsx",
+      "target": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/modals/ProcessStepModal.jsx",
+      "target": "client/src/pages/workflows/components/ModalChrome.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/nodes/EvaluateNode.jsx",
+      "target": "client/src/pages/workflows/components/NodeShell.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/nodes/FormNode.jsx",
+      "target": "client/src/pages/workflows/components/NodeShell.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/nodes/InitiatorNode.jsx",
+      "target": "client/src/pages/workflows/components/NodeShell.jsx",
+      "type": "import"
+    },
+    {
+      "source": "client/src/pages/workflows/nodes/ProcessNode.jsx",
+      "target": "client/src/pages/workflows/components/NodeShell.jsx",
+      "type": "import"
+    }
+  ]
+}

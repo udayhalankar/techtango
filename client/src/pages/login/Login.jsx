@@ -80,9 +80,9 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-left">
-          <img src={logo} alt="Tymebound Logo" className="login-logo" />
+          <img src={logo} alt="Augmis Logo" className="login-logo" />
           <h1>Hello!</h1>
-          <p className="subtitle">Welcome to Tymebound</p>
+          <p className="subtitle">Welcome to Augmis</p>
 
           <form onSubmit={handleSubmit}>
             <input

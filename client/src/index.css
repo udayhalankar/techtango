@@ -1,3 +1,9 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,9 +11,42 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #f5f7fb;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.modal-overlay,
+.add {
+  z-index: 1600 !important;
+  background: rgba(15, 23, 42, 0.38) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.modal.show,
+.modal.fade.show {
+  z-index: 1600 !important;
+}
+
+.modal-backdrop.show {
+  z-index: 1590 !important;
+  background-color: rgba(15, 23, 42, 0.38) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 1;
+}
+
+.MuiModal-root,
+.MuiDialog-root {
+  z-index: 1600 !important;
+}
+
+.MuiBackdrop-root {
+  background-color: rgba(15, 23, 42, 0.38) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }

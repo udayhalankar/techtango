@@ -40,19 +40,35 @@ function decryptFile(encryptedPath, decryptedPath, ivHex) {
   });
 }
 
+function resolveStoredFilePath(storedPath) {
+  if (!storedPath) return null;
+  if (path.isAbsolute(storedPath)) return storedPath;
+  const normalized = storedPath.replace(/[\\/]+/g, path.sep);
+  return path.resolve(__dirname, '..', normalized);
+}
+
+async function bindAuditUser(client, userId) {
+  const value = String(userId ?? '').trim();
+  await client.query(`SELECT set_config($1, $2::text, true)`, ['app.user_id', value]);
+  await client.query(`SELECT set_config($1, $2::text, true)`, ['app.current_user_id', value]);
+}
+
 router.post('/', verifyToken, upload.array('files'), async (req, res) => {
   const { title, assignee, details, dueDate } = req.body;
   const userId = req.user.userId;
   const client = await pool.connect();
+  let assigneeUser = null;
+  let approvalId = null;
 
   try {
     await client.query('BEGIN');
+    await bindAuditUser(client, userId);
     const approvalRes = await client.query(
       `INSERT INTO approvals (title, assignee, details, due_date, assigned_by, created_at, status)
        VALUES ($1, $2, $3, $4, $5, NOW(), 'New') RETURNING id`,
       [title, assignee, details, dueDate, userId]
     );
-    const approvalId = approvalRes.rows[0].id;
+    approvalId = approvalRes.rows[0].id;
 
     for (const file of req.files) {
       const iv = crypto.randomBytes(ivLength);
@@ -67,20 +83,35 @@ router.post('/', verifyToken, upload.array('files'), async (req, res) => {
       );
     }
 
-    const assigneeRes = await pool.query(
+    const assigneeRes = await client.query(
       'SELECT firstname, email FROM users WHERE id = $1',
       [assignee]
     );
-    const assigneeUser = assigneeRes.rows[0];
-    await sendTaskEmail({
-      to: assigneeUser.email,
-      recipientName: assigneeUser.firstname,
-      message: "You have been assigned a new task item.",
-      link: appUrl("/approvals?tab=inbox")
-    });
+    assigneeUser = assigneeRes.rows[0] || null;
 
     await client.query('COMMIT');
-    res.status(201).json({ message: 'Approval created' });
+    res.status(201).json({ message: 'Approval created', id: approvalId });
+
+    if (assigneeUser?.email) {
+      sendTaskEmail({
+        to: assigneeUser.email,
+        recipientName: assigneeUser.firstname || 'User',
+        message: "You have been assigned a new task item.",
+        link: appUrl("/approvals?tab=inbox")
+      }).catch((mailErr) => {
+        console.error('⚠️ Approval created but notification email failed:', {
+          approvalId,
+          assignee,
+          email: assigneeUser.email,
+          error: mailErr.message
+        });
+      });
+    } else {
+      console.warn('⚠️ Approval created without notification email target:', {
+        approvalId,
+        assignee
+      });
+    }
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('❌ Error creating approval:', err);
@@ -151,12 +182,31 @@ router.get('/download/:id', verifyToken, async (req, res) => {
     const { original_filename, encrypted_path, iv } = fileRes.rows[0];
 
     const tempDir = path.join(__dirname, '../temp');
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-    const decryptedPath = path.join(tempDir, original_filename);
+    fs.mkdirSync(tempDir, { recursive: true });
 
-    await decryptFile(encrypted_path, decryptedPath, iv);
-    res.download(decryptedPath, original_filename, (err) => {
+    const encryptedAbsolutePath = resolveStoredFilePath(encrypted_path);
+    if (!encryptedAbsolutePath || !fs.existsSync(encryptedAbsolutePath)) {
+      console.error('❌ Encrypted source file missing:', {
+        fileId,
+        original_filename,
+        encrypted_path,
+        encryptedAbsolutePath
+      });
+      return res.status(404).json({ error: 'Stored attachment is missing on disk' });
+    }
+
+    const safeExt = path.extname(original_filename || '') || '.bin';
+    const decryptedPath = path.join(tempDir, `approval_${fileId}_${Date.now()}${safeExt}`);
+
+    await decryptFile(encryptedAbsolutePath, decryptedPath, iv);
+    await fs.promises.access(decryptedPath, fs.constants.R_OK);
+
+    const cleanup = () => {
       fs.unlink(decryptedPath, () => {});
+    };
+
+    res.download(decryptedPath, original_filename, (err) => {
+      cleanup();
       if (err) console.error('Download error:', err);
     });
   } catch (err) {
@@ -208,9 +258,11 @@ router.patch('/:id/update-by-assignee', verifyToken, upload.array('files'), asyn
   const userId = req.user.userId;
   const { status, assignee_comments } = req.body;
   const client = await pool.connect();
+  let assignor = null;
 
   try {
     await client.query('BEGIN');
+    await bindAuditUser(client, userId);
     const approvalCheck = await client.query('SELECT * FROM approvals WHERE id = $1 AND assignee = $2', [approvalId, userId]);
     if (approvalCheck.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -234,20 +286,29 @@ router.patch('/:id/update-by-assignee', verifyToken, upload.array('files'), asyn
       );
     }
 
-    const assignorRes = await pool.query(
+    const assignorRes = await client.query(
       `SELECT u.firstname, u.email FROM users u JOIN approvals a ON a.assigned_by = u.id WHERE a.id = $1`,
       [approvalId]
     );
-    const assignor = assignorRes.rows[0];
-    await sendTaskEmail({
-      to: assignor.email,
-      recipientName: assignor.firstname,
-      message: "The status of your assigned task has been updated.",
-      link: appUrl("/approvals?tab=outbox")
-    });
+    assignor = assignorRes.rows[0] || null;
 
     await client.query('COMMIT');
     res.json({ message: 'Approval updated successfully' });
+
+    if (assignor?.email) {
+      sendTaskEmail({
+        to: assignor.email,
+        recipientName: assignor.firstname || 'User',
+        message: "The status of your assigned task has been updated.",
+        link: appUrl("/approvals?tab=outbox")
+      }).catch((mailErr) => {
+        console.error('⚠️ Approval updated but notification email failed:', {
+          approvalId,
+          assignorEmail: assignor.email,
+          error: mailErr.message
+        });
+      });
+    }
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('❌ Assignee update failed:', err);

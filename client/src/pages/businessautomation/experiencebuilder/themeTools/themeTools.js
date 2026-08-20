@@ -114,7 +114,7 @@ export const THEME_TOOL_TROUBLESHOOTING = [
   {
     id: "navbar-offset",
     title: "Navbar offset",
-    detail: "Edit mode should keep the Tymebound navbar visible while published mode hides it.",
+    detail: "Edit mode should keep the Augmis navbar visible while published mode hides it.",
   },
   {
     id: "section-padding",
@@ -131,11 +131,11 @@ export const THEME_TOOL_TROUBLESHOOTING = [
 export const DEFAULT_THEME_TOOLS = {
   starterPresetId: "operations-dashboard",
   whiteLabel: {
-    brandName: "Tymebound",
+    brandName: "Augmis",
     tagline: "Manage Information Effortlessly",
     primaryColor: "#1e3a6d",
     accentColor: "#2f7dd6",
-    logoText: "Tymebound",
+    logoText: "Augmis",
     hideBranding: false,
   },
   plugins: THEME_TOOL_PLUGINS.reduce((acc, plugin) => {

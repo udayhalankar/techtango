@@ -16,13 +16,13 @@ export default function Layout() {
     return <Outlet />;
   }
   return (
-    <>
+    <div className="app-shell" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Navbar />
-      <div className="page-content" style={{ paddingTop: "65px", paddingBottom: "45px" }}>
+      <div className="page-content" style={{ paddingTop: "65px", flex: 1 }}>
         <Outlet />
       </div>
       <Footer />
-    </>
+    </div>
   );
 }
 

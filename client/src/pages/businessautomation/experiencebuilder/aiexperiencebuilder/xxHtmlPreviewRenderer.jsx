@@ -32,7 +32,7 @@ const injectHeaderOverlay = (srcDoc, headerOverlay = {}) => {
     return srcDoc;
   }
 
-  const headerTitle = String(headerOverlay?.logoText || headerOverlay?.brandName || headerOverlay?.pageTitle || headerOverlay?.title || "Tymebound").trim();
+  const headerTitle = String(headerOverlay?.logoText || headerOverlay?.brandName || headerOverlay?.pageTitle || headerOverlay?.title || "Augmis").trim();
   const overlayHtml = `
     <div style="position:sticky;top:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#0b4a8b;color:#fff;border-bottom:1px solid rgba(255,255,255,.12);box-shadow:0 2px 8px rgba(29,62,120,.12);">
       <div style="display:flex;align-items:center;gap:12px;min-width:0;">

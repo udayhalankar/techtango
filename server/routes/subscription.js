@@ -83,7 +83,10 @@ router.get('/subscriptions', verifyToken, async (req, res) => {
         s.module_id,
         m.name AS module_name,
         m.description,
-        m.routeinfo AS route,
+        CASE
+          WHEN lower(m.name) = 'approvals' THEN '/directassignments'
+          ELSE m.routeinfo
+        END AS route,
         s.start_date,
         s.end_date,
         s.status

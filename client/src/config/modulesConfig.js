@@ -10,6 +10,8 @@ import Ccm from "../pages/ccm/Ccm";
 import Mrm from "../pages/mrm/Mrm";
 import Dms from "../pages/dms/Dms";
 import Approvals from "../pages/approvals/Approvals";
+import DirectAssignments from "../pages/directassignments/DirectAssignments";
+import WorkflowAssign from "../pages/workflowassign/WorkflowAssign";
 import Feedback from "../pages/feedback/Feedback";
 import NewEnquiryForm from "../pages/enquiries/NewEnquiryForm";
 import Rms from "../pages/rm/Rms";
@@ -108,7 +110,9 @@ const modulesConfig = {
   RmConfigLayout: { path: "/rmconfig/*", component: RmConfigLayout, protected: true, moduleId: 6, moduleName: "RMS" },
   RegisterNew: { path: "/registernew", component: RegisterNew, protected: true, moduleId: 6, moduleName: "RMS" },
 
-  Approvals: { path: "/approvals", component: Approvals, protected: true },
+  Approvals: { path: "/approvals", component: Approvals, protected: true, moduleId: 9, moduleName: "Assignments" },
+  DirectAssignments: { path: "/directassignments", component: DirectAssignments, protected: true, moduleId: 8, moduleName: "Business Automation" },
+  WorkflowAssign: { path: "/workflowassign", component: WorkflowAssign, protected: true, moduleId: 14, moduleName: "Business Automation" },
   Feedback: { path: "/feedback", component: Feedback, protected: false },
 
   HomeLayout: { path: "/homelayout", component: HomeLayout, protected: false },

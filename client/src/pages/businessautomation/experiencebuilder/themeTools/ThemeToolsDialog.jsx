@@ -220,7 +220,7 @@ export default function ThemeToolsDialog({
               </Grid>
               <FormControlLabel
                 control={<Switch checked={hideBranding} onChange={(_event, checked) => setHideBranding(checked)} />}
-                label="Hide Tymebound branding"
+                label="Hide Augmis branding"
               />
               <Button variant="contained" onClick={saveWhiteLabel}>
                 Save White Label

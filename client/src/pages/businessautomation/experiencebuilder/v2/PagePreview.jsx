@@ -211,7 +211,7 @@ export default function PagePreview({ pageSpec, dense = false }) {
           <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
             <Stack>
               <Typography sx={{ fontWeight: 800, color: "#16233b" }}>
-                {theme.brandName || shell.topNavbar?.brandName || "Tymebound"}
+                {theme.brandName || shell.topNavbar?.brandName || "Augmis"}
               </Typography>
               <Typography variant="caption" sx={{ color: "#5f6f8a" }}>
                 {theme.tagline || shell.topNavbar?.tagline || "Manage Information Effortlessly"}

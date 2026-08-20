@@ -87,7 +87,7 @@ const renderSlotBody = (slotKey, shell, pageMeta, theme) => {
     const logoUrl = String(config.logoImageUrl || config.logoUrl || config.logo?.url || "").trim();
     const logoHeight = clampInt(config.logoHeight ?? 32, 16, Math.max(16, headerHeight - 10));
     const logoWidth = clampInt(config.logoWidth ?? 20, 5, 20);
-    const headerTitle = title || config.logoText || shell.brandName || theme?.brandName || pageMeta.name || "Tymebound";
+    const headerTitle = title || config.logoText || shell.brandName || theme?.brandName || pageMeta.name || "Augmis";
     const headerSubtitle = content || config.subtitle || shell.tagline || theme?.tagline || "Manage Information Effortlessly";
 
     return (
@@ -311,7 +311,7 @@ const AppShell = ({ page, theme, children, showEditorChrome = true, onShellSlotO
           <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2} flexWrap="wrap">
             <Stack spacing={0.35}>
               <Typography sx={{ fontWeight: 900, letterSpacing: -0.4, fontSize: 18 }}>
-                {shell.topNavbar?.logoText || shell.brandName || theme?.brandName || pageMeta.name || "Tymebound"}
+                {shell.topNavbar?.logoText || shell.brandName || theme?.brandName || pageMeta.name || "Augmis"}
               </Typography>
               <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.88)" }}>
                 {shell.topNavbar?.tagline || shell.tagline || theme?.tagline || "Manage Information Effortlessly"}

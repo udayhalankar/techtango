@@ -1,0 +1,6 @@
+[
+  {
+    "file": "server/routes/chowkidar.js",
+    "error": "parse: Identifier 'RESULTS_PATH' has already been declared. (65:6)"
+  }
+]

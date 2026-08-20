@@ -43,9 +43,9 @@ GOOGLE_REDIRECT_URI=http://localhost:3000
 Use production values:
 
 ```text
-APP_BASE_URL=https://tymebound.com
-CLIENT_ORIGIN=https://tymebound.com
-GOOGLE_REDIRECT_URI=https://tymebound.com
+APP_BASE_URL=https://augmis.com
+CLIENT_ORIGIN=https://augmis.com
+GOOGLE_REDIRECT_URI=https://augmis.com
 ```
 
 ### 2. Keep Docker env aligned
@@ -75,7 +75,7 @@ docker compose exec api printenv GOOGLE_REDIRECT_URI
 Expected:
 
 ```text
-https://tymebound.com
+https://augmis.com
 ```
 
 ### 5. Verify logs
@@ -87,21 +87,21 @@ docker compose logs api --since=1m
 Expected:
 
 ```text
-[GOOGLE] redirect_uri used: https://tymebound.com
+[GOOGLE] redirect_uri used: https://augmis.com
 ```
 
 ## Google Cloud Configuration
 
 ### Authorized JavaScript origins
 
-- `https://tymebound.com`
-- `https://www.tymebound.com`
+- `https://augmis.com`
+- `https://www.augmis.com`
 - `http://localhost:3000`
 
 ### Authorized redirect URIs
 
-- `https://tymebound.com`
-- `https://www.tymebound.com`
+- `https://augmis.com`
+- `https://www.augmis.com`
 - `http://localhost:3000`
 
 Do not use:

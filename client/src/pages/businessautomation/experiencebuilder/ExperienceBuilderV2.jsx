@@ -2812,7 +2812,7 @@ export default function ExperienceBuilder() {
                         Header (Fixed)
                       </Typography>
                       <Typography sx={{ fontSize: 12, color: "#5f6f8a" }}>
-                        {themeTools.whiteLabel.hideBranding ? themeTools.whiteLabel.brandName : themeTools.whiteLabel.brandName || "Tymebound"}
+                        {themeTools.whiteLabel.hideBranding ? themeTools.whiteLabel.brandName : themeTools.whiteLabel.brandName || "Augmis"}
                         {themeTools.whiteLabel.tagline ? ` | ${themeTools.whiteLabel.tagline}` : ""}
                       </Typography>
                     </Box>
@@ -3208,7 +3208,7 @@ export default function ExperienceBuilder() {
                     Bottom Bar Center (Fixed)
                   </Typography>
                   <Typography sx={{ fontSize: 12, color: "#5f6f8a" }}>
-                    {themeTools.whiteLabel.brandName || "Tymebound"}
+                    {themeTools.whiteLabel.brandName || "Augmis"}
                     {themeTools.whiteLabel.tagline ? ` | ${themeTools.whiteLabel.tagline}` : ""}
                   </Typography>
                 </Box>

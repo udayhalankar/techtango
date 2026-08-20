@@ -238,6 +238,7 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
     layoutSections = null,
     canvasModel = null,
     containerStyle = null,
+    presentation = "default",
     children,
   },
   ref
@@ -637,6 +638,7 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
     const c = getCol(f);
     return c !== "audit_trail" && c !== "step_comments";
   });
+  const assignmentLike = presentation === "reusableModal";
   // Respect forced one-column layout or explicit layoutSections from saved form view
   const twoCols = (oneColumn || (Array.isArray(layoutSections) && layoutSections.length > 0))
     ? false
@@ -858,7 +860,8 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
     const common = {
       //key,
       name: key,
-      label,
+      label: assignmentLike ? undefined : label,
+      placeholder: assignmentLike ? label : undefined,
       value: values[key] ?? (isCheck ? [] : ""),
       error: !!errors[key],
       helperText: errors[key] || "",
@@ -867,16 +870,24 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
       size: "small",
     };
 
+    const fieldLabel = (
+      <Typography className="rfm-field-label" sx={{ mb: 0.5 }}>
+        {String(label || "").toUpperCase()}
+        {common.required ? " *" : ""}
+      </Typography>
+    );
+
     if (isSelect) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : null}
           <TextField
             {...common}
             select
             onChange={(e) => setValAndValidate(f, key, e.target.value)}
             onBlur={(e) => setValAndValidate(f, key, e.target.value)}
           >
-            <MenuItem value="">—</MenuItem>
+            <MenuItem value="">{assignmentLike ? "-- Select --" : "—"}</MenuItem>
             {options.map((opt) => (
               <MenuItem key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
@@ -889,13 +900,16 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     if (isRadio) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
-            {label}
-            {common.required ? " *" : ""}
-          </Typography>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : (
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+              {label}
+              {common.required ? " *" : ""}
+            </Typography>
+          )}
           <FormControl>
             <RadioGroup
+              className={assignmentLike ? "rfm-choice-group" : undefined}
               value={String(values[key] ?? "")}
               onChange={(e) => setValAndValidate(f, key, e.target.value)}
             >
@@ -921,12 +935,17 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
     if (isCheck) {
       const cur = Array.isArray(values[key]) ? values[key] : [];
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
-            {label}
-            {common.required ? " *" : ""}
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "flex-start" }}>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : (
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+              {label}
+              {common.required ? " *" : ""}
+            </Typography>
+          )}
+          <Box
+            className={assignmentLike ? "rfm-choice-group" : undefined}
+            sx={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "flex-start" }}
+          >
             {options.map((opt) => {
               const token = String(opt.value);
               const checked = cur.includes(token);
@@ -962,11 +981,12 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     if (isDate) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : null}
           <TextField
             {...common}
             type="date"
-            InputLabelProps={{ shrink: true }}
+            InputLabelProps={assignmentLike ? undefined : { shrink: true }}
             onChange={(e) => setValAndValidate(f, key, e.target.value)}
             onBlur={(e) => setValAndValidate(f, key, e.target.value)}
           />
@@ -976,7 +996,8 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     if (isNumber) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : null}
           <TextField
             {...common}
             type="number"
@@ -995,7 +1016,8 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     if (isTextArea) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : null}
           <TextField
             {...common}
             multiline
@@ -1009,10 +1031,12 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     if (isFile) {
       return (
-        <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
-            {label}
-          </Typography>
+        <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+          {assignmentLike ? fieldLabel : (
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+              {label}
+            </Typography>
+          )}
           <Button component="label" variant="outlined" size="small">
             Choose files
             <input
@@ -1032,7 +1056,8 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
     // default text input
     return (
-      <Grid key={key} item xs={12} md={twoCols ? 6 : 12}>
+      <Grid key={key} item xs={12} md={twoCols ? 6 : 12} className="rfm-field">
+        {assignmentLike ? fieldLabel : null}
         <TextField
           {...common}
           onChange={(e) => setValAndValidate(f, key, e.target.value)}
@@ -1049,6 +1074,7 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
       component="form"
       ref={formRef}
       onSubmit={submit}
+      className={assignmentLike ? "rfm-form" : undefined}
       sx={{
         mt: 1,
         ...(cs.border === false
@@ -1217,7 +1243,7 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
       {children}
 
       {showPrimaryButton && (
-        <Box display="flex" gap={1} mt={2}>
+        <Box display="flex" gap={1} mt={2} className={assignmentLike ? "rfm-actions" : undefined}>
           <Button type="submit" variant="contained">
             {primaryActionLabel}
           </Button>

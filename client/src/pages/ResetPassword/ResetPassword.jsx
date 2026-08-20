@@ -55,7 +55,7 @@ export default function ResetPassword() {
     <div className="reset-password-page">
       <div className="reset-password-card">
         <div className="reset-password-panel">
-          <img src={logo} alt="Tymebound Logo" className="reset-password-logo" />
+          <img src={logo} alt="Augmis Logo" className="reset-password-logo" />
           <h1>Set New Password</h1>
           <p className="reset-password-subtitle">
             Choose a new password for your account.

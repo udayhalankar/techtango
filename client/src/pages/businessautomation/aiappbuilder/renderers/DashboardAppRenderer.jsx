@@ -751,54 +751,6 @@ export default function DashboardAppRenderer({
 
   return (
     <Stack gap={0}>
-      <Box
-        sx={{
-          px: 3.5,
-          py: 2.75,
-          background: "linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%)",
-          borderBottom: "1px solid #dbeafe",
-        }}
-      >
-        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2} flexWrap="wrap">
-          <Box>
-            <Typography sx={{ fontSize: 24, fontWeight: 900, color: "#0f2f57" }}>
-              {schema?.title || "Dashboard"}
-            </Typography>
-            <Typography sx={{ mt: 0.75, fontSize: 14, color: "#64748b" }}>
-              {schema?.description || "AI-generated dashboard view."}
-            </Typography>
-          </Box>
-
-          <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-            {/* <Button
-              variant="outlined"
-              size="small"
-              onClick={saveDashboardChanges}
-              disabled={saveState === "saving"}
-              startIcon={<SaveOutlinedIcon />}
-              sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                borderRadius: 999,
-                px: 2,
-                minHeight: 34,
-                borderColor: "#60a5fa",
-                color: "#2563eb",
-                bgcolor: "#ffffff",
-              }}
-            >
-              {saveState === "saving" ? "Saving..." : "Save Changes"}
-            </Button> */}
-
-            <Chip
-              icon={<DashboardIcon />}
-              label={`Source: ${schema?.sourceTable || "Multiple / Not selected"}`}
-              sx={{ bgcolor: "#eff6ff", color: "#2563eb", fontWeight: 800 }}
-            />
-          </Stack>
-        </Stack>
-      </Box>
-
       <Box sx={{ p: 3.5 }}>
         <Grid container spacing={2}>
           {cards.map((card, index) => {

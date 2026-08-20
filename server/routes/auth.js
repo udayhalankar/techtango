@@ -16,7 +16,7 @@ const {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI,
-  JWT_SECRET = 'YOUR_SECRET_KEY',
+  JWT_SECRET,
 } = process.env;
 
 const client = new OAuth2Client(
@@ -129,10 +129,10 @@ router.post('/register', async (req, res) => {
   } catch (err) {
     console.error('Register error:', err);
     sendAlertEmail({
-      subject: 'Tymebound registration/email failure',
+      subject: 'Augmis registration/email failure',
       text: `Registration or activation email failed for ${email || 'unknown email'}: ${err.message}`,
       html: `
-        <h3>Tymebound registration/email failure</h3>
+        <h3>Augmis registration/email failure</h3>
         <p><strong>Email:</strong> ${email || 'unknown'}</p>
         <p><strong>Name:</strong> ${[firstname, lastname].filter(Boolean).join(' ') || 'unknown'}</p>
         <p><strong>Error:</strong> ${err.message}</p>
@@ -278,10 +278,10 @@ router.post('/login', async (req, res) => {
         details: { email, reason: 'User not found' },
       });
       sendAlertEmail({
-        subject: 'Tymebound failed login',
+        subject: 'Augmis failed login',
         text: `Failed login attempt for ${email || 'unknown'}: user not found`,
         html: `
-          <h3>Tymebound failed login</h3>
+          <h3>Augmis failed login</h3>
           <p><strong>Email:</strong> ${email || 'unknown'}</p>
           <p><strong>Reason:</strong> User not found</p>
         `,
@@ -300,10 +300,10 @@ router.post('/login', async (req, res) => {
         details: { email, reason: 'Invalid password' },
       });
       sendAlertEmail({
-        subject: 'Tymebound failed login',
+        subject: 'Augmis failed login',
         text: `Failed login attempt for ${email || 'unknown'}: invalid password`,
         html: `
-          <h3>Tymebound failed login</h3>
+          <h3>Augmis failed login</h3>
           <p><strong>Email:</strong> ${email || 'unknown'}</p>
           <p><strong>Reason:</strong> Invalid password</p>
         `,

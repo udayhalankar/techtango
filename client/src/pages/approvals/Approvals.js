@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./approvals.scss";
 import api from "../../services/api";
+import ModuleTileGrid from "../../components/ModuleTileGrid";
 
 const Approvals = () => {
   const [activeTab, setActiveTab] = useState("outbox");
@@ -170,97 +171,73 @@ const handleSubmit = async (e) => {
   const filteredApprovals = approvals.filter((a) => a.title?.toLowerCase().includes(searchTerm.toLowerCase()));
   const paginated = filteredApprovals.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredApprovals.length / itemsPerPage);
+  const approvalTiles = paginated.map((a) => {
+    const isDelayed =
+      new Date() > new Date(a.due_date) &&
+      a.status !== "Completed" &&
+      a.status !== "Closed";
+
+    let statusBadge = null;
+    if (a.status === "Completed") {
+      statusBadge = { text: "Completed", color: "#ffffff", backgroundColor: "#16a34a" };
+    } else if (a.status === "Closed") {
+      statusBadge = { text: "Closed", color: "#ffffff", backgroundColor: "#16a34a" };
+    } else if (isDelayed) {
+      statusBadge = { text: "Delayed", color: "#ffffff", backgroundColor: "#f59e0b" };
+    }
+
+    return {
+      id: a.id,
+      headerLabel: `${a.assigned_by_firstname} → ${a.assignee_firstname}`,
+      label: a.title,
+      assignedDate: new Date(a.created_at).toLocaleDateString(),
+      dueDate: new Date(a.due_date).toLocaleDateString(),
+      status: a.status,
+      statusBadge,
+      onClick: () => {
+        setSelectedApproval(a);
+        setShowPreview(true);
+        setUpdateForm({
+          status: a.status,
+          assignee_comments: a.assignee_comments || "",
+          files: [],
+        });
+        fetchAuditLogs(a.id);
+      },
+    };
+  });
 
   return (
     <div className="approvals-container">
-      <header className="module-header">
-        <div>
-          <h1>DIRECT ASSIGNMENTS</h1>
-          <h6 className="section-label">DIRECT ASSIGNMENTS {activeTab.toUpperCase()}</h6>
-        </div>
-        <div className="tab-toggle">
-          <button className={activeTab === "inbox" ? "active" : ""} onClick={() => setActiveTab("inbox")}>INBOX</button>
-          <button className={activeTab === "outbox" ? "active" : ""} onClick={() => setActiveTab("outbox")}>OUTBOX</button>
-        </div>
-      </header>
-
-      <div className="section-header">
-        <button className="button2" onClick={() => setShowModal(true)}>Create New Request</button>
-        <div className="search-and-pagination">
-          <input type="text" placeholder="Search title" className="search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          <div className="pagination">
-            <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1}>Prev</button>
-            <span>Page {currentPage}</span>
-            <button onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Next</button>
-          </div>
-        </div>
-      </div>
-
-
-      <div className="card-grid">
-        {paginated.map((a) => (
-          <div
-            className="approval-card"
-            key={a.id}
-            onClick={() => {
-              setSelectedApproval(a);
-              setShowPreview(true);
-              setUpdateForm({
-                status: a.status,
-                assignee_comments: a.assignee_comments || "",
-                files: [],
-              });
-              fetchAuditLogs(a.id); // 👈 fetch audit
-            }}
-            style={{
-                backgroundColor:
-                  a.status === "Rejected"
-                    ? "#ffd5d5"
-                    : a.status === "Closed"
-                    ? "#d9ffd9"
-                    : new Date() > new Date(a.due_date) &&
-                      a.status !== "Completed" &&
-                      a.status !== "Closed"
-                    ? "#fff3cd" // light orange/yellow
-                    : "white",
-              }}
-          >
-            <div className="card-header">
-              <div className="avatar">👤</div>
-              <span className="username">
-                {a.assigned_by_firstname} ➡ {a.assignee_firstname}
-              </span>
-            </div>
-            <h3>{a.title}</h3>
-            <div className="field-line">
-              Date Assigned: {new Date(a.created_at).toLocaleDateString()}
-            </div>
-            <div className="field-line">
-              Due Date: {new Date(a.due_date).toLocaleDateString()}
-            </div>
-              
-              <div className="field-line status-line">
-                <span>Status: {a.status}</span>
-                <span className="status-badge">
-                  {a.status === "Completed" && (
-                    <span className="completed-badge">✅ Completed</span>
-                  )}
-                  {a.status === "Closed" && (
-                    <span className="completed-badge">✅ Closed</span>
-                  )}
-                  {new Date() > new Date(a.due_date) &&
-                    a.status !== "Completed" &&
-                    a.status !== "Closed" && (
-                      <span className="delay-badge">⚠️ Delayed</span>
-                  )}
-                </span>
+      <ModuleTileGrid
+        title="Direct Assignments"
+        subtitle={`Direct assignments ${activeTab}. Create requests, track status, and review assignment details.`}
+        titleBarColor="#173b6f"
+        containerMaxWidth="xl"
+        titleBarTabs={[
+          { key: "inbox", label: "INBOX", active: activeTab === "inbox", onClick: () => setActiveTab("inbox") },
+          { key: "outbox", label: "OUTBOX", active: activeTab === "outbox", onClick: () => setActiveTab("outbox") },
+        ]}
+        controls={
+          <div className="section-header">
+            <button className="button2" onClick={() => setShowModal(true)}>Create New Request</button>
+            <div className="search-and-pagination">
+              <input type="text" placeholder="Search title" className="search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <div className="pagination">
+                <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1}>Prev</button>
+                <span>Page {currentPage}</span>
+                <button onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Next</button>
               </div>
-
-
-
+            </div>
           </div>
-        ))}
-      </div>
+        }
+        tiles={approvalTiles}
+        tilesPerRow={{ xs: 1, sm: 2, md: 4, lg: 5 }}
+        maxRows={2}
+        tileVariant="approval"
+        tileHeight={242}
+        showDefaultFooter={false}
+      />
 
 
 
@@ -293,7 +270,7 @@ const handleSubmit = async (e) => {
                   />
                 </div>
 
-                <div className="field-block">
+                <div className="field-block assignee-field">
                   <label htmlFor="assignment-assignee">Select Assignee</label>
                   <select
                     id="assignment-assignee"

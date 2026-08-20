@@ -364,7 +364,7 @@ if (subscriptionRoutes) app.use('/api/subscription', subscriptionRoutes);
 if (uploadRoutes)       app.use('/api/upload', uploadRoutes);
 if (usersRoutes)        app.use('/api/users', usersRoutes);
 if (enquiriesRoute)     app.use('/api/enquiries',  checkSubscription('Enquiries'), enquiriesRoute);
-if (approvalsRoutes)    app.use('/api/approvals',  checkSubscription('Approvals'), approvalsRoutes);
+if (approvalsRoutes)    app.use('/api/approvals',  checkSubscription('Assignments'), approvalsRoutes);
 if (workflowsRoute)     app.use('/api/workflows',  workflowsRoute);
 
 if (formRoutes)         app.use('/api/formconfig',    checkSubscription(BA),     formRoutes);

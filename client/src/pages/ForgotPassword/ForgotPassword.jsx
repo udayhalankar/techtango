@@ -36,7 +36,7 @@ export default function ForgotPassword() {
     <div className="forgot-password-page">
       <div className="forgot-password-card">
         <div className="forgot-password-panel">
-          <img src={logo} alt="Tymebound Logo" className="forgot-password-logo" />
+          <img src={logo} alt="Augmis Logo" className="forgot-password-logo" />
           <h1>Reset Password</h1>
           <p className="forgot-password-subtitle">
             Enter your email and we will send you a password reset link.

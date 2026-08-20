@@ -1,0 +1,570 @@
+From a89ef86d45455c90aa4a39b701151d5e4af4c2d0 Mon Sep 17 00:00:00 2001
+From: udayhalankar <udayhalankar@gmail.com>
+Date: Sun, 16 Aug 2026 18:52:34 +0300
+Subject: [PATCH] Extract reusable module tile grid
+
+---
+ client/src/components/ModuleTileGrid.jsx      | 171 ++++++++
+ .../businessautomation/BusinessAutomation.jsx | 366 ++++++------------
+ 2 files changed, 299 insertions(+), 238 deletions(-)
+ create mode 100644 client/src/components/ModuleTileGrid.jsx
+
+diff --git a/client/src/components/ModuleTileGrid.jsx b/client/src/components/ModuleTileGrid.jsx
+new file mode 100644
+index 000000000..5c38fd072
+--- /dev/null
++++ b/client/src/components/ModuleTileGrid.jsx
+@@ -0,0 +1,171 @@
++import React, { useMemo, useState } from "react";
++import { Link as RouterLink } from "react-router-dom";
++import {
++  Box,
++  Container,
++  InputAdornment,
++  Paper,
++  TextField,
++  Typography,
++} from "@mui/material";
++import SearchIcon from "@mui/icons-material/Search";
++
++function normalizeTilesPerRow(tilesPerRow = {}) {
++  return {
++    xs: tilesPerRow.xs || 1,
++    sm: tilesPerRow.sm || tilesPerRow.xs || 2,
++    md: tilesPerRow.md || tilesPerRow.sm || 4,
++    lg: tilesPerRow.lg || tilesPerRow.md || 4,
++  };
++}
++
++export default function ModuleTileGrid({
++  title,
++  subtitle = "",
++  titleBarColor = "#1f355d",
++  pageBackground = "#f5f7fb",
++  tiles = [],
++  tilesPerRow,
++  maxRows,
++  searchEnabled = false,
++  searchPlaceholder = "Search modules",
++  containerMaxWidth = "lg",
++}) {
++  const [searchTerm, setSearchTerm] = useState("");
++  const gridConfig = useMemo(() => normalizeTilesPerRow(tilesPerRow), [tilesPerRow]);
++
++  const filteredTiles = useMemo(() => {
++    const query = searchTerm.trim().toLowerCase();
++    if (!query) return tiles;
++    return tiles.filter((tile) =>
++      `${tile.label || ""} ${tile.desc || ""}`.toLowerCase().includes(query)
++    );
++  }, [searchTerm, tiles]);
++
++  const maxVisibleTiles = maxRows ? gridConfig.lg * maxRows : null;
++  const visibleTiles = maxVisibleTiles ? filteredTiles.slice(0, maxVisibleTiles) : filteredTiles;
++
++  return (
++    <Box sx={{ minHeight: "100vh", bgcolor: pageBackground }}>
++      <Box sx={{ bgcolor: titleBarColor, color: "#fff", px: 4, mt: "-65px", pt: "97px", pb: 4 }}>
++        <Typography variant="h4" sx={{ fontWeight: 600 }}>
++          {title}
++        </Typography>
++        {subtitle ? (
++          <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
++            {subtitle}
++          </Typography>
++        ) : null}
++      </Box>
++
++      <Container maxWidth={containerMaxWidth} sx={{ py: 4 }}>
++        <Box
++          sx={{
++            mt: 3,
++            display: "flex",
++            alignItems: "center",
++            justifyContent: searchEnabled ? "space-between" : "flex-start",
++            gap: 2,
++            flexWrap: "wrap",
++            mb: 2,
++          }}
++        >
++          <Box />
++          {searchEnabled ? (
++            <TextField
++              value={searchTerm}
++              onChange={(event) => setSearchTerm(event.target.value)}
++              placeholder={searchPlaceholder}
++              size="small"
++              sx={{
++                width: { xs: "100%", sm: 320 },
++                bgcolor: "#fff",
++                borderRadius: 2,
++                "& .MuiOutlinedInput-root": {
++                  borderRadius: 2,
++                },
++              }}
++              InputProps={{
++                startAdornment: (
++                  <InputAdornment position="start">
++                    <SearchIcon sx={{ color: "#7b8aa1" }} />
++                  </InputAdornment>
++                ),
++              }}
++            />
++          ) : null}
++        </Box>
++
++        <Box
++          sx={{
++            display: "grid",
++            gap: 2,
++            gridTemplateColumns: {
++              xs: `repeat(${gridConfig.xs}, minmax(0, 1fr))`,
++              sm: `repeat(${gridConfig.sm}, minmax(0, 1fr))`,
++              md: `repeat(${gridConfig.md}, minmax(0, 1fr))`,
++              lg: `repeat(${gridConfig.lg}, minmax(0, 1fr))`,
++            },
++          }}
++        >
++          {visibleTiles.map((tile) => {
++            const Icon = tile.Icon;
++            return (
++              <Paper
++                key={tile.to || tile.label}
++                component={RouterLink}
++                to={tile.to}
++                elevation={0}
++                sx={{
++                  bgcolor: "#ffffff",
++                  color: "#1f355d",
++                  border: "1px solid #2f5fff",
++                  boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
++                  borderRadius: 2,
++                  p: 2,
++                  minHeight: 160,
++                  display: "flex",
++                  flexDirection: "column",
++                  justifyContent: "space-between",
++                  gap: 1.5,
++                  textDecoration: "none",
++                  transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
++                  "&:hover": {
++                    transform: "translateY(-4px)",
++                    boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
++                    borderColor: "#1a4fd8",
++                  },
++                }}
++              >
++                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.1 }}>
++                  {Icon ? (
++                    <Box sx={{ color: "#1a4fd8", display: "flex", alignItems: "center" }}>
++                      <Icon fontSize="small" />
++                    </Box>
++                  ) : null}
++                  <Typography
++                    sx={{
++                      fontWeight: 700,
++                      fontSize: 16,
++                      color: "#1a4fd8",
++                      textDecoration: "none",
++                      display: "block",
++                    }}
++                  >
++                    {tile.label}
++                  </Typography>
++                  <Typography sx={{ fontSize: 12, color: "#51607d" }}>
++                    {tile.desc}
++                  </Typography>
++                </Box>
++                <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#1a4fd8" }}>
++                  Open
++                </Typography>
++              </Paper>
++            );
++          })}
++        </Box>
++      </Container>
++    </Box>
++  );
++}
+diff --git a/client/src/pages/businessautomation/BusinessAutomation.jsx b/client/src/pages/businessautomation/BusinessAutomation.jsx
+index b75fddd9c..f7cc3d698 100644
+--- a/client/src/pages/businessautomation/BusinessAutomation.jsx
++++ b/client/src/pages/businessautomation/BusinessAutomation.jsx
+@@ -1,246 +1,136 @@
+-// src/pages/businessautomation/BusinessAutomation.jsx
+ import React from "react";
+-import { Link as RouterLink } from "react-router-dom";
+-import {
+-  Box,
+-  Button,
+-  Container,
+-  Grid,
+-  Paper,
+-  Typography,
+-} from "@mui/material";
+-
+-// Icons
+-import DescriptionIcon from "@mui/icons-material/Description";        // Forms
+-import DynamicFormIcon from "@mui/icons-material/DynamicForm";        // SmartForms
+-import TableChartIcon from "@mui/icons-material/TableChart";          // Table Creator
++import DescriptionIcon from "@mui/icons-material/Description";
++import DynamicFormIcon from "@mui/icons-material/DynamicForm";
++import TableChartIcon from "@mui/icons-material/TableChart";
+ import StorageIcon from "@mui/icons-material/Storage";
+-import AutoGraphIcon from "@mui/icons-material/AutoGraph";            // Chart Builder
+-import UploadFileIcon from "@mui/icons-material/UploadFile";          // Bulk Uploader
+-import AppsIcon from "@mui/icons-material/Apps";                      // UI Creator
+-import ManageHistoryIcon from "@mui/icons-material/ManageHistory";    // Workflow Manager (new)
+-import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing"; // Workflow Manager (alt)
+-import DesignServicesIcon from "@mui/icons-material/DesignServices";  // Workflow Designer
+-import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions"; // Compat Designer
+-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";      // Workflow Library
+-import AccountTreeIcon from "@mui/icons-material/AccountTree";        // Workflows / Assignments
+-import BoltIcon from "@mui/icons-material/Bolt";                      // Create Workflow (Modal)
++import AutoGraphIcon from "@mui/icons-material/AutoGraph";
++import UploadFileIcon from "@mui/icons-material/UploadFile";
++import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
++import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
++import DesignServicesIcon from "@mui/icons-material/DesignServices";
++import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
++import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
++import AccountTreeIcon from "@mui/icons-material/AccountTree";
+ import WebAssetOutlinedIcon from "@mui/icons-material/WebAssetOutlined";
++import ModuleTileGrid from "../../components/ModuleTileGrid";
+ 
+-export default function BusinessAutomation() {
+-  // All tiles for the routes you provided (no :id edit tiles)
+-  const tiles = [
+-    {
+-      label: "Experience Builder",
+-      desc: "Create Pages",
+-      to: "/experiencebuilder",
+-      Icon:  StorageIcon,
+-    },
+-    {
+-      label: "Entity Data Model Builder",
+-      desc: "Build reusable schemas and keep your data structures consistent",
+-      to: "/datatablebuilder",
+-      Icon:  StorageIcon,
+-    },
+-    {
+-      label: "Data Application Builder",
+-      desc: "Build full data-driven applications without coding",
+-      to: "/crudwebpage",
+-      Icon: WebAssetOutlinedIcon,
+-    },
+-    {
+-      label: "AI App Builder",
+-      desc: "Create one-page CRUD apps from AI-generated schema",
+-      to: "/aiappbuilder",
+-      Icon: WebAssetOutlinedIcon,
+-    },
+-
+-    {
+-      label: "Workflow Studio",
+-      desc: "Streamline Business Form Workflows, Design and Deploy Workflows with a level of ease never experienced before",
+-      to: "/simplewfb",
+-      Icon: WebAssetOutlinedIcon,
+-    },
+-
+-    {
+-      label: "Dashboard Studio",
+-      desc: "Create Dashboards to Vusualize Enterprise Processes",
+-      to: "/dashboardbuilder",
+-      Icon: WebAssetOutlinedIcon,
+-    },
+-    
+-    {
+-      label: "Forms",
+-      desc: "Create Business Forms",
+-      to: "/forms",
+-      Icon: DescriptionIcon,
+-    },
+-    {
+-      label: "Report Builder",
+-      desc: "Create Report using Database tables",
+-      to: "/tables",
+-      Icon: TableChartIcon,
+-    },
+-    {
+-      label: "Chart Builder",
+-      desc: "Build charts & dashboards",
+-      to: "/charts/new",
+-      Icon: AutoGraphIcon,
+-    },  
+-    {
+-      label: "SmartForms",
+-      desc: "Build forms faster",
+-      to: "/sbforms",
+-      Icon: DynamicFormIcon,
+-    },
+-    
+-    
+-    {
+-      label: "Workflows",
+-      desc: "Manage assignments",
+-      to: "/wfassignments",
+-      Icon: AccountTreeIcon,
+-    },
+-    {
+-      label: "Workflow Manager",
+-      desc: "Manage & monitor flows",
+-      to: "/workflowmanager",
+-      Icon: ManageHistoryIcon,
+-    },
+-    {
+-      label: "Workflow Manager (Alt)",
+-      desc: "Alternate manager route",
+-      to: "/wfmanager",
+-      Icon: PrecisionManufacturingIcon,
+-    },
+-    {
+-      label: "Workflow Designer",
+-      desc: "Design flows visually",
+-      to: "/wfdesigner",
+-      Icon: DesignServicesIcon,
+-    },
+-    {
+-      label: "Workflow Designer (Compat)",
+-      desc: "Legacy/compat editor",
+-      to: "/workflow-designer",
+-      Icon: IntegrationInstructionsIcon,
+-    },
+-    {
+-      label: "Workflow Library",
+-      desc: "Reusable templates",
+-      to: "/wflibrary",
+-      Icon: LibraryBooksIcon,
+-    },
+-    {
+-      label: "Create Workflow (Modal)",
+-      desc: "Quick create flow",
+-      to: "/wfmod",
+-      Icon: BoltIcon,
+-    },
+-    {
+-      label: "Bulk Uploader",
+-      desc: "Import CSV/Excel",
+-      to: "/bulkuploader",
+-      Icon: UploadFileIcon,
+-    },
+-    {
+-      label: "UI Creator",
+-      desc: "Compose UIs from parts",
+-      to: "/uicreator",
+-      Icon: AppsIcon,
+-    },
+-  ];
++const tiles = [
++  {
++    label: "Experience Builder",
++    desc: "Create Pages",
++    to: "/experiencebuilder",
++    Icon: StorageIcon,
++  },
++  {
++    label: "Entity Data Model Builder",
++    desc: "Build reusable schemas and keep your data structures consistent",
++    to: "/datatablebuilder",
++    Icon: StorageIcon,
++  },
++  {
++    label: "Data Application Builder",
++    desc: "Build full data-driven applications without coding",
++    to: "/crudwebpage",
++    Icon: WebAssetOutlinedIcon,
++  },
++  {
++    label: "AI App Builder",
++    desc: "Create one-page CRUD apps from AI-generated schema",
++    to: "/aiappbuilder",
++    Icon: WebAssetOutlinedIcon,
++  },
++  {
++    label: "Workflow Studio",
++    desc: "Streamline Business Form Workflows, Design and Deploy Workflows with a level of ease never experienced before",
++    to: "/simplewfb",
++    Icon: WebAssetOutlinedIcon,
++  },
++  {
++    label: "Dashboard Studio",
++    desc: "Create Dashboards to Vusualize Enterprise Processes",
++    to: "/dashboardbuilder",
++    Icon: WebAssetOutlinedIcon,
++  },
++  {
++    label: "Forms",
++    desc: "Create Business Forms",
++    to: "/forms",
++    Icon: DescriptionIcon,
++  },
++  {
++    label: "Report Builder",
++    desc: "Create Report using Database tables",
++    to: "/tables",
++    Icon: TableChartIcon,
++  },
++  {
++    label: "Chart Builder",
++    desc: "Build charts & dashboards",
++    to: "/charts/new",
++    Icon: AutoGraphIcon,
++  },
++  {
++    label: "SmartForms",
++    desc: "Build forms faster",
++    to: "/sbforms",
++    Icon: DynamicFormIcon,
++  },
++  {
++    label: "Workflows",
++    desc: "Manage assignments",
++    to: "/wfassignments",
++    Icon: AccountTreeIcon,
++  },
++  {
++    label: "Workflow Manager",
++    desc: "Manage & monitor flows",
++    to: "/workflowmanager",
++    Icon: ManageHistoryIcon,
++  },
++  {
++    label: "Workflow Manager (Alt)",
++    desc: "Alternate manager route",
++    to: "/wfmanager",
++    Icon: PrecisionManufacturingIcon,
++  },
++  {
++    label: "Workflow Designer",
++    desc: "Design flows visually",
++    to: "/wfdesigner",
++    Icon: DesignServicesIcon,
++  },
++  {
++    label: "Workflow Designer (Compat)",
++    desc: "Legacy/compat editor",
++    to: "/workflow-designer",
++    Icon: IntegrationInstructionsIcon,
++  },
++  {
++    label: "Workflow Library",
++    desc: "Reusable templates",
++    to: "/wflibrary",
++    Icon: LibraryBooksIcon,
++  },
++  {
++    label: "Bulk Uploader",
++    desc: "Import CSV/Excel",
++    to: "/bulkuploader",
++    Icon: UploadFileIcon,
++  },
++];
+ 
++export default function BusinessAutomation() {
+   return (
+-    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
+-      <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, mt: "-65px", pt: "97px", pb: 4 }}>
+-        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+-          Business Automation
+-        </Typography>
+-        {/* <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
+-          Intelligent automation solutions designed to power digital transformation, fuel growth, and enhance sustainability.
+-        </Typography> */}
+-        <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
+-          Streamline business form creation, workflow automation, and gain insights through reports, charts, and dashboards.
+-        </Typography>
+-      </Box>
+-
+-      <Container maxWidth="lg" sx={{ py: 4 }}>
+-        <Box
+-          // sx={{
+-          //   maxWidth: 1200,
+-          //   mx: "auto",
+-          //   // bgcolor: "#eef2fb",
+-          //   borderRadius: 2,
+-          //   p: 3,
+-          // }}
+-          display="flex"
+-            alignItems="center"
+-            justifyContent="space-between"
+-            mb={2}
+-            sx={{ gap: 2, flexWrap: 'wrap' }}
+-        >
+-          <Box sx={{ mt: 3 }}>
+-            <Grid container spacing={2}>
+-              {tiles.map((t) => (
+-                <Grid item key={t.to} xs={12} sm={6} md={3}>
+-                  <Paper
+-                    elevation={0}
+-                    sx={{
+-                      bgcolor: "#ffffff",
+-                      color: "#1f355d",
+-                      border: "1px solid #2f5fff",
+-                      boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
+-                      borderRadius: 2,
+-                      p: 2,
+-                      minHeight: 160,
+-                      display: "flex",
+-                      flexDirection: "column",
+-                      justifyContent: "space-between",
+-                      gap: 1.5,
+-                      transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
+-                      "&:hover": {
+-                        transform: "translateY(-4px)",
+-                        boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
+-                        borderColor: "#1a4fd8",
+-                      },
+-                    }}
+-                  >
+-                    <Box>
+-                      <Typography
+-                        component={RouterLink}
+-                        to={t.to}
+-                        sx={{
+-                          fontWeight: 700,
+-                          fontSize: 16,
+-                          color: "#1a4fd8",
+-                          textDecoration: "none",
+-                          display: "block",
+-                        }}
+-                      >
+-                        {t.label}
+-                      </Typography>
+-                      <Typography sx={{ fontSize: 12, color: "#51607d", mt: 1 }}>
+-                        {t.desc}
+-                      </Typography>
+-                    </Box>
+-                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+-                      <Button
+-                        size="small"
+-                        variant="outlined"
+-                        sx={{ textTransform: "none" }}
+-                        onClick={() => alert("TODO: Manage access")}
+-                      >
+-                        Manage Access
+-                      </Button>
+-                    </Box>
+-                  </Paper>
+-                </Grid>
+-              ))}
+-            </Grid>
+-          </Box>
+-        </Box>
+-      </Container>
+-    </Box>
++    <ModuleTileGrid
++      title="Business Automation"
++      subtitle="Streamline business form creation, workflow automation, and gain insights through reports, charts, and dashboards."
++      titleBarColor="#1f355d"
++      searchEnabled
++      searchPlaceholder="Search business automation"
++      tiles={tiles}
++      tilesPerRow={{ xs: 1, sm: 2, md: 4, lg: 4 }}
++      maxRows={5}
++      containerMaxWidth="lg"
++    />
+   );
+ }
+-- 
+2.45.2.windows.1
+

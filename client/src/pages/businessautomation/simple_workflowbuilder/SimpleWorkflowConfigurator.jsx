@@ -507,7 +507,16 @@ const initiateStep = useMemo(
 
   // --------- RENDER ----------
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        bgcolor: "#eef4fb",
+        background:
+          "radial-gradient(circle at top right, rgba(82, 173, 255, 0.12), transparent 26%), linear-gradient(180deg, #f6f9ff 0%, #eef4fb 100%)",
+      }}
+    >
       {!header ? (
         <Box sx={{ p: 3 }}>
           <Typography variant="body1">Loading…</Typography>
@@ -517,32 +526,95 @@ const initiateStep = useMemo(
           {/* Top bar */}
           <Box
             sx={{
-              minheight: 80,
-               py: 1,                     // extra vertical padding
-              px: 3,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              bgcolor: "#0b3b8c",
-              color: "grey.100",
+              px: { xs: 2, md: 3 },
+              py: { xs: 2, md: 2.5 },
+              color: "#fff",
+              background: "linear-gradient(135deg, #143a72 0%, #1f4f96 54%, #245fb2 100%)",
+              boxShadow: "0 18px 40px rgba(20, 58, 114, 0.22)",
             }}
           >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, fontSize: 15 }}
+            <Stack
+              direction={{ xs: "column", lg: "row" }}
+              spacing={2}
+              alignItems={{ xs: "flex-start", lg: "center" }}
+              justifyContent="space-between"
             >
-              Workflow Studio
-            </Typography>
+              <Box>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    letterSpacing: "0.16em",
+                    fontWeight: 700,
+                    opacity: 0.82,
+                  }}
+                >
+                  Workflow Studio
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    mt: 0.25,
+                    fontWeight: 800,
+                    lineHeight: 1.1,
+                    fontSize: { xs: "1.6rem", md: "2rem" },
+                  }}
+                >
+                  {header.workflow_map_name}
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  sx={{ mt: 1.25, flexWrap: "wrap" }}
+                >
+                  <Chip
+                    label={`Table: ${header.workflow_table_name || "Not linked"}`}
+                    size="small"
+                    sx={{
+                      borderRadius: 999,
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                    }}
+                  />
+                  <Chip
+                    label={`${steps.length} step${steps.length === 1 ? "" : "s"}`}
+                    size="small"
+                    sx={{
+                      borderRadius: 999,
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                    }}
+                  />
+                  <Chip
+                    label={isPublished ? "Published" : "Draft"}
+                    size="small"
+                    sx={{
+                      borderRadius: 999,
+                      bgcolor: isPublished ? "rgba(52, 211, 153, 0.2)" : "rgba(251, 191, 36, 0.18)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                    }}
+                  />
+                </Stack>
+              </Box>
 
-            <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                useFlexGap
+                flexWrap="wrap"
+                justifyContent={{ xs: "flex-start", lg: "flex-end" }}
+              >
               <Chip
                 label={`Workflow: ${header.workflow_map_name}`}
                 size="small"
                 sx={{
                   borderRadius: 999,
-                  borderColor: "grey.700",
-                  bgcolor: "grey.950",
-                  color: "grey.300",
+                  borderColor: "rgba(255,255,255,0.22)",
+                  bgcolor: "rgba(6, 18, 42, 0.28)",
+                  color: "rgba(255,255,255,0.86)",
                   borderWidth: 1,
                   borderStyle: "solid",
                   fontSize: 11,
@@ -553,11 +625,12 @@ const initiateStep = useMemo(
                 variant={viewMode === "studio" ? "contained" : "outlined"}
                 sx={{
                   borderRadius: 999,
-                  borderColor: "grey.700",
-                  color: "grey.100",
+                  borderColor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
                   textTransform: "none",
                   fontSize: 13,
                   px: 1.75,
+                  bgcolor: viewMode === "studio" ? "rgba(255,255,255,0.16)" : "transparent",
                 }}
                 onClick={() => setViewMode("studio")}
               >
@@ -568,11 +641,12 @@ const initiateStep = useMemo(
                 variant={viewMode === "map" ? "contained" : "outlined"}
                 sx={{
                   borderRadius: 999,
-                  borderColor: "grey.700",
-                  color: "grey.100",
+                  borderColor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
                   textTransform: "none",
                   fontSize: 13,
                   px: 1.75,
+                  bgcolor: viewMode === "map" ? "rgba(255,255,255,0.16)" : "transparent",
                 }}
                 onClick={() => setViewMode("map")}
               >
@@ -583,8 +657,8 @@ const initiateStep = useMemo(
                 variant="outlined"
                 sx={{
                   borderRadius: 999,
-                  borderColor: "grey.700",
-                  color: "grey.100",
+                  borderColor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
                   textTransform: "none",
                   fontSize: 13,
                   px: 1.75,
@@ -604,19 +678,32 @@ const initiateStep = useMemo(
                   textTransform: "none",
                   fontSize: 13,
                   px: 2.25,
+                  boxShadow: "0 10px 24px rgba(7, 15, 34, 0.22)",
                 }}
               >
                 {isPublished ? "Unpublish workflow" : "Publish workflow"}
               </Button>
               {!publishReady && (
-                <Typography variant="caption" sx={{ ml: 1, opacity: 0.9 }}>
+                <Typography variant="caption" sx={{ ml: 1, opacity: 0.88, maxWidth: 220 }}>
                   {publishReasons[0] || "Not ready to publish"}
                 </Typography>
               )}
             </Stack>
+            </Stack>
           </Box>
           {/* Add Step dialog */}
-          <Dialog open={addModalOpen} onClose={()=>setAddModalOpen(false)} fullWidth maxWidth="xs">
+          <Dialog
+            open={addModalOpen}
+            onClose={()=>setAddModalOpen(false)}
+            fullWidth
+            maxWidth="xs"
+            PaperProps={{
+              sx: {
+                borderRadius: 3,
+                boxShadow: "0 28px 70px rgba(15, 23, 42, 0.18)",
+              }
+            }}
+          >
             <DialogTitle>Add New Step</DialogTitle>
             <DialogContent sx={{ display:'grid', gap: 1.5, mt: 0.5 }}>
               <TextField
@@ -656,9 +743,11 @@ const initiateStep = useMemo(
           <Box
   sx={{
     flex: 1,
-    bgcolor: "grey.100",
-    py: 2,
-    px: 2.5,              // 👈 same unit as spacing below (2.5)
+    py: 2.5,
+    px: { xs: 1.5, md: 2.5 },
+    maxWidth: 1680,
+    width: "100%",
+    mx: "auto",
   }}
 >
   <Grid
@@ -675,9 +764,12 @@ const initiateStep = useMemo(
         variant="outlined"
         sx={{
           height: "100%",
-          p: 1.25,
-          borderRadius: 1,
-          borderColor: "grey.300",
+          p: 1.5,
+          borderRadius: 3,
+          borderColor: "#d8e4f2",
+          bgcolor: "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
         }}
       >
                   <Stack
@@ -701,7 +793,7 @@ const initiateStep = useMemo(
                         borderRadius: 999,
                         px: 1.5,
                         py: 0.3,
-                        boxShadow: 2
+                        boxShadow: "0 10px 22px rgba(37, 99, 235, 0.18)"
                       }}
                       onClick={()=>setAddModalOpen(true)}
                     >
@@ -724,17 +816,24 @@ const initiateStep = useMemo(
             setSelectedStepId(s.id);
           }}
           sx={{
-            borderRadius: 1,
+            borderRadius: 2,
             mb: 0.5,
             border: "1px solid",
             borderColor: isSelected
-              ? "primary.main"
-              : "grey.200",
-            bgcolor: isSelected
-              ? "primary.50"
-              : "grey.50",
+              ? "#2563eb"
+              : "#dce6f3",
+            background: isSelected
+              ? "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(96,165,250,0.06))"
+              : "#f8fbff",
             opacity: terminate ? 0.6 : 1,         // look slightly faded
             cursor: terminate ? "default" : "pointer",
+            boxShadow: isSelected ? "0 12px 26px rgba(37, 99, 235, 0.12)" : "none",
+            "&.Mui-selected": {
+              bgcolor: "rgba(37, 99, 235, 0.08)",
+            },
+            "&.Mui-selected:hover": {
+              bgcolor: "rgba(37, 99, 235, 0.1)",
+            },
           }}
         >
           <ListItemAvatar>
@@ -817,11 +916,69 @@ const initiateStep = useMemo(
         }}
       > */}
           {!selectedStep ? (
-            <Typography variant="body2">
-              Select a step from the left to configure.
-            </Typography>
+            <Paper
+              elevation={0}
+              variant="outlined"
+              sx={{
+                minHeight: 420,
+                borderRadius: 3,
+                borderColor: "#d8e4f2",
+                bgcolor: "rgba(255,255,255,0.9)",
+                display: "grid",
+                placeItems: "center",
+                boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "#47617f" }}>
+                Select a step from the left to configure.
+              </Typography>
+            </Paper>
           ) : (
-            <>
+            <Paper
+              elevation={0}
+              variant="outlined"
+              sx={{
+                borderRadius: 3,
+                borderColor: "#d8e4f2",
+                bgcolor: "rgba(255,255,255,0.92)",
+                boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: "1px solid #e4edf7",
+                  background: "linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%)",
+                }}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                >
+                  <Box>
+                    <Typography sx={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "#59718f", textTransform: "uppercase" }}>
+                      Editing Step
+                    </Typography>
+                    <Typography sx={{ fontSize: 20, fontWeight: 800, color: "#143a72" }}>
+                      {selectedStep.step_name}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={`Step ${selectedStep.step_no}`}
+                    sx={{
+                      borderRadius: 999,
+                      bgcolor: "#e8f0ff",
+                      color: "#2456a3",
+                      fontWeight: 700,
+                    }}
+                  />
+                </Stack>
+              </Box>
+              <Box sx={{ p: 1.25 }}>
               <StepInlineConfigurator
                 key={selectedStep.id}
                 inline
@@ -881,7 +1038,8 @@ const initiateStep = useMemo(
                   setSteps(s || []);
                 }}
               />
-            </>
+              </Box>
+            </Paper>
           )}
         {/* </Paper> */}
       </Grid>
@@ -895,7 +1053,13 @@ const initiateStep = useMemo(
         <Paper
           elevation={0}
           variant="outlined"
-          sx={{ p: 1.25, borderRadius: 1, borderColor: "grey.300" }}
+          sx={{
+            p: 1.5,
+            borderRadius: 3,
+            borderColor: "#d8e4f2",
+            bgcolor: "rgba(255,255,255,0.88)",
+            boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
+          }}
         >
                     <Typography
                       variant="caption"
@@ -911,9 +1075,10 @@ const initiateStep = useMemo(
                       variant="outlined"
                       sx={{
                         mt: 1,
-                        p: 1,
-                        borderRadius: 1,
-                        bgcolor: "grey.50",
+                        p: 1.25,
+                        borderRadius: 2,
+                        bgcolor: "#f8fbff",
+                        borderColor: "#e3ecf8",
                       }}
                     >
                       <Typography
@@ -980,12 +1145,14 @@ const initiateStep = useMemo(
                   <Paper
             elevation={0}
             variant="outlined"
-            sx={{
-              p: 1.25,
-              borderRadius: 1,
+          sx={{
+              p: 1.5,
+              borderRadius: 3,
               fontSize: 12,
               flex: 1,
-              borderColor: "grey.300",
+              borderColor: "#d8e4f2",
+              bgcolor: "rgba(255,255,255,0.88)",
+              boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
             }}
           >
                     <Typography
@@ -1029,7 +1196,14 @@ const initiateStep = useMemo(
                    <Paper
           elevation={0}
           variant="outlined"
-          sx={{ p: 1.25, borderRadius: 1, borderColor: "grey.300", flex: 1 }}
+          sx={{
+            p: 1.5,
+            borderRadius: 3,
+            borderColor: "#d8e4f2",
+            flex: 1,
+            bgcolor: "rgba(255,255,255,0.88)",
+            boxShadow: "0 14px 36px rgba(25, 46, 87, 0.08)",
+          }}
         ></Paper>
                 </Stack>
               </Grid>

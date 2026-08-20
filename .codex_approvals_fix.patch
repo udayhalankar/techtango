@@ -1,0 +1,658 @@
+From 91e7700000be615099bb6196f92fd248e1ed4d89 Mon Sep 17 00:00:00 2001
+From: udayhalankar <udayhalankar@gmail.com>
+Date: Sat, 15 Aug 2026 22:46:11 +0300
+Subject: [PATCH] Tighten approvals modal layout
+
+---
+ client/src/pages/approvals/Approvals.js   | 227 ++++++++---------
+ client/src/pages/approvals/approvals.scss | 285 ++++++++++++++++++++--
+ 2 files changed, 379 insertions(+), 133 deletions(-)
+
+diff --git a/client/src/pages/approvals/Approvals.js b/client/src/pages/approvals/Approvals.js
+index ea3ce1d73..1ccf93ae9 100644
+--- a/client/src/pages/approvals/Approvals.js
++++ b/client/src/pages/approvals/Approvals.js
+@@ -372,115 +372,121 @@ const handleSubmit = async (e) => {
+ 
+       {showPreview && selectedApproval && (
+         <div className="modal-overlay">
+-          <div className="modal-form" ref={previewRef}>
+-            <h3 className="modal-title">Assignment Details</h3>
+-            <div><strong>Title:</strong> {selectedApproval.title}</div>
+-            <div><strong>Details:</strong> {selectedApproval.details}</div>
+-            <div><strong>From:</strong> {selectedApproval.assigned_by_firstname}</div>
+-            <div><strong>To:</strong> {selectedApproval.assignee_firstname}</div>
+-            <div><strong>Due Date:</strong> {new Date(selectedApproval.due_date).toLocaleDateString()}</div>
+-
+-            {activeTab === "inbox" ? (
+-              <>
+-                <label>Status</label>
+-                <select name="status" value={updateForm.status} onChange={handleUpdateChange}>
+-                  <option>New</option>
+-                  <option>In-Progress</option>
+-                  <option>Completed</option>
+-                </select>
+-                <label>Assignee Comments</label>
+-                <textarea name="assignee_comments" value={updateForm.assignee_comments} onChange={handleUpdateChange} />
+-                <label>Upload New Files</label>
+-                <input type="file" multiple onChange={handleUpdateFileChange} />
+-                <button onClick={handleAssigneeUpdate}>Submit Update</button>
+-              </>
+-            ) : selectedApproval.status === "Completed" ? (
+-              <>
+-                <label>Final Status <span style={{ color: "red" }}>*</span></label>
+-                <select
+-                  name="status"
+-                  value={updateForm.status}
+-                  onChange={handleUpdateChange}
+-                  required
+-                >
+-                  <option value="">-- Select --</option>
+-                  <option value="Rejected">Rejected</option>
+-                  <option value="Closed">Closed</option>
+-                </select>
+-                <button
+-                  onClick={() => {
+-                    if (!updateForm.status) {
+-                      alert("?? Please select a final status before submitting.");
+-                      return;
+-                    }
+-                    handleAssigneeUpdate();
+-                  }}
+-                >
+-                  Submit Final Status
+-                </button>
+-              </>
+-            ) : null}
+-
+-            <div style={{ marginTop: "1rem" }}>
+-              <strong>Uploaded Files</strong>
+-              {selectedApproval.files?.length > 0 ? (
+-                <ul>
+-                  {selectedApproval.files.map((file) => (
+-                    <li key={file.id}>
+-                      {file.original_filename} by {file.uploaded_by_name} at{" "}
+-                      {new Date(file.uploaded_at).toLocaleString()}
+-                      <button
+-                        onClick={() => downloadFile(file.id, file.original_filename)}
+-                        style={{ marginLeft: "10px" }}
+-                      >
+-                        Download
+-                      </button>
+-                    </li>
+-                  ))}
+-                </ul>
+-              ) : (
+-                <p>No attachments</p>
+-              )}
++          <div className="modal-form assignment-preview-modal" ref={previewRef}>
++            <div className="modal-header-band">
++              <div className="modal-header-icon" aria-hidden="true">??</div>
++              <div>
++                <h3 className="modal-title">Assignment Details</h3>
++                <p className="modal-subtitle">
++                  Review assignment information, uploaded files, and the full audit trail in one place.
++                </p>
++              </div>
+             </div>
+ 
+-              <div style={{
+-                  marginTop: "1rem",
+-                  maxHeight: "200px",
+-                  overflowY: "auto",
+-                  backgroundColor: "#f5f5f5",
+-                  border: "1px solid #ccc",
+-                  padding: "10px",
+-                  borderRadius: "8px",
+-                  fontSize: "14px"
+-                }}>
+-                  <strong style={{ display: "block", marginBottom: "8px" }}>?????? Audit Trail</strong>
+-
+-                  
+-
+-                  {auditLogs.length > 0 && (
+-                    <div style={{
+-                      marginTop: "1.5rem",
+-                      maxHeight: "200px",
+-                      overflowY: "auto",
+-                      backgroundColor: "#f9f9f9",
+-                      border: "1px solid #ccc",
+-                      padding: "10px",
+-                      borderRadius: "8px",
+-                      fontSize: "14px"
+-                    }}>
+-                      <strong style={{ display: "block", marginBottom: "10px" }}>??? Audit Trail</strong>
+-
+-                      <ul style={{ listStyle: "none", paddingLeft: 0, margin: 0 }}>
+-                        {auditLogs.map((log) => {
+-                          const actionText = log.action === "Insert" ? "Created" : "Modified";
++            <div className="preview-body">
++              <div className="preview-summary-grid">
++                <div className="preview-field"><strong>Title:</strong> {selectedApproval.title}</div>
++                <div className="preview-field"><strong>Due Date:</strong> {new Date(selectedApproval.due_date).toLocaleDateString()}</div>
++                <div className="preview-field"><strong>From:</strong> {selectedApproval.assigned_by_firstname}</div>
++                <div className="preview-field"><strong>To:</strong> {selectedApproval.assignee_firstname}</div>
++                <div className="preview-field preview-field-full"><strong>Details:</strong> {selectedApproval.details}</div>
++              </div>
+ 
+-                          // const status = log.changed_data?.status || log.after_change?.status;
+-                          // const comments = log.changed_data?.assignee_comments || log.after_change?.assignee_comments;
++              {activeTab === "inbox" ? (
++                <div className="preview-section">
++                  <div className="preview-section-title">Update Assignment</div>
++                  <div className="assignment-form-grid preview-form-grid">
++                    <div className="field-block">
++                      <label>Status</label>
++                      <select name="status" value={updateForm.status} onChange={handleUpdateChange}>
++                        <option>New</option>
++                        <option>In-Progress</option>
++                        <option>Completed</option>
++                      </select>
++                    </div>
++                    <div className="field-block">
++                      <label>Upload New Files</label>
++                      <input type="file" multiple onChange={handleUpdateFileChange} />
++                    </div>
++                    <div className="field-block field-block-full">
++                      <label>Assignee Comments</label>
++                      <textarea name="assignee_comments" value={updateForm.assignee_comments} onChange={handleUpdateChange} />
++                    </div>
++                  </div>
++                  <div className="modal-actions">
++                    <button className="submit-btn" onClick={handleAssigneeUpdate}>Submit Update</button>
++                  </div>
++                </div>
++              ) : selectedApproval.status === "Completed" ? (
++                <div className="preview-section">
++                  <div className="preview-section-title">Final Review</div>
++                  <div className="assignment-form-grid preview-form-grid">
++                    <div className="field-block field-block-full">
++                      <label>Final Status <span className="required-indicator">*</span></label>
++                      <select
++                        name="status"
++                        value={updateForm.status}
++                        onChange={handleUpdateChange}
++                        required
++                      >
++                        <option value="">-- Select --</option>
++                        <option value="Rejected">Rejected</option>
++                        <option value="Closed">Closed</option>
++                      </select>
++                    </div>
++                  </div>
++                  <div className="modal-actions">
++                    <button
++                      className="submit-btn"
++                      onClick={() => {
++                        if (!updateForm.status) {
++                          alert("?? Please select a final status before submitting.");
++                          return;
++                        }
++                        handleAssigneeUpdate();
++                      }}
++                    >
++                      Submit Final Status
++                    </button>
++                  </div>
++                </div>
++              ) : null}
++
++              <div className="preview-section">
++                <div className="preview-section-title">Uploaded Files</div>
++                {selectedApproval.files?.length > 0 ? (
++                  <ul className="preview-file-list">
++                    {selectedApproval.files.map((file) => (
++                      <li key={file.id}>
++                        <div className="preview-file-meta">
++                          <strong>{file.original_filename}</strong>
++                          <span>by {file.uploaded_by_name} at {new Date(file.uploaded_at).toLocaleString()}</span>
++                        </div>
++                        <button
++                          className="download-btn"
++                          onClick={() => downloadFile(file.id, file.original_filename)}
++                        >
++                          Download
++                        </button>
++                      </li>
++                    ))}
++                  </ul>
++                ) : (
++                  <p className="empty-state">No attachments</p>
++                )}
++              </div>
+ 
++              <div className="preview-section audit-section">
++                <div className="preview-section-title">Audit Trail</div>
++                {auditLogs.length > 0 ? (
++                    <div className="audit-log-panel">
++                      <ul className="audit-log-list-plain">
++                        {auditLogs.map((log) => {
++                          const actionText = log.action === "Insert" ? "Created" : "Modified";
+                           const { status, comments } = log;
+ 
+                           return (
+-                            <li key={log.id} style={{ marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px dashed #ccc" }}>
++                            <li key={log.id}>
+                               <div>??? <strong>Date:</strong> {new Date(log.modified_at).toLocaleString()}</div>
+                               <div>?? <strong>Action:</strong> {actionText}</div>
+                               <div>?? <strong>By:</strong> {log.modified_by_name}</div>
+@@ -491,18 +497,15 @@ const handleSubmit = async (e) => {
+                         })}
+                       </ul>
+                     </div>
++                  ) : (
++                    <p className="empty-state">No audit trail entries available.</p>
+                   )}
++              </div>
+ 
+-                </div>
+-
+-
+-
+-
+-
+-
+-
+-
+-            <button className="cancel-btn" onClick={() => setShowPreview(false)}>Close</button>
++              <div className="modal-actions">
++                <button className="cancel-btn" onClick={() => setShowPreview(false)}>Close</button>
++              </div>
++            </div>
+           </div>
+         </div>
+       )}
+diff --git a/client/src/pages/approvals/approvals.scss b/client/src/pages/approvals/approvals.scss
+index 5bdbd73e0..a1c4c7ed2 100644
+--- a/client/src/pages/approvals/approvals.scss
++++ b/client/src/pages/approvals/approvals.scss
+@@ -259,8 +259,10 @@
+   background: rgba(0,0,0,0.3);
+   display: flex;
+   justify-content: center;
+-  align-items: center;
++  align-items: flex-start;
++  padding: 36px 16px;
+   z-index: 999;
++  overflow-y: auto;
+ }
+ 
+ .modal-form {
+@@ -325,18 +327,20 @@
+ }
+ 
+ .assignment-create-modal {
+-  width: 820px;
+-  max-width: min(92vw, 820px);
++  width: 656px;
++  max-width: min(88vw, 656px);
+   padding: 0;
+   border-radius: 18px;
+   overflow: hidden;
+   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
++  max-height: calc(100vh - 72px);
++  overflow-y: auto;
+ 
+   .modal-header-band {
+     display: flex;
+     align-items: flex-start;
+     gap: 14px;
+-    padding: 18px 22px 16px;
++    padding: 14px 18px 13px;
+     color: #fff;
+     background: linear-gradient(135deg, #0f7c8b 0%, #176d96 100%);
+   }
+@@ -355,25 +359,25 @@
+   .modal-title {
+     text-align: left;
+     margin: 0 0 4px;
+-    font-size: 1.55rem;
++    font-size: 1.24rem;
+   }
+ 
+   .modal-subtitle {
+     margin: 0;
+     color: rgba(255, 255, 255, 0.88);
+-    font-size: 0.92rem;
++    font-size: 0.82rem;
+     line-height: 1.45;
+   }
+ 
+   form {
+-    padding: 20px 22px 18px;
++    padding: 16px 18px 15px;
+     background: #f8fbff;
+   }
+ 
+   .assignment-form-grid {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+-    gap: 18px 16px;
++    gap: 14px 13px;
+   }
+ 
+   .field-block {
+@@ -387,8 +391,8 @@
+ 
+   label {
+     margin-top: 0;
+-    margin-bottom: 8px;
+-    font-size: 0.78rem;
++    margin-bottom: 6px;
++    font-size: 0.72rem;
+     font-weight: 800;
+     letter-spacing: 0.08em;
+     text-transform: uppercase;
+@@ -399,8 +403,8 @@
+   select,
+   textarea {
+     margin-top: 0;
+-    min-height: 44px;
+-    padding: 11px 14px;
++    min-height: 36px;
++    padding: 9px 12px;
+     border: 1px solid #c7d3e4;
+     border-radius: 10px;
+     background: #fff;
+@@ -417,28 +421,28 @@
+   }
+ 
+   textarea {
+-    min-height: 110px;
++    min-height: 88px;
+   }
+ 
+   input[type="file"] {
+-    padding: 10px 12px;
++    padding: 8px 10px;
+     background: #fdfefe;
+   }
+ 
+   small {
+-    margin-top: 7px;
++    margin-top: 5px;
+     color: #8193b2;
+-    font-size: 0.76rem;
++    font-size: 0.72rem;
+     line-height: 1.4;
+   }
+ 
+   .attachments {
+     margin-top: 0;
+-    padding: 14px 16px;
++    padding: 11px 13px;
+     border: 1px solid #dbe5f1;
+     border-radius: 12px;
+     background: #fff;
+-    font-size: 0.92rem;
++    font-size: 0.84rem;
+   }
+ 
+   .attachments strong {
+@@ -458,14 +462,14 @@
+     display: flex;
+     justify-content: flex-end;
+     gap: 10px;
+-    margin-top: 20px;
++    margin-top: 16px;
+   }
+ 
+   .submit-btn,
+   .cancel-btn {
+     margin-top: 0;
+-    min-width: 140px;
+-    padding: 0.8rem 1.1rem;
++    min-width: 112px;
++    padding: 0.64rem 0.9rem;
+     border-radius: 12px;
+   }
+ 
+@@ -499,6 +503,245 @@
+   }
+ }
+ 
++.assignment-preview-modal {
++  width: 656px;
++  max-width: min(88vw, 656px);
++  padding: 0;
++  border-radius: 18px;
++  overflow: hidden;
++  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
++  max-height: calc(100vh - 72px);
++  overflow-y: auto;
++
++  .modal-header-band {
++    display: flex;
++    align-items: flex-start;
++    gap: 14px;
++    padding: 14px 18px 13px;
++    color: #fff;
++    background: linear-gradient(135deg, #173b6f 0%, #1a5e8a 100%);
++  }
++
++  .modal-header-icon {
++    width: 38px;
++    height: 38px;
++    border-radius: 12px;
++    display: grid;
++    place-items: center;
++    background: rgba(255, 255, 255, 0.16);
++    font-size: 18px;
++    flex: 0 0 auto;
++  }
++
++  .modal-title {
++    text-align: left;
++    margin: 0 0 4px;
++    font-size: 1.24rem;
++  }
++
++  .modal-subtitle {
++    margin: 0;
++    color: rgba(255, 255, 255, 0.88);
++    font-size: 0.82rem;
++    line-height: 1.45;
++  }
++
++  .preview-body {
++    padding: 16px 18px 15px;
++    background: #f8fbff;
++  }
++
++  .preview-summary-grid {
++    display: grid;
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++    gap: 12px;
++    margin-bottom: 14px;
++  }
++
++  .preview-field {
++    padding: 11px 13px;
++    border: 1px solid #d9e4f2;
++    border-radius: 12px;
++    background: #fff;
++    color: #274466;
++    line-height: 1.5;
++  }
++
++  .preview-field-full {
++    grid-column: 1 / -1;
++  }
++
++  .preview-section {
++    margin-top: 14px;
++    padding: 13px;
++    border: 1px solid #d9e4f2;
++    border-radius: 14px;
++    background: #fff;
++  }
++
++  .preview-section-title {
++    margin-bottom: 12px;
++    font-size: 0.9rem;
++    font-weight: 800;
++    letter-spacing: 0.04em;
++    text-transform: uppercase;
++    color: #365784;
++  }
++
++  .preview-form-grid {
++    gap: 12px;
++  }
++
++  label {
++    margin-top: 0;
++    margin-bottom: 6px;
++    font-size: 0.72rem;
++    font-weight: 800;
++    letter-spacing: 0.08em;
++    text-transform: uppercase;
++    color: #4b648b;
++  }
++
++  input,
++  select,
++  textarea {
++    margin-top: 0;
++    min-height: 36px;
++    padding: 9px 12px;
++    border: 1px solid #c7d3e4;
++    border-radius: 10px;
++    background: #fff;
++    color: #183153;
++    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
++  }
++
++  textarea {
++    min-height: 82px;
++  }
++
++  input:focus,
++  select:focus,
++  textarea:focus {
++    outline: none;
++    border-color: #4f8cff;
++    box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.12);
++  }
++
++  .preview-file-list,
++  .audit-log-list-plain {
++    list-style: none;
++    margin: 0;
++    padding: 0;
++  }
++
++  .preview-file-list li,
++  .audit-log-list-plain li {
++    display: flex;
++    justify-content: space-between;
++    gap: 12px;
++    padding: 10px 0;
++    border-bottom: 1px dashed #d8dfeb;
++  }
++
++  .preview-file-list li:last-child,
++  .audit-log-list-plain li:last-child {
++    border-bottom: 0;
++    padding-bottom: 0;
++  }
++
++  .preview-file-meta {
++    display: flex;
++    flex-direction: column;
++    gap: 4px;
++    color: #48617f;
++  }
++
++  .preview-file-meta strong {
++    color: #234166;
++  }
++
++  .download-btn {
++    border: 1px solid #b9c9de;
++    background: #eef4ff;
++    color: #234e8a;
++    border-radius: 10px;
++    padding: 0.55rem 0.85rem;
++    font-weight: 700;
++    cursor: pointer;
++    height: fit-content;
++  }
++
++  .download-btn:hover {
++    background: #dfebff;
++  }
++
++  .audit-log-panel {
++    max-height: 180px;
++    overflow-y: auto;
++    padding-right: 4px;
++  }
++
++  .empty-state {
++    margin: 0;
++    color: #617a98;
++  }
++
++  .required-indicator {
++    color: #d11f48;
++  }
++
++  .modal-actions {
++    display: flex;
++    justify-content: flex-end;
++    gap: 10px;
++    margin-top: 16px;
++  }
++
++  .submit-btn,
++  .cancel-btn {
++    margin-top: 0;
++    min-width: 112px;
++    padding: 0.64rem 0.9rem;
++    border-radius: 12px;
++    border: none;
++    font-weight: 700;
++    cursor: pointer;
++  }
++
++  .submit-btn {
++    background: #2563eb;
++    color: #fff;
++  }
++
++  .cancel-btn {
++    background: #eef3f9;
++    color: #3b526f;
++    border: 1px solid #d2ddea;
++  }
++
++  @media (max-width: 720px) {
++    .preview-summary-grid,
++    .preview-form-grid {
++      grid-template-columns: 1fr;
++    }
++
++    .preview-file-list li,
++    .audit-log-list-plain li {
++      flex-direction: column;
++    }
++
++    .modal-actions {
++      flex-direction: column-reverse;
++    }
++
++    .submit-btn,
++    .cancel-btn,
++    .download-btn {
++      width: 100%;
++    }
++  }
++}
++
+ 
+ 
+ 
+-- 
+2.45.2.windows.1
+

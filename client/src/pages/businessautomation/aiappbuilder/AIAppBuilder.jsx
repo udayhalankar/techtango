@@ -9,15 +9,13 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  CardContent,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  Drawer,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -34,12 +32,19 @@ import {
   TextField,
   Tooltip,
   Typography,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import AppsRoundedIcon from "@mui/icons-material/AppsRounded";
+import DashboardCustomizeRoundedIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import api from "../../../services/api";
+import ReusableFormModal from "../../../components/ReusableFormModal";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25];
 
@@ -949,11 +954,18 @@ const createDefaultDependencyRule = () => ({
   },
 };
 
-const CompactTextField = (props) => (
+const CompactTextField = ({ SelectProps, ...props }) => (
   <TextField
     fullWidth
     size="small"
     sx={compactTextFieldSx}
+    SelectProps={{
+      ...SelectProps,
+      MenuProps: {
+        hideBackdrop: true,
+        ...SelectProps?.MenuProps,
+      },
+    }}
     {...props}
   />
 );
@@ -1448,68 +1460,31 @@ const validateDashboardBuilder = (cards, charts, tablesConfig, tables) => {
  
 
   return (
-    <Dialog
-          open={open}
-          onClose={onClose}
-          maxWidth={false}
-          fullWidth
-          PaperProps={{
-            sx: {
-              width: "75vw",
-              maxWidth: "900px",
-              height: "94vh",
-              maxHeight: "94vh",
-              borderRadius: 4,
-              overflow: "hidden",
-              m: 0.5,
-              border: "3px solid #f97316",
-              outline: "1px solid rgba(249, 115, 22, 0.18)",
-              boxShadow: "0 30px 50px rgba(149, 115, 22, 0.18)",
-            },
-          }}
-        >
-      <DialogContent
-          sx={{
-            p: 0,
-            bgcolor: "#ffffff",
-            overflowY: "auto",
-            borderRadius: 0,
-            "&::-webkit-scrollbar": {
-              width: 8,
-            },
-            "&::-webkit-scrollbar-thumb": {
-              bgcolor: "#fdba74",
-              borderRadius: 8,
-            },
-          }}
-        >
-        <Box
-            sx={{
-              width: "100%",
-              maxWidth: "none",
-              mx: 0,
-              my: 0,
-              bgcolor: "#ffffff",
-              borderRadius: 0,
-              overflow: "hidden",
-              border: "none",
-              boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "100%",
-            }}
-          >
-          <Box sx={{ px: 4, py: 3, background: "linear-gradient(135deg, #f8fbff, #eef5ff)", borderBottom: "1px solid #dbeafe" }}>
-            <Typography sx={{ fontSize: 28, fontWeight: 700, color: "#0f2f57" }}>
-              Create a New Application
-            </Typography>
-            <Typography sx={{ mt: 1, color: "#64748b", fontSize: 14 }}>
-              Define fields, table display, dependencies and validation rules before AI generates the CRUD schema.
-            </Typography>
-          </Box>
-
-          <Box sx={{ px: 2.5, py: 2.5 }}>
-            <Stack gap={3}>
+    <ReusableFormModal
+      open={open}
+      onClose={onClose}
+      icon="🤝"
+      title="Create a New Application"
+      subtitle="Define fields, table display, dependencies and validation rules before AI generates the CRUD schema."
+    >
+      <Box
+        className="rfm-form"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          overflowY: "auto",
+          pr: 0.5,
+          "&::-webkit-scrollbar": {
+            width: 8,
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#c7d3e4",
+            borderRadius: 999,
+          },
+        }}
+      >
+        <Stack gap={2}>
               <Box sx={{ border: "1px solid #e2e8f0", borderRadius: 3, p: 1.5, bgcolor: "#fbfdff" }}>
                 <Typography sx={{ fontSize: 17, fontWeight: 700, color: "#0f2f57", mb: 1.5 }}>
                   Application Details
@@ -2175,39 +2150,19 @@ const validateDashboardBuilder = (cards, charts, tablesConfig, tables) => {
               </Box>
               ) : null}
             </Stack>
-          </Box>
 
           <Box
             sx={{
-              px: 2.5,
-              py: 1.5,
-              bgcolor: "#fffaf5",
-              borderTop: "1px solid #fed7aa",
               display: "flex",
               justifyContent: "flex-end",
               gap: 1,
               flexWrap: "wrap",
             }}
+            className="rfm-actions"
           >
             <Button
               variant="outlined"
               onClick={onClose}
-              size="small"
-              sx={{
-                minWidth: 82,
-                height: 34,
-                borderRadius: 2,
-                textTransform: "none",
-                fontSize: 12,
-                fontWeight: 700,
-                borderColor: "#fdba74",
-                color: "#9a3412",
-                px: 1.5,
-                "&:hover": {
-                  borderColor: "#f97316",
-                  bgcolor: "#fff7ed",
-                },
-              }}
             >
               Cancel
             </Button>
@@ -2215,22 +2170,6 @@ const validateDashboardBuilder = (cards, charts, tablesConfig, tables) => {
             <Button
               variant="outlined"
               onClick={() => handleGenerate()}
-              size="small"
-              sx={{
-                minWidth: 108,
-                height: 34,
-                borderRadius: 2,
-                textTransform: "none",
-                fontSize: 12,
-                fontWeight: 700,
-                borderColor: "#fdba74",
-                color: "#9a3412",
-                px: 1.75,
-                "&:hover": {
-                  borderColor: "#f97316",
-                  bgcolor: "#fff7ed",
-                },
-              }}
             >
               Preview Schema
             </Button>
@@ -2238,33 +2177,17 @@ const validateDashboardBuilder = (cards, charts, tablesConfig, tables) => {
             <Button
               variant="contained"
               onClick={handleGenerate}
-              size="small"
-              sx={{
-                minWidth: 132,
-                height: 34,
-                borderRadius: 2,
-                textTransform: "none",
-                fontSize: 12,
-                fontWeight: 700,
-                px: 2,
-                bgcolor: "#f97316",
-                boxShadow: "0 8px 18px rgba(249, 115, 22, 0.28)",
-                "&:hover": {
-                  bgcolor: "#ea580c",
-                },
-              }}
             >
               Generate Application
             </Button>
           </Box>
           {error ? (
-            <Box sx={{ px: 2.5, pb: 2 }}>
+            <Box>
               <Alert severity="error">{error}</Alert>
             </Box>
           ) : null}
-        </Box>
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </ReusableFormModal>
   );
 
 
@@ -2370,6 +2293,7 @@ export default function AIAppBuilder() {
   const [schemaReviewOpen, setSchemaReviewOpen] = useState(false);
   const [notice, setNotice] = useState({ open: false, severity: "success", message: "" });
   const [dashboardSaveToken, setDashboardSaveToken] = useState(0);
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
   
   const notify = (severity, message) => setNotice({ open: true, severity, message });
 
@@ -2445,6 +2369,11 @@ export default function AIAppBuilder() {
         .some((value) => String(value || "").toLowerCase().includes(term))
     );
   }, [applications, appSearch]);
+
+  const recentApplications = useMemo(
+    () => filteredApplications.slice(0, 2),
+    [filteredApplications]
+  );
 
   const normalizedRecords = useMemo(() => (
     Array.isArray(records) ? records.map(normalizeRecord) : []
@@ -2587,6 +2516,35 @@ export default function AIAppBuilder() {
     }
   };
 
+  const handleDeleteApplication = async (app) => {
+    if (!app?.app_slug) return;
+    if (!window.confirm(`Delete ${app.app_name || app.app_slug}? This will remove the application and its table.`)) return;
+
+    setLoading(true);
+    try {
+      await api.delete(`/aiappbuilder/${encodeURIComponent(app.app_slug)}`);
+      notify("success", "Application deleted.");
+
+      const res = await api.get("/aiappbuilder");
+      const list = Array.isArray(res.data) ? res.data : [];
+      setApplications(list);
+
+      if (selectedSlug === app.app_slug) {
+        const nextSlug = list[0]?.app_slug || "";
+        setSelectedSlug(nextSlug);
+        if (!nextSlug) {
+          setSelectedApp(null);
+          setSchema(null);
+          setRecords([]);
+        }
+      }
+    } catch (error) {
+      notify("error", error?.response?.data?.error || error?.message || "Failed to delete application.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // const handleSaveApplicationChanges = async (app) => {
   //   if (!app?.app_slug) return;
   //   if (String(app?.schema_json?.appMode || "").toLowerCase() !== "dashboard") {
@@ -2695,158 +2653,482 @@ export default function AIAppBuilder() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb", p: 2 }}>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          borderRadius: 3,
-          border: "1px solid #d8dde7",
-          bgcolor: "#ffffff",
-          boxShadow: "0 8px 28px rgba(16, 24, 40, 0.06)",
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#edf3fb",
+        background:
+          "linear-gradient(180deg, #f4f8fd 0%, #edf3fb 100%)",
+      }}
+    >
+      <Drawer
+        anchor="left"
+        open={appDrawerOpen}
+        onClose={() => setAppDrawerOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{
+          sx: {
+            width: 370,
+            maxWidth: "92vw",
+            boxShadow: "20px 0 50px rgba(15,35,60,.18)",
+            bgcolor: "#fff",
+          },
         }}
       >
-        <Stack gap={2}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+        <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <Box
+            sx={{
+              px: 2.25,
+              py: 2.25,
+              borderBottom: "1px solid #dfe6ef",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1.5,
+            }}
+          >
             <Box>
-              <Typography sx={{ fontSize: 26, fontWeight: 800, color: "#16233b" }}>
-                AI App Builder
+              <Typography sx={{ m: 0, color: "#15385f", fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
+                Applications
               </Typography>
-              <Typography sx={{ color: "#5f6f8a", fontSize: 13 }}>
-                Build one-page CRUD applications from AI-generated schemas.
+              <Typography sx={{ mt: 0.5, fontSize: 12, color: "#8190a2" }}>
+                {filteredApplications.length} available
               </Typography>
             </Box>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+            <IconButton
+              onClick={() => setAppDrawerOpen(false)}
+              sx={{ width: 38, height: 38, border: "1px solid #dfe6ef", bgcolor: "#fff" }}
+            >
+              <ChevronLeftRoundedIcon />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ p: 1.9, overflow: "auto", flex: 1 }}>
+            <TextField
+              size="small"
+              fullWidth
+              value={appSearch}
+              onChange={(event) => setAppSearch(event.target.value)}
+              placeholder="Search applications..."
+              InputProps={{
+                startAdornment: <SearchIcon sx={{ fontSize: 18, color: "#7b8aa1", mr: 1 }} />,
+              }}
+              sx={{
+                mb: 1.5,
+                "& .MuiOutlinedInput-root": {
+                  height: 42,
+                  borderRadius: 2.5,
+                  bgcolor: "#fff",
+                },
+              }}
+            />
+
+            {recentApplications.length ? (
+              <>
+                <Typography sx={{ fontSize: 11, fontWeight: 800, color: "#92a0b2", textTransform: "uppercase", m: "15px 3px 8px" }}>
+                  Recent
+                </Typography>
+                <Stack gap={1}>
+                  {recentApplications.map((app) => {
+                    const active = app.app_slug === selectedSlug;
+                    return (
+                      <Box
+                        key={`recent-${app.id}`}
+                        onClick={() => {
+                          setSelectedSlug(app.app_slug);
+                          setAppDrawerOpen(false);
+                        }}
+                        sx={{
+                          p: 1.5,
+                          border: "1px solid #e5eaf1",
+                          borderRadius: "11px",
+                          cursor: "pointer",
+                          bgcolor: active ? "#f7faff" : "#fff",
+                          borderColor: active ? "#9eb8dd" : "#e5eaf1",
+                        }}
+                      >
+                        <Typography sx={{ color: "#17385f", fontWeight: 800, fontSize: 15 }}>
+                          {app.app_name}
+                        </Typography>
+                        <Typography sx={{ mt: 0.5, color: "#758397", fontSize: 12 }}>
+                          {(app.requirement || app.table_name || "No description")} · {app.status || "Active"}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </>
+            ) : null}
+
+            <Typography sx={{ fontSize: 11, fontWeight: 800, color: "#92a0b2", textTransform: "uppercase", m: "15px 3px 8px" }}>
+              All Applications
+            </Typography>
+            <Stack gap={1}>
+              {filteredApplications.length ? (
+                filteredApplications.map((app) => {
+                  const active = app.app_slug === selectedSlug;
+                  const isDashboard = String(app?.schema_json?.appMode || "").toLowerCase() === "dashboard";
+                  return (
+                    <Box
+                      key={app.id}
+                      onClick={() => {
+                        setSelectedSlug(app.app_slug);
+                        setAppDrawerOpen(false);
+                      }}
+                      sx={{
+                        p: 1.5,
+                        border: "1px solid #e5eaf1",
+                        borderRadius: "11px",
+                        cursor: "pointer",
+                        bgcolor: active ? "#f7faff" : "#fff",
+                        borderColor: active ? "#9eb8dd" : "#e5eaf1",
+                        "&:hover": {
+                          bgcolor: "#f7faff",
+                          borderColor: "#9eb8dd",
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography sx={{ color: "#17385f", fontWeight: 800, fontSize: 15 }}>
+                            {app.app_name}
+                          </Typography>
+                          <Typography sx={{ mt: 0.5, color: "#758397", fontSize: 12 }}>
+                            {(app.requirement || app.table_name || "No description")} · {app.status || "Active"}
+                          </Typography>
+                        </Box>
+                        <Tooltip title="Delete application">
+                          <IconButton
+                            size="small"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteApplication(app);
+                            }}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              color: "#7f91ab",
+                              border: "1px solid #d8e4f2",
+                              bgcolor: "#fff",
+                              "&:hover": {
+                                color: "#c62828",
+                                borderColor: "#f1b2b2",
+                                bgcolor: "#fff5f5",
+                              },
+                            }}
+                          >
+                            <DeleteOutlineOutlinedIcon sx={{ fontSize: 15 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <Box sx={{ mt: 1.1, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                        <Typography sx={{ fontSize: 12, color: "#60758f" }}>
+                          {app.table_name}
+                        </Typography>
+                        <Stack direction="row" spacing={0.75}>
+                          {isDashboard ? (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{ minWidth: 0, px: 0.85, minHeight: 26, fontSize: 10.5, textTransform: "none", borderRadius: 2 }}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleSaveApplicationChanges(app);
+                              }}
+                            >
+                              Save
+                            </Button>
+                          ) : null}
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            sx={{ minWidth: 0, px: 0.85, minHeight: 26, fontSize: 10.5, textTransform: "none", borderRadius: 2 }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handlePublishApplication(app);
+                            }}
+                            disabled={String(app.status || "").toLowerCase() === "published"}
+                          >
+                            {String(app.status || "").toLowerCase() === "published" ? "Published" : "Publish"}
+                          </Button>
+                        </Stack>
+                      </Box>
+                    </Box>
+                  );
+                })
+              ) : (
+                <Typography sx={{ fontSize: 13, color: "#5f6f8a", p: 1 }}>
+                  No applications yet.
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+
+          <Box sx={{ mt: "auto", p: 1.9, borderTop: "1px solid #dfe6ef" }}>
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setAppDrawerOpen(false);
+                setCreateOpen(true);
+              }}
+              sx={{
+                minHeight: 44,
+                borderRadius: 2.5,
+                textTransform: "none",
+                fontWeight: 800,
+              }}
+            >
               Create New Application
             </Button>
           </Box>
+        </Box>
+      </Drawer>
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 1.5,
-                  border: "1px solid #d8dde7",
-                  borderRadius: 2,
-                  bgcolor: "#fbfcff",
-                  height: "100%",
-                }}
+      <Box
+        sx={{
+          minHeight: "calc(100vh - 72px)",
+        }}
+      >
+        <Box
+          sx={{
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: 1.75,
+              borderBottom: "1px solid #dfe6ef",
+              bgcolor: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            {selectedApp ? (
+              <Stack
+                direction={{ xs: "column", lg: "row" }}
+                spacing={1.5}
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", lg: "center" }}
+                sx={{ width: "100%" }}
               >
-                <Stack gap={1.25}>
-                  <TextField
-                    size="small"
-                    value={appSearch}
-                    onChange={(event) => setAppSearch(event.target.value)}
-                    placeholder="Search applications"
-                    InputProps={{
-                      startAdornment: <SearchIcon sx={{ fontSize: 18, color: "#7b8aa1", mr: 1 }} />,
+                <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flexWrap: "wrap", rowGap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setAppDrawerOpen(true)}
+                    startIcon={<MenuIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      minHeight: 50,
+                      borderRadius: 2.25,
+                      px: 2,
+                      textTransform: "none",
+                      borderColor: "#dfe6ef",
+                      bgcolor: "#fff",
+                      color: "#334155",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      "& .MuiButton-startIcon": {
+                        mr: 0.75,
+                      },
+                    }}
+                  >
+                    Applications {applications.length}
+                  </Button>
+                  <Typography sx={{ fontSize: { xs: 18, md: 20 }, fontWeight: 700, color: "#15386d", lineHeight: 1.05 }}>
+                    {selectedApp.app_name}
+                  </Typography>
+                  <Chip
+                    label={selectedApp.status || "Active"}
+                    sx={{
+                      height: 29,
+                      borderRadius: 999,
+                      bgcolor: String(selectedApp.status || "").toLowerCase() === "published" ? "#eef8f3" : "#f7fafc",
+                      color: String(selectedApp.status || "").toLowerCase() === "published" ? "#15966a" : "#46617d",
+                      border: "1px solid #d8e4f2",
+                      fontWeight: 700,
+                      "& .MuiChip-label": {
+                        px: 1.15,
+                        fontSize: 12,
+                      },
                     }}
                   />
-                  <Divider />
-                  <Stack gap={1} sx={{ maxHeight: "550vh", overflow: "auto" }}>
-                    {filteredApplications.length ? (
-                      filteredApplications.map((app) => {
-                        const active = app.app_slug === selectedSlug;
-                        return (
-                          <Card
-                            key={app.id}
-                            sx={{
-                              border: active ? "1px solid #2f7dd6" : "1px solid #d8dde7",
-                              boxShadow: active ? "0 8px 20px rgba(47,125,214,0.12)" : "none",
-                            }}
-                          >
-                            <CardActionArea onClick={() => setSelectedSlug(app.app_slug)}>
-                              <CardContent>
-                                <Stack gap={0.5}>
-                                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                                    <Typography sx={{ fontWeight: 800, color: "#16233b" }}>
-                                      {app.app_name}
-                                    </Typography>
-                                    {active ? <Chip size="small" label="Open" color="primary" /> : null}
-                                  </Box>
-                                  <Typography sx={{ fontSize: 12, color: "#5f6f8a" }}>
-                                    {app.table_name}
-                                  </Typography>
-                                  <Typography sx={{ fontSize: 12, color: "#5f6f8a" }}>
-                                    {app.requirement ? String(app.requirement).slice(0, 90) : "No requirement summary"}
-                                  </Typography>
-                                  <Typography sx={{ fontSize: 12, color: "#5f6f8a" }}>
-                                    Status: {app.status || "Active"}
-                                  </Typography>
-                                </Stack>
-                                <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
-                                  {String(app?.schema_json?.appMode || "").toLowerCase() === "dashboard" ? (
-                                    <Button
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{ textTransform: "none", mr: 1 }}
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        handleSaveApplicationChanges(app);
-                                      }}
-                                    >
-                                      Save Changes
-                                    </Button>
-                                  ) : null}
-                                  <Button
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ textTransform: "none" }}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handlePublishApplication(app);
-                                    }}
-                                    disabled={String(app.status || "").toLowerCase() === "published"}
-                                  >
-                                    {String(app.status || "").toLowerCase() === "published" ? "Published" : "Publish"}
-                                  </Button>
-                                </Box>
-                              </CardContent>
-                            </CardActionArea>
-                          </Card>
-                        );
-                      })
-                    ) : (
-                      <Typography sx={{ fontSize: 13, color: "#5f6f8a", p: 1 }}>
-                        No applications yet.
-                      </Typography>
-                    )}
-                  </Stack>
+                  <Chip
+                    icon={<DashboardCustomizeRoundedIcon />}
+                    label={`Source: ${selectedApp.table_name || "N/A"}`}
+                    sx={{
+                      height: 29,
+                      borderRadius: 999,
+                      bgcolor: "#f5f7fb",
+                      color: "#67758a",
+                      border: "1px solid #e5eaf0",
+                      fontWeight: 500,
+                      "& .MuiChip-label": {
+                        pr: 1.15,
+                        fontSize: 12,
+                      },
+                      "& .MuiChip-icon": {
+                        fontSize: 15,
+                      },
+                    }}
+                  />
                 </Stack>
-              </Paper>
-            </Grid>
+                <Box sx={{ flex: "0 0 auto", alignSelf: "center" }}>
+                  <Typography sx={{ fontSize: { xs: 18, md: 22 }, fontWeight: 600, color: "#15386d", lineHeight: 1.05 }}>
+                    AI App Builder
+                  </Typography>
+                </Box>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      minHeight: 42,
+                      px: 1.75,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      borderColor: "#dfe6ef",
+                      color: "#334155",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Preview
+                  </Button>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      minHeight: 42,
+                      px: 1.75,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      bgcolor: "#eef4ff",
+                      color: "#2563eb",
+                      boxShadow: "none",
+                      fontWeight: 700,
+                      "&:hover": {
+                        bgcolor: "#e4edff",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    Save Draft
+                  </Button>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      minHeight: 42,
+                      px: 1.75,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      bgcolor: "#2563eb",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Publish
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setCreateOpen(true)}
+                    sx={{
+                      minHeight: 42,
+                      px: 2,
+                      borderRadius: 2.5,
+                      textTransform: "none",
+                      fontWeight: 800,
+                      bgcolor: "#173a67",
+                      "&:hover": {
+                        bgcolor: "#133257",
+                      },
+                    }}
+                  >
+                    Create New Application
+                  </Button>
+                </Stack>
+              </Stack>
+            ) : (
+              <Box>
+                <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 0.5, flexWrap: "wrap", rowGap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setAppDrawerOpen(true)}
+                    startIcon={<MenuIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      minHeight: 50,
+                      borderRadius: 2.25,
+                      px: 2,
+                      textTransform: "none",
+                      borderColor: "#dfe6ef",
+                      bgcolor: "#fff",
+                      color: "#334155",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      "& .MuiButton-startIcon": {
+                        mr: 0.75,
+                      },
+                    }}
+                  >
+                    Applications {applications.length}
+                  </Button>
+                  <Typography sx={{ fontSize: 22, fontWeight: 600, color: "#15386d" }}>
+                    AI App Builder
+                  </Typography>
+                </Stack>
+              </Box>
+            )}
+          </Box>
 
-            <Grid item xs={12} md={9}>
-              <Paper
-                elevation={0}
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflow: "auto",
+              bgcolor: "transparent",
+            }}
+          >
+            {selectedApp && schema ? (
+              renderSelectedApplication()
+            ) : (
+              <Box
                 sx={{
-                  p: 0,
-                  borderRadius: 4,
-                  minHeight: 520,
-                  overflow: "hidden",
-                  border: "1px solid #e2e8f0",
-                  bgcolor: "#ffffff",
-                  boxShadow: "0 24px 70px rgba(15, 23, 42, 0.12)",
+                  minHeight: 420,
+                  display: "grid",
+                  placeItems: "center",
+                  px: 3,
                 }}
               >
-                {selectedApp && schema ? (
-  renderSelectedApplication()
-) : (
-  <Box sx={{ p: 4 }}>
-    <Typography sx={{ fontWeight: 700, color: "#16233b" }}>
-      No application selected
-    </Typography>
-    <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>
-      Select an application from the left panel or create a new one.
-    </Typography>
-  </Box>
-)}
-              </Paper>
-            </Grid>
-          </Grid>
-        </Stack>
-      </Paper>
+                <Stack spacing={1.5} alignItems="center" sx={{ textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      width: 68,
+                      height: 68,
+                      borderRadius: 3,
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "#eaf2ff",
+                      color: "#2563eb",
+                    }}
+                  >
+                    <AppsRoundedIcon sx={{ fontSize: 32 }} />
+                  </Box>
+                  <Typography sx={{ fontWeight: 800, color: "#16233b", fontSize: 22 }}>
+                    No application selected
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontSize: 14, maxWidth: 420 }}>
+                    Select an application from the left panel or create a new one.
+                  </Typography>
+                </Stack>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
 
       <CreateApplicationDialog
         open={createOpen}

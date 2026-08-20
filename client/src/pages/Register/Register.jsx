@@ -33,9 +33,9 @@ export default function Register() {
     <div className="register-container">
       <div className="register-card">
         <div className="register-left">
-          <img src={logo} alt="Tymebound Logo" className="register-logo" />
+          <img src={logo} alt="Augmis Logo" className="register-logo" />
           <h1>Welcome!</h1>
-          <p className="subtitle">Create your Tymebound account</p>
+          <p className="subtitle">Create your Augmis account</p>
           <form onSubmit={handleSubmit}>
             <input
               name="firstname"

@@ -1,11 +1,12 @@
 // src/pages/businessautomation/crudpagebuilder/CrudPageBuilder.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import ReusableFormModal from "../../../components/ReusableFormModal";
 import { useParams } from "react-router-dom";
 import api from "../../../services/api";
 import {
   Box, Button, Card, CardContent, Container, Divider, Dialog, DialogTitle, DialogContent, Grid, Stack, Typography, Paper,
   TextField, Autocomplete, OutlinedInput, InputAdornment, List, ListItemButton, ListItemText,
-  Table, TableBody, TableCell, TableHead, TableRow, Pagination, ToggleButton, ToggleButtonGroup,
+  Table, TableBody, TableCell, TableHead, TableRow, ToggleButton, ToggleButtonGroup,
   Menu, MenuItem, Tabs, Tab, IconButton, Checkbox, FormControlLabel, FormControl, InputLabel, Select, RadioGroup, Radio,
   ListItem
 } from "@mui/material";
@@ -28,9 +29,12 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import * as XLSX from "xlsx";
 import SecureFileUploader from "../../../components/SecureFileUploader";
 
@@ -193,7 +197,7 @@ export default function CrudPageBuilder() {
   const [page, setPage] = useState(1);
   const [tablePage, setTablePage] = useState(0);
   const [tablePageSize, setTablePageSize] = useState(5);
-  const PER_PAGE = 12;
+  const PER_PAGE = 8;
   const [recordsView, setRecordsView] = useState("grid");
   const apiRef = useGridApiRef();
   const [exportMenuPosition, setExportMenuPosition] = useState(null);
@@ -312,36 +316,122 @@ export default function CrudPageBuilder() {
   }, [chartRows, chartX, chartY]);
 
   const RecordsToolbar = () => (
-    <GridToolbarContainer sx={{ gap: 1, p: 1 }}>
+    <GridToolbarContainer
+      sx={{
+        minHeight: 48,
+        px: 1.25,
+        py: 0.75,
+        gap: 0.75,
+        bgcolor: "#FFFFFF",
+        borderBottom: "1px solid #DCE6F0",
+
+        "& .MuiButton-root": {
+          minHeight: 32,
+          px: 1.15,
+          border: "1px solid #C9D8E8",
+          borderRadius: "8px",
+          textTransform: "none",
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: "#0B5CAD",
+          bgcolor: "#FFFFFF",
+        },
+
+        "& .MuiButton-root:hover": {
+          bgcolor: "#F3F8FD",
+          borderColor: "#9FC0DF",
+        },
+
+        "& .MuiButton-startIcon": {
+          color: "#0B6BCB",
+        },
+
+        "& .MuiSvgIcon-root": {
+          fontSize: 17,
+        },
+      }}
+    >
+      <OutlinedInput
+        size="small"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search records..."
+        sx={{
+          width: 380,
+          height: 36,
+          bgcolor: "#FFFFFF",
+          borderRadius: "8px",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#C9D8E8",
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#91B9DD",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#0B6BCB",
+            borderWidth: "1px",
+          },
+        }}
+        startAdornment={
+          <InputAdornment position="start">
+            <SearchIcon sx={{ fontSize: 18, color: "#64748B" }} />
+          </InputAdornment>
+        }
+      />
+
+      <Box sx={{ flexGrow: 1 }} />
+
       <GridToolbarColumnsButton />
       <GridToolbarFilterButton />
       <GridToolbarDensitySelector />
+
       <Button
         size="small"
         variant="text"
         onClick={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
-          setExportMenuPosition({ top: rect.bottom + 4, left: rect.left });
+          setExportMenuPosition({
+            top: rect.bottom + 4,
+            left: rect.left,
+          });
         }}
-        sx={{ minWidth: "auto", px: 1 }}
       >
         Export
       </Button>
+
       <Menu
         open={Boolean(exportMenuPosition)}
         onClose={() => setExportMenuPosition(null)}
         anchorReference="anchorPosition"
         anchorPosition={exportMenuPosition || undefined}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: "8px",
+            mt: 0.5,
+            border: "1px solid #DCE6F0",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.10)",
+            "& .MuiMenuItem-root": {
+              fontSize: 13,
+              minHeight: 36,
+            },
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
-            apiRef.current.exportDataAsCsv({ fileName: activePage?.page_name || "records" });
+            apiRef.current.exportDataAsCsv({
+              fileName: activePage?.page_name || "records",
+            });
             setExportMenuPosition(null);
           }}
         >
           Download as CSV
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             apiRef.current.exportDataAsPrint();
@@ -350,6 +440,7 @@ export default function CrudPageBuilder() {
         >
           Print
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             exportExcel();
@@ -359,7 +450,13 @@ export default function CrudPageBuilder() {
           Export Excel
         </MenuItem>
       </Menu>
-      <Button size="small" variant="outlined" startIcon={<BarChartOutlinedIcon />} onClick={() => setChartOpen(true)}>
+
+      <Button
+        size="small"
+        variant="text"
+        startIcon={<BarChartOutlinedIcon />}
+        onClick={() => setChartOpen(true)}
+      >
         Charts
       </Button>
     </GridToolbarContainer>
@@ -727,21 +824,62 @@ export default function CrudPageBuilder() {
         headerName: "Actions",
         sortable: false,
         filterable: false,
-        width: 300,
+        width: 120,
+        align: "center",
+        headerAlign: "center",
         renderCell: (params) => (
-          <Box sx={{ pr: 1 }}>
-            <Stack direction="row" spacing={1}>
-              <Button size="small" variant="outlined" onClick={() => openView(params.row)} startIcon={<VisibilityOutlinedIcon />}>
-                View
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => openEdit(params.row)} startIcon={<ModeEditOutlineOutlinedIcon />}>
-                Edit
-              </Button>
-              <Button size="small" color="error" variant="outlined" onClick={() => handleDelete(params.row)} startIcon={<DeleteOutlineOutlinedIcon />}>
-                Delete
-              </Button>
-            </Stack>
-          </Box>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{
+              width: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <IconButton
+              size="small"
+              aria-label="View record"
+              onClick={() => openView(params.row)}
+              sx={{
+                width: 30,
+                height: 30,
+                border: "1px solid #C9D8E8",
+                borderRadius: "8px",
+                color: "#0B6BCB",
+                bgcolor: "#FFFFFF",
+                "&:hover": {
+                  bgcolor: "#F0F7FF",
+                  borderColor: "#91B9DD",
+                },
+              }}
+            >
+              <VisibilityOutlinedIcon sx={{ fontSize: 17 }} />
+            </IconButton>
+
+            <IconButton
+              size="small"
+              aria-label="More record actions"
+              onClick={(event) => {
+                setRecordMenuAnchor(event.currentTarget);
+                setRecordMenuRow(params.row);
+              }}
+              sx={{
+                width: 30,
+                height: 30,
+                border: "1px solid #C9D8E8",
+                borderRadius: "8px",
+                color: "#0B6BCB",
+                bgcolor: "#FFFFFF",
+                "&:hover": {
+                  bgcolor: "#F0F7FF",
+                  borderColor: "#91B9DD",
+                },
+              }}
+            >
+              <MoreVertIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Stack>
         ),
       },
     ];
@@ -760,7 +898,7 @@ export default function CrudPageBuilder() {
   --------------------------------------------------------------------------- */
   if (!standaloneId) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
+      <Box sx={{ minHeight: "100vh", bgcolor: "#FFFFFF" }}>
         <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, py: 4 }}>
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             Data Application Builder
@@ -1013,67 +1151,128 @@ export default function CrudPageBuilder() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
-      <Box sx={{ bgcolor: "#e1e6e5", color: "#1f355d", px: 4, py: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          {activePage?.page_name || "CRUD Webpage"}
-        </Typography>
-        {activePage?.description && (
-          <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#1f355d" }}>
-            {activePage.description}
-          </Typography>
-        )}
-      </Box>
-
-      <Box sx={{ px: 0, py: 4 }}>
-        <Box sx={{ maxWidth: recordsView === "table" ? 1500 : 1140, mx: "auto" }}>
+     <Box sx={{ minHeight: "100vh", bgcolor: "#FFFFFF" }}>
+      <Box sx={{ px: 0, py: 0 }}>
+        <Box sx={{ width: "100%" }}>
           {/* Records preview for the selected page */}
           {activePage && (
-            <Card
-              variant="outlined"
-              sx={{ bgcolor: "#f5f7fb", borderColor: "#f5f7fb" }}
-            >
-              <CardContent sx={{ p: 2 }}>
-                {/* <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  {activePage.page_name} - Records
-                </Typography> */}
+            <Box>
+              <Box sx={{ px: 2.5, py: 2 }}>
+                <Box
+                  sx={{
+                    mx: -2.5,
+                    mt: -2,
+                    mb: 2,
+                    px: 4,
+                    py: 4,
+                    color: "#ffffff",
+                    background: "linear-gradient(135deg, #1f355d 0%, #315f9a 100%)",
+                  }}
+                >
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 600,
+                    }}
+                  >
+                    {activePage?.page_name || "CRUD Webpage"}
+                  </Typography>
 
-                <Box sx={{ mt: 1.5, maxWidth: recordsView === "table" ? 1500 : 1170, mx: "auto" }}>
-                  <Stack direction="row" alignItems="center" spacing={2}>
+                  {activePage?.description && (
+                    <Typography
+                      variant="body1"
+                      sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}
+                    >
+                      {activePage.description}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    maxWidth: recordsView === "grid" ? 1200 : 1500,
+                    boxSizing: "border-box",
+                    mx: "auto",
+                    px: recordsView === "grid" ? 3 : 0.5,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1.25}
+                    sx={{
+                      minHeight: 58,
+                      bgcolor: "#FFFFFF",
+                      px: 0.5,
+                      py: 0.75,
+                    }}
+                  >
                     <Button
-                      variant="contained"
-                      // startIcon={<AddCircleOutlineIcon />}
-                      onClick={openCreate}
-                      sx={{ textTransform: "none" }}
-                    >
-                      Create New Record
-                    </Button>
+  variant="contained"
+  startIcon={<AddCircleOutlineIcon />}
+  onClick={openCreate}
+  sx={{
+    height: 38,
+    px: 1.75,
+    bgcolor: "#0B6BCB",
+    borderRadius: "8px",
+    textTransform: "none",
+    fontWeight: 700,
+    boxShadow: "none",
+
+    "&:hover": {
+      bgcolor: "#095BAE",
+      boxShadow: "none",
+    },
+  }}
+>
+  Create New Record
+</Button>
                     <IconButton
-                      size="small"
-                      onClick={(e) => setConfigAnchor(e.currentTarget)}
-                      sx={{ border: "1px solid #cbd5e1", bgcolor: "#ffffff" }}
-                    >
-                      <SettingsOutlinedIcon fontSize="small" />
-                    </IconButton>
+  size="small"
+  onClick={(e) => setConfigAnchor(e.currentTarget)}
+  sx={{
+    width: 38,
+    height: 38,
+    border: "1px solid #C9D8E8",
+    borderRadius: "8px",
+    bgcolor: "#FFFFFF",
+    color: "#0B6BCB",
+
+    "&:hover": {
+      bgcolor: "#F0F7FF",
+      borderColor: "#91B9DD",
+    },
+  }}
+>
+  <SettingsOutlinedIcon fontSize="small" />
+</IconButton>
                     <Box sx={{ flexGrow: 1 }} />
-                    <OutlinedInput
-                      size="small"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search"
-                      sx={{ width: 490 }}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <SearchIcon fontSize="small" />
-                        </InputAdornment>
-                      }
-                    />
                     <ToggleButtonGroup
-                      size="small"
-                      exclusive
-                      value={recordsView}
-                      onChange={(_e, v) => v && setRecordsView(v)}
-                    >
+  size="small"
+  exclusive
+  value={recordsView}
+  onChange={(_e, v) => v && setRecordsView(v)}
+  sx={{
+    height: 38,
+
+    "& .MuiToggleButton-root": {
+      width: 40,
+      borderRadius: "8px",
+      borderColor: "#C9D8E8",
+      color: "#58708A",
+
+      "&.Mui-selected": {
+        bgcolor: "#EAF4FF",
+        color: "#0B6BCB",
+      },
+
+      "&.Mui-selected:hover": {
+        bgcolor: "#DFEEFC",
+      },
+    },
+  }}
+>
                       <ToggleButton value="grid">
                         <ViewModuleIcon fontSize="small" />
                       </ToggleButton>
@@ -1084,9 +1283,29 @@ export default function CrudPageBuilder() {
                   </Stack>
                 </Box>
 
-              <Divider sx={{ my: 1.5 }} />
+              <Divider sx={{ my: 1.25, borderColor: "#EEF2F6" }} />
 
               {recordsView === "grid" ? (
+                <Container maxWidth="lg" sx={{ py: 0, position: "relative" }}>
+                {totalPages > 1 ? (
+                  <IconButton
+                    aria-label="Previous records"
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    disabled={page === 1}
+                    sx={{
+                      position: "absolute",
+                      left: { md: -56, lg: -64 },
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#b8c2d4",
+                      backgroundColor: "transparent",
+                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
+                      "&.Mui-disabled": { color: "#d7dee9" },
+                    }}
+                  >
+                    <ChevronLeftIcon />
+                  </IconButton>
+                ) : null}
                 <Grid container spacing={2} columns={{ xs: 1, sm: 2, md: 4 }}>
                   {paged.length === 0 ? (
                     <Grid item xs={12} >
@@ -1115,10 +1334,12 @@ export default function CrudPageBuilder() {
                             bgcolor: "#ffffff",
                             color: "#1f355d",
                             border: "1px solid #2f5fff",
-                            boxShadow: "0 4px 10px rgba(16, 24, 40, 0.12)",
+                            boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
                             borderRadius: 2,
                             p: 2,
-                            minHeight: 160,
+                            height: 180,
+                            minHeight: 180,
+                            maxHeight: 180,
                             overflow: "hidden",
                             display: "flex",
                             flexDirection: "column",
@@ -1127,7 +1348,7 @@ export default function CrudPageBuilder() {
                             transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
                             "&:hover": {
                               transform: "translateY(-4px)",
-                              boxShadow: "0 10px 18px rgba(16, 24, 40, 0.2)",
+                              boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
                               borderColor: "#1a4fd8",
                             },
                             "&:active": {
@@ -1179,13 +1400,34 @@ export default function CrudPageBuilder() {
                     ))
                   )}
                 </Grid>
+                {totalPages > 1 ? (
+                  <IconButton
+                    aria-label="Next records"
+                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    disabled={page === totalPages}
+                    sx={{
+                      position: "absolute",
+                      right: { md: -56, lg: -64 },
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#b8c2d4",
+                      backgroundColor: "transparent",
+                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
+                      "&.Mui-disabled": { color: "#d7dee9" },
+                    }}
+                  >
+                    <ChevronRightIcon />
+                  </IconButton>
+                ) : null}
+                </Container>
               ) : (
                 <Box sx={{ width: 1500, maxWidth: "100%", mx: "auto" }}>
                   <Box sx={{ width: "100%", minWidth: 0 }}>
-                    <DataGrid
-                      apiRef={apiRef}
-                      autoHeight
-                      rows={rowsForGrid}
+            <DataGrid
+              apiRef={apiRef}
+              autoHeight
+              density="compact"
+              rows={rowsForGrid}
                       columns={gridColumns}
                       loading={loading}
                       disableRowSelectionOnClick
@@ -1201,13 +1443,124 @@ export default function CrudPageBuilder() {
                         },
                       }}
                       slots={{ toolbar: RecordsToolbar }}
+                      slotProps={{
+                        pagination: {
+                          SelectProps: {
+                            MenuProps: {
+                              BackdropProps: {
+                                sx: {
+                                  backdropFilter: "none !important",
+                                  WebkitBackdropFilter: "none !important",
+                                  backgroundColor: "transparent !important",
+                                },
+                              },
+                            },
+                          },
+                        },
+                      }}
                       onRowDoubleClick={(params) => openView(params.row)}
                       sx={{
-                        borderRadius: 2,
-                        bgcolor: "#ffffff",
+                        border: "1px solid #D8E3EE",
+                        borderRadius: "10px",
+                        bgcolor: "#FFFFFF",
+                        color: "#19324D",
+                        fontSize: 12.5,
+                        overflow: "hidden",
+
+                        "& .MuiDataGrid-main": {
+                          borderRadius: 0,
+                        },
+
                         "& .MuiDataGrid-columnHeaders": {
-                          bgcolor: "grey.200",
-                          fontWeight: 700,
+                          bgcolor: "#0C467B",
+                          color: "#FFFFFF",
+                          borderBottom: "none",
+                          minHeight: "44px !important",
+                          maxHeight: "44px !important",
+                        },
+
+                        "& .MuiDataGrid-columnHeader": {
+                          bgcolor: "#0C467B",
+                          outline: "none !important",
+                          borderRight: "none",
+                          px: 1.5,
+                        },
+
+                        "& .MuiDataGrid-columnHeaderTitle": {
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.15px",
+                          textTransform: "uppercase",
+                        },
+
+                        "& .MuiDataGrid-columnHeader .MuiSvgIcon-root, & .MuiDataGrid-menuIconButton, & .MuiDataGrid-sortIcon": {
+                          color: "#DCEBFA",
+                        },
+
+              "& .MuiDataGrid-row": {
+                borderBottom: "1px solid #E3EAF2",
+                transition: "background-color 120ms ease",
+              },
+
+                        "& .MuiDataGrid-row:last-of-type": {
+                          borderBottom: "none",
+                        },
+
+                        "& .MuiDataGrid-row:hover": {
+                          bgcolor: "#F7FBFF !important",
+                        },
+
+                        "& .MuiDataGrid-row.Mui-selected": {
+                          bgcolor: "#EEF6FF !important",
+                        },
+
+              "& .MuiDataGrid-cell": {
+                display: "flex",
+                alignItems: "center",
+                height: "100%",
+                minHeight: 0,
+                borderBottom: "none",
+                          borderRight: "none",
+                          px: 1.5,
+                          outline: "none !important",
+                        },
+
+                        "& .MuiDataGrid-toolbarContainer": {
+                          borderBottom: "1px solid #DCE6F0",
+                        },
+
+                        "& .MuiDataGrid-footerContainer": {
+                          minHeight: 48,
+                          bgcolor: "#FFFFFF",
+                          borderTop: "1px solid #DCE6F0",
+                          color: "#52677D",
+                        },
+
+                        "& .MuiTablePagination-root": {
+                          fontSize: 12,
+                        },
+
+                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                          fontSize: 12,
+                          color: "#52677D",
+                        },
+
+                        "& ::-webkit-scrollbar": {
+                          width: 8,
+                          height: 8,
+                        },
+
+                        "& ::-webkit-scrollbar-thumb": {
+                          bgcolor: "#C7D4E2",
+                          borderRadius: "8px",
+                        },
+
+                        "& ::-webkit-scrollbar-track": {
+                          bgcolor: "#F8FAFC",
+                        },
+
+                        "& .MuiDataGrid-overlayWrapper": {
+                          bgcolor: "#FFFFFF",
                         },
                       }}
                     />
@@ -1463,6 +1816,13 @@ export default function CrudPageBuilder() {
                 anchorEl={configAnchor}
                 open={Boolean(configAnchor)}
                 onClose={() => setConfigAnchor(null)}
+                BackdropProps={{
+                  sx: {
+                    backdropFilter: "none !important",
+                    WebkitBackdropFilter: "none !important",
+                    backgroundColor: "transparent !important",
+                  },
+                }}
               >
                 <MenuItem
                   onClick={() => {
@@ -1486,6 +1846,13 @@ export default function CrudPageBuilder() {
                 anchorEl={recordMenuAnchor}
                 open={Boolean(recordMenuAnchor)}
                 onClose={closeRecordMenu}
+                BackdropProps={{
+                  sx: {
+                    backdropFilter: "none !important",
+                    WebkitBackdropFilter: "none !important",
+                    backgroundColor: "transparent !important",
+                  },
+                }}
               >
                 <MenuItem
                   onClick={() => {
@@ -1516,31 +1883,91 @@ export default function CrudPageBuilder() {
                 </MenuItem>
               </Menu>
 
-              {recordsView === "grid" && (
-                <Box sx={{ mt: 1.5, display: "flex", justifyContent: "flex-end" }}>
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={(_e, p) => setPage(p)}
-                    size="small"
-                  />
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+            </Box>
+          </Box>
           )}
         </Box>
       </Box>
 
       {/* Create/Edit/View modal */}
       {activePage && recModalOpen && (
-        <Overlay onClose={() => setRecModalOpen(false)}>
-          <>
-            <Typography variant="h6" sx={{ mb: 1.5 }}>
-              {recMode === "create" ? "Create" : recMode === "edit" ? "Edit" : "View"} Record
-            </Typography>
+  <ReusableFormModal
+    open={recModalOpen}
+    onClose={() => setRecModalOpen(false)}
+    title={`${recMode === "create" ? "Create" : recMode === "edit" ? "Edit" : "View"} Record`}
+    subtitle={activePage?.form_name || activePage?.page_name || ""}
+    icon={recMode === "create" ? "➕" : recMode === "edit" ? "✏️" : "👁️"}
+    maxWidth={660}
+  >
 
-            <Grid container spacing={1.5}>
+<Box
+  sx={{
+     pt: 1.5,
+    "& .rfm-field": {
+      display: "flex",
+      flexDirection: "column",
+      gap: "3px",
+    },
+
+    "& .rfm-field-label": {
+  fontSize: "9px",
+  lineHeight: 1.2,
+  fontWeight: 300,
+  color: "#516784",
+  letterSpacing: "0.15px",
+  textTransform: "uppercase",
+},
+
+    "& .MuiOutlinedInput-root": {
+      minHeight: 38,
+      borderRadius: "6px",
+      bgcolor: "#FFFFFF",
+
+      "& fieldset": {
+        borderColor: "#C9D5E3",
+      },
+
+      "&:hover fieldset": {
+        borderColor: "#97ADC4",
+      },
+
+      "&.Mui-focused fieldset": {
+        borderColor: "#16839A",
+        borderWidth: "1px",
+      },
+    },
+
+    "& .MuiInputBase-input": {
+      py: "8px",
+      px: "11px",
+      fontSize: "13px",
+      color: "#18324F",
+    },
+
+    "& .MuiInputBase-input::placeholder": {
+      color: "#8B98A8",
+      opacity: 1,
+    },
+
+    "& .MuiSelect-select": {
+      py: "8px !important",
+      fontSize: "13px",
+    },
+
+    "& .MuiFormControlLabel-label": {
+      fontSize: "12.5px",
+      color: "#263B53",
+    },
+
+    "& .MuiCheckbox-root, & .MuiRadio-root": {
+      p: "4px",
+    },
+  }}
+>
+  <Grid container columnSpacing={2} rowSpacing={1.75}></Grid>
+    
+
+            <Grid container spacing={2}>
               {formFields
                 .filter((f, idx) => {
                   const key =
@@ -1576,12 +2003,31 @@ export default function CrudPageBuilder() {
                   const validation = validationForField(templateValidations, modeKey, key);
                   const label =
                     f?.label ?? f?.caption ?? f?.title ?? f?.display ?? key;
+
+
+                    
                   const inputType = String(f?.inputType ?? f?.controlType ?? f?.dataType ?? f?.type ?? "")
                     .toLowerCase();
+
+
+                  const cleanLabel = String(label || key)
+                      .replace(/_/g, " ")
+                      .trim();
+
+                  const placeholder =
+                      inputType === "textarea"
+                        ? `Enter ${cleanLabel.toLowerCase()}...`
+                        : inputType === "date"
+                          ? "dd / mm / yyyy"
+                          : `Enter ${cleanLabel.toLowerCase()}`;
+
                   const dataType = String(f?.dataType ?? "").toLowerCase();
                   const options = parseOptions(f?.optionsCsv);
                   const pairs = codeLabelPairs(options);
                   const isInt = dataType.includes("int");
+
+                  const isWideField = inputType === "textarea";
+                  
                   const rawValue = recValues[key];
                   const dateGran = String(f?.dateGranularity ?? f?.format ?? "date").toLowerCase();
                   const dateType = dateGran === "month" ? "month" : dateGran === "year" ? "number" : "date";
@@ -1592,47 +2038,70 @@ export default function CrudPageBuilder() {
                     validation.read_only ||
                     validation.data_entry === false;
 
-                  if (inputType === "checkbox" && options.length) {
-                    const rawSelected = parseMultiValue(rawValue);
-                    const selected = isInt
-                      ? rawSelected.map((v) => Number(v)).filter((n) => Number.isFinite(n))
-                      : rawSelected.map((v) => String(v));
-                    return (
-                      <Grid item xs={12} key={key}>
-                        <FormControl fullWidth size="small" disabled={disabled}>
-                          <InputLabel shrink>{label}</InputLabel>
-                          <Box sx={{ display: "flex", flexDirection: "column", mt: 1 }}>
-                            {pairs.map(({ code, label: optLabel }, i) => {
-                              const checked = isInt ? selected.includes(code) : selected.includes(optLabel);
-                              return (
-                                <FormControlLabel
-                                  key={`${key}_opt_${i}`}
-                                  control={
-                                    <Checkbox
-                                      checked={checked}
-                                      onChange={(e) => {
-                                        const value = isInt ? code : optLabel;
-                                        const next = e.target.checked
-                                          ? [...selected, value]
-                                          : selected.filter((v) => v !== value);
-                                        setRecValues((v) => ({ ...v, [key]: next }));
-                                      }}
-                                      disabled={disabled}
-                                    />
-                                  }
-                                  label={optLabel}
-                                />
-                              );
-                            })}
-                          </Box>
-                        </FormControl>
-                      </Grid>
-                    );
-                  }
+if (inputType === "checkbox" && options.length) {
+  const rawSelected = parseMultiValue(rawValue);
+
+  const selected = isInt
+    ? rawSelected.map(Number).filter(Number.isFinite)
+    : rawSelected.map(String);
+
+  return (
+    <Grid item xs={12} md={6} key={key}>
+      <Box className="rfm-field">
+        <Typography className="rfm-field-label">
+          {label}
+          {validation.mandatory ? " *" : ""}
+        </Typography>
+
+        <Box
+          sx={{
+            minHeight: 38,
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          {pairs.map(({ code, label: optLabel }, i) => {
+            const checked = isInt
+              ? selected.includes(code)
+              : selected.includes(optLabel);
+
+            return (
+              <FormControlLabel
+                key={`${key}_opt_${i}`}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={(e) => {
+                      const optionValue = isInt ? code : optLabel;
+
+                      const next = e.target.checked
+                        ? [...selected, optionValue]
+                        : selected.filter((v) => v !== optionValue);
+
+                      setRecValues((v) => ({
+                        ...v,
+                        [key]: next,
+                      }));
+                    }}
+                  />
+                }
+                label={optLabel}
+              />
+            );
+          })}
+        </Box>
+      </Box>
+    </Grid>
+  );
+}
 
                   if (inputType === "checkbox") {
                     return (
-                      <Grid item xs={12} key={key}>
+                      <Grid item xs={12} md={isWideField ? 12 : 6} key={key}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -1650,136 +2119,194 @@ export default function CrudPageBuilder() {
                   }
 
                   if (inputType === "radio") {
-                    return (
-                      <Grid item xs={12} key={key}>
-                        <FormControl fullWidth disabled={disabled}>
-                          <InputLabel shrink>{label}</InputLabel>
-                          <RadioGroup
-                            value={value === null || value === undefined ? "" : String(value)}
-                            onChange={(e) =>
-                              setRecValues((v) => ({
-                                ...v,
-                                [key]: isInt ? Number(e.target.value) : e.target.value,
-                              }))
-                            }
-                          >
-                            {pairs.map(({ code, label: optLabel }) => (
-                              <FormControlLabel
-                                key={`${key}_radio_${code}`}
-                                value={String(isInt ? code : optLabel)}
-                                control={<Radio />}
-                                label={optLabel}
-                              />
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                      </Grid>
-                    );
-                  }
+  return (
+    <Grid item xs={12} md={6} key={key}>
+      <Box className="rfm-field">
+        <Typography className="rfm-field-label">
+          {label}
+          {validation.mandatory ? " *" : ""}
+        </Typography>
+
+        <RadioGroup
+          row
+          value={value === null || value === undefined ? "" : String(value)}
+          onChange={(e) =>
+            setRecValues((v) => ({
+              ...v,
+              [key]: isInt ? Number(e.target.value) : e.target.value,
+            }))
+          }
+          sx={{
+            minHeight: 38,
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          {pairs.map(({ code, label: optLabel }) => (
+            <FormControlLabel
+              key={`${key}_radio_${code}`}
+              value={String(isInt ? code : optLabel)}
+              control={<Radio size="small" />}
+              label={optLabel}
+              disabled={disabled}
+            />
+          ))}
+        </RadioGroup>
+      </Box>
+    </Grid>
+  );
+}
 
                   if (inputType === "dropdownlist") {
-                    return (
-                      <Grid item xs={12} key={key}>
-                        <FormControl fullWidth size="small" disabled={disabled}>
-                          <InputLabel>{label}</InputLabel>
-                          <Select
-                            label={label}
-                            value={value === null || value === undefined ? "" : String(value)}
-                            onChange={(e) =>
-                              setRecValues((v) => ({
-                                ...v,
-                                [key]: isInt ? Number(e.target.value) : e.target.value,
-                              }))
-                            }
-                          >
-                            {pairs.map(({ code, label: optLabel }) => (
-                              <MenuItem key={`${key}_opt_${code}`} value={String(isInt ? code : optLabel)}>
-                                {optLabel}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    );
+  return (
+    <Grid item xs={12} md={6} key={key}>
+      <Box className="rfm-field">
+        <Typography className="rfm-field-label">
+          {label}
+          {validation.mandatory ? " *" : ""}
+        </Typography>
+
+        <FormControl fullWidth size="small" disabled={disabled}>
+          <Select
+            value={value === null || value === undefined ? "" : String(value)}
+            displayEmpty
+            onChange={(e) =>
+              setRecValues((v) => ({
+                ...v,
+                [key]: isInt ? Number(e.target.value) : e.target.value,
+              }))
+            }
+          >
+            <MenuItem value="">
+  <em>{`— Select ${cleanLabel.toLowerCase()} —`}</em>
+</MenuItem>
+
+            {pairs.map(({ code, label: optLabel }) => (
+              <MenuItem
+                key={`${key}_opt_${code}`}
+                value={String(isInt ? code : optLabel)}
+              >
+                {optLabel}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+    </Grid>
+  );
+}
+
+                  
+
+if (inputType === "image") {
+  const attachments = parseAttachmentValue(rawValue);
+
+  return (
+    <Grid item xs={12} md={6} key={key}>
+      <Box className="rfm-field">
+        <Typography className="rfm-field-label">
+          {label}
+          {validation.mandatory ? " *" : ""}
+        </Typography>
+
+        {!disabled && (
+          <SecureFileUploader
+            files={fileFields[key] || []}
+            setFiles={(next) =>
+              setFileFields((s) => ({
+                ...s,
+                [key]: next,
+              }))
+            }
+            multiple
+          />
+        )}
+
+        {attachments.length > 0 && (
+          <List dense sx={{ mt: 0.5 }}>
+            {attachments.map((f, i) => (
+              <ListItem
+                key={`${key}_file_${i}`}
+                disableGutters
+                secondaryAction={
+                  f?.id ? (
+                    <Button
+                      size="small"
+                      onClick={() => handleDownloadAttachment(f)}
+                    >
+                      Download
+                    </Button>
+                  ) : null
+                }
+              >
+                <ListItemText
+                  primary={
+                    f?.original_filename ||
+                    f?.name ||
+                    `file_${i + 1}`
                   }
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Box>
+    </Grid>
+  );
+}
+const fieldType =
+  inputType === "textarea"
+    ? "textarea"
+    : inputType === "date"
+      ? dateType
+      : inputType === "integer" ||
+          inputType === "number" ||
+          dataType.includes("int")
+        ? "number"
+        : "text";
 
-                  if (inputType === "image") {
-                    const attachments = parseAttachmentValue(rawValue);
-                    return (
-                      <Grid item xs={12} key={key}>
-                        <Box>
-                          <InputLabel shrink>{label}</InputLabel>
-                          {attachments.length > 0 && (
-                            <List dense sx={{ mt: 1 }}>
-                              {attachments.map((f, i) => (
-                                <ListItem
-                                  key={`${key}_file_${i}`}
-                                  secondaryAction={
-                                    f?.id ? (
-                                      <Button
-                                        size="small"
-                                        onClick={() => handleDownloadAttachment(f)}
-                                      >
-                                        Download
-                                      </Button>
-                                    ) : null
-                                  }
-                                >
-                                  <ListItemText
-                                    primary={f?.original_filename || f?.name || `file_${i + 1}`}
-                                  />
-                                </ListItem>
-                              ))}
-                            </List>
-                          )}
-                          {!disabled && (
-                            <SecureFileUploader
-                              files={fileFields[key] || []}
-                              setFiles={(next) => setFileFields((s) => ({ ...s, [key]: next }))}
-                              multiple
-                            />
-                          )}
-                        </Box>
-                      </Grid>
-                    );
-                  }
+return (
+  <Grid item xs={12} md={isWideField ? 12 : 6} key={key}>
+    <Box className="rfm-field">
+      <Typography className="rfm-field-label">
+        {label}
+        {validation.mandatory ? " *" : ""}
+      </Typography>
 
-                  const fieldType =
-                    inputType === "textarea"
-                      ? "textarea"
-                      : inputType === "date"
-                        ? dateType
-                        : inputType === "integer" || inputType === "number" || dataType.includes("int")
-                          ? "number"
-                          : "text";
-
-                  return (
-                    <Grid item xs={12} key={key}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={label}
-                        required={validation.mandatory}
-                        type={fieldType === "textarea" ? "text" : fieldType}
-                        multiline={fieldType === "textarea"}
-                        minRows={fieldType === "textarea" ? 3 : undefined}
-                        InputLabelProps={fieldType === "date" ? { shrink: true } : undefined}
-                        value={value ?? ""}
-                        onChange={(e) =>
-                          setRecValues((v) => ({
-                            ...v,
-                            [key]: fieldType === "number" && e.target.value !== ""
-                              ? Number(e.target.value)
-                              : e.target.value,
-                          }))
-                        }
-                        disabled={disabled}
-                      />
-                    </Grid>
-                  );
-                })}
-            </Grid>
-
+      <TextField
+  fullWidth
+  size="small"
+  type={fieldType === "textarea" ? "text" : fieldType}
+  multiline={fieldType === "textarea"}
+  minRows={fieldType === "textarea" ? 3 : undefined}
+  placeholder={placeholder}
+  value={value ?? ""}
+  onChange={(e) =>
+    setRecValues((v) => ({
+      ...v,
+      [key]:
+        fieldType === "number" && e.target.value !== ""
+          ? Number(e.target.value)
+          : e.target.value,
+    }))
+  }
+  disabled={disabled}
+  sx={
+    fieldType === "textarea"
+      ? {
+          "& .MuiOutlinedInput-root": {
+            alignItems: "flex-start",
+          },
+        }
+      : undefined
+  }
+/>
+    </Box>
+  </Grid>
+);
+})}
+</Grid>
+</Box>
             <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
               <Button variant="outlined" onClick={() => setRecModalOpen(false)}>
                 Close
@@ -1790,8 +2317,8 @@ export default function CrudPageBuilder() {
                 </Button>
               )}
             </Stack>
-          </>
-        </Overlay>
+          
+          </ReusableFormModal>
       )}
 
       {templateModalOpen && activePage?.table_name && (
@@ -1823,5 +2350,3 @@ export default function CrudPageBuilder() {
     </Box>
   );
 }
-
-

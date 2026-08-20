@@ -885,10 +885,12 @@ async function sendWorkflowMail({ stepCfg, formData, instance, instanceId, actio
         let effectiveAuth = authHeader || null;
         const tokenUserId = resolveMailTokenUserId({ action, stepCfg, instance });
         if (Number.isFinite(tokenUserId)) {
-          const secret = process.env.JWT_SECRET || 'super_secret_token';
+          const secret = process.env.JWT_SECRET;
           try {
-            const svcToken = jwt.sign({ id: tokenUserId }, secret, { expiresIn: '10m' });
-            effectiveAuth = `Bearer ${svcToken}`;
+            if (secret) {
+              const svcToken = jwt.sign({ id: tokenUserId }, secret, { expiresIn: '10m' });
+              effectiveAuth = `Bearer ${svcToken}`;
+            }
           } catch (_) {}
         }
 

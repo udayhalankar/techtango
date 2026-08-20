@@ -1,13 +1,36 @@
-// utils/sendTaskEmail.js
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'Gmail',
-  auth: {
-    user: 'udayhalankar@gmail.com',
-    pass: process.env.EMAIL_PASS // set this in your .env as the Gmail App Password
+function getMailConfig() {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure = String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true';
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER || 'udayhalankar@gmail.com';
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || '';
+  const from = process.env.MAIL_FROM || `"Approvals System" <${user}>`;
+  return { host, port, secure, user, pass, from };
+}
+
+function createTransporter() {
+  const cfg = getMailConfig();
+  if (!cfg.user || !cfg.pass) {
+    const err = new Error('SMTP credentials missing: set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS');
+    err.code = 'SMTP_CONFIG_MISSING';
+    throw err;
   }
-});
+
+  return {
+    transporter: nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: {
+        user: cfg.user,
+        pass: cfg.pass
+      }
+    }),
+    config: cfg
+  };
+}
 
 async function sendTaskEmail({ to, recipientName, message, link }) {
   const html = `
@@ -25,8 +48,9 @@ async function sendTaskEmail({ to, recipientName, message, link }) {
     <p><br>Regards,<br>Approvals System</p>
   `;
 
+  const { transporter, config } = createTransporter();
   await transporter.sendMail({
-    from: '"Approvals System" <udayhalankar@gmail.com>',
+    from: config.from,
     to,
     subject: 'Task Notification',
     html

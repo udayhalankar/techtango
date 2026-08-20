@@ -206,7 +206,7 @@ export default function LandingPage() {
                   mb: 3,
                 }}
               >
-                Tymebound gives teams a structured way to create configurable pages,
+                Augmis gives teams a structured way to create configurable pages,
                 publish experiences, visualize data, and automate business processes with less
                 manual effort.
               </Typography>
@@ -518,7 +518,7 @@ export default function LandingPage() {
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
           <Typography variant="body2">
-            {t("footer_left", "© Tymebound")} {new Date().getFullYear()}
+            {t("footer_left", "© Augmis")} {new Date().getFullYear()}
           </Typography>
           <Typography variant="body2">Manage information effortlessly</Typography>
         </Stack>

@@ -20,102 +20,49 @@ const tiles = [
     desc: "Create Pages",
     to: "/experiencebuilder",
     Icon: StorageIcon,
+    iconColor: "#0f766e",
   },
   {
     label: "Entity Data Model Builder",
     desc: "Build reusable schemas and keep your data structures consistent",
     to: "/datatablebuilder",
     Icon: StorageIcon,
+    iconColor: "#7c3aed",
   },
   {
     label: "Data Application Builder",
     desc: "Build full data-driven applications without coding",
     to: "/crudwebpage",
     Icon: WebAssetOutlinedIcon,
+    iconColor: "#ea580c",
   },
   {
     label: "AI App Builder",
     desc: "Create one-page CRUD apps from AI-generated schema",
     to: "/aiappbuilder",
     Icon: WebAssetOutlinedIcon,
+    iconColor: "#2563eb",
   },
   {
     label: "Workflow Studio",
     desc: "Streamline Business Form Workflows, Design and Deploy Workflows with a level of ease never experienced before",
     to: "/simplewfb",
     Icon: WebAssetOutlinedIcon,
+    iconColor: "#be185d",
   },
   {
     label: "Dashboard Studio",
     desc: "Create Dashboards to Vusualize Enterprise Processes",
     to: "/dashboardbuilder",
     Icon: WebAssetOutlinedIcon,
-  },
-  {
-    label: "Forms",
-    desc: "Create Business Forms",
-    to: "/forms",
-    Icon: DescriptionIcon,
-  },
-  {
-    label: "Report Builder",
-    desc: "Create Report using Database tables",
-    to: "/tables",
-    Icon: TableChartIcon,
-  },
-  {
-    label: "Chart Builder",
-    desc: "Build charts & dashboards",
-    to: "/charts/new",
-    Icon: AutoGraphIcon,
-  },
-  {
-    label: "SmartForms",
-    desc: "Build forms faster",
-    to: "/sbforms",
-    Icon: DynamicFormIcon,
-  },
-  {
-    label: "Workflows",
-    desc: "Manage assignments",
-    to: "/wfassignments",
-    Icon: AccountTreeIcon,
-  },
-  {
-    label: "Workflow Manager",
-    desc: "Manage & monitor flows",
-    to: "/workflowmanager",
-    Icon: ManageHistoryIcon,
-  },
-  {
-    label: "Workflow Manager (Alt)",
-    desc: "Alternate manager route",
-    to: "/wfmanager",
-    Icon: PrecisionManufacturingIcon,
-  },
-  {
-    label: "Workflow Designer",
-    desc: "Design flows visually",
-    to: "/wfdesigner",
-    Icon: DesignServicesIcon,
-  },
-  {
-    label: "Workflow Designer (Compat)",
-    desc: "Legacy/compat editor",
-    to: "/workflow-designer",
-    Icon: IntegrationInstructionsIcon,
-  },
-  {
-    label: "Workflow Library",
-    desc: "Reusable templates",
-    to: "/wflibrary",
-    Icon: LibraryBooksIcon,
+    iconColor: "#0891b2",
   },
   {
     label: "Bulk Uploader",
     desc: "Import CSV/Excel",
     to: "/bulkuploader",
     Icon: UploadFileIcon,
+    iconColor: "#b45309",
   },
 ];
 
@@ -129,7 +76,7 @@ export default function BusinessAutomation() {
       searchPlaceholder="Search business automation"
       tiles={tiles}
       tilesPerRow={{ xs: 1, sm: 2, md: 4, lg: 4 }}
-      maxRows={5}
+      maxRows={2}
       containerMaxWidth="lg"
     />
   );
