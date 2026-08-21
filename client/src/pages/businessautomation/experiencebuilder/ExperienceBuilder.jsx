@@ -31,6 +31,8 @@ import {
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import api from "../../../services/api";
 import Chart from "chart.js/auto";
 import { useLocation } from "react-router-dom";
@@ -684,6 +686,22 @@ export default function ExperienceBuilder() {
       return name.includes(q) || layout.includes(q) || status.includes(q) || String(page.id || "").includes(q);
     });
   }, [pages, search]);
+
+  const tilesPerPage = 8;
+  const pageCount = Math.max(1, Math.ceil(filteredPages.length / tilesPerPage));
+  const [pageIndex, setPageIndex] = useState(0);
+  const pagedPages = useMemo(
+    () => filteredPages.slice(pageIndex * tilesPerPage, (pageIndex + 1) * tilesPerPage),
+    [filteredPages, pageIndex]
+  );
+
+  useEffect(() => {
+    setPageIndex((current) => Math.min(current, pageCount - 1));
+  }, [pageCount]);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [search]);
 
   const selectedLayout = useMemo(
     () => layoutOptions.find((layout) => layout.id === selectedLayoutId) || layoutOptions[0],
@@ -2132,9 +2150,28 @@ export default function ExperienceBuilder() {
                 />
               </Box>
 
-              <Box sx={{ mt: 3 }}>
+              <Box sx={{ mt: 3, position: "relative" }}>
+                {pageCount > 1 ? (
+                  <IconButton
+                    aria-label="Previous experience pages"
+                    onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                    disabled={pageIndex === 0}
+                    sx={{
+                      position: "absolute",
+                      left: { md: -48, lg: -64 },
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#b8c2d4",
+                      backgroundColor: "transparent",
+                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
+                      "&.Mui-disabled": { color: "#d7dee9" },
+                    }}
+                  >
+                    <ChevronLeftIcon />
+                  </IconButton>
+                ) : null}
                 <Grid container spacing={2}>
-            {filteredPages.map((page) => {
+            {pagedPages.map((page) => {
               const isPublished = String(page.status || "").toLowerCase() === "published";
               const pageUrl = isPublished
                 ? page.pageUrl || getPublishedPageUrl(page.id)
@@ -2151,7 +2188,9 @@ export default function ExperienceBuilder() {
                       boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
                       borderRadius: 2,
                       p: 2,
-                      minHeight: 160,
+                      height: 180,
+                      minHeight: 180,
+                      maxHeight: 180,
                       display: "flex",
                       flexDirection: "column",
                       justifyContent: "space-between",
@@ -2166,11 +2205,19 @@ export default function ExperienceBuilder() {
                     }}
                   >
                     <Box>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: 1,
+                          minHeight: 32,
+                        }}
+                      >
                         <Typography
                           sx={{
-                            fontWeight: 700,
-                            fontSize: 16,
+                            fontWeight: 600,
+                            fontSize: 14,
                             color: "#1a4fd8",
                             lineHeight: 1.2,
                           }}
@@ -2178,19 +2225,6 @@ export default function ExperienceBuilder() {
                           {page.name}
                         </Typography>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                          {isPublished && (
-                            <Typography
-                              sx={{
-                                fontWeight: 700,
-                                fontSize: 15,
-                                color: "#ef6c00",
-                                lineHeight: 1.2,
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Published
-                            </Typography>
-                          )}
                           {isPublished && (
                             <IconButton
                               size="small"
@@ -2216,20 +2250,33 @@ export default function ExperienceBuilder() {
                           )}
                         </Box>
                       </Box>
-                      <Typography sx={{ fontSize: 12, color: "#51607d", mt: 1 }}>
-                        Template ID: {page.id}
+                      <Typography
+                        sx={{
+                          minHeight: 18,
+                          mt: 0.25,
+                          fontSize: 12,
+                          fontWeight: isPublished ? 600 : 400,
+                          color: isPublished ? "#ef6c00" : "#51607d",
+                        }}
+                      >
+                        Status: {page.status || "-"}
                       </Typography>
-                      <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                        Created by: {page.created_by ?? "-"}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                        Last Modified:{" "}
-                        {page.date_modified
-                          ? new Date(page.date_modified).toLocaleDateString()
-                          : page.date_created
-                            ? new Date(page.date_created).toLocaleDateString()
-                            : "-"}
-                      </Typography>
+                      <Box sx={{ minHeight: 54, mt: 0.5 }}>
+                        <Typography sx={{ fontSize: 12, color: "#51607d" }}>
+                          Template ID: {page.id}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: "#51607d" }}>
+                          Created by: {page.created_by ?? "-"}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: "#51607d" }}>
+                          Last Modified:{" "}
+                          {page.date_modified
+                            ? new Date(page.date_modified).toLocaleDateString()
+                            : page.date_created
+                              ? new Date(page.date_created).toLocaleDateString()
+                              : "-"}
+                        </Typography>
+                      </Box>
                     </Box>
 
                     <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
@@ -2262,6 +2309,25 @@ export default function ExperienceBuilder() {
               );
             })}
                 </Grid>
+                {pageCount > 1 ? (
+                  <IconButton
+                    aria-label="Next experience pages"
+                    onClick={() => setPageIndex((current) => Math.min(pageCount - 1, current + 1))}
+                    disabled={pageIndex === pageCount - 1}
+                    sx={{
+                      position: "absolute",
+                      right: { md: -48, lg: -64 },
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#b8c2d4",
+                      backgroundColor: "transparent",
+                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
+                      "&.Mui-disabled": { color: "#d7dee9" },
+                    }}
+                  >
+                    <ChevronRightIcon />
+                  </IconButton>
+                ) : null}
               </Box>
             </Box>
           </Container>
