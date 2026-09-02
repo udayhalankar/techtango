@@ -1,0 +1,201 @@
+.augmis-rte-shell {
+    width:100%;
+    overflow:hidden;
+
+    border:1px solid #cdd9e4;
+    border-radius:8px;
+
+    background:#ffffff;
+}
+
+
+.augmis-rte-editor-wrap {
+    position:relative;
+
+    min-height:220px;
+
+    background:#ffffff;
+}
+
+
+.augmis-rte-editor {
+    min-height:220px;
+
+    padding:14px 16px;
+
+    outline:none;
+
+    color:#263b53;
+
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+    font-size:12px;
+
+    line-height:1.55;
+}
+
+
+.augmis-rte-placeholder {
+    position:absolute;
+
+    top:14px;
+    left:16px;
+
+    pointer-events:none;
+
+    color:#a0adba;
+
+    font-size:12px;
+}
+
+
+.augmis-rte-editor p {
+    margin:0 0 8px;
+}
+
+
+.augmis-rte-h1 {
+    margin:4px 0 10px;
+
+    font-size:22px;
+
+    line-height:1.25;
+
+    font-weight:700;
+}
+
+
+.augmis-rte-h2 {
+    margin:4px 0 9px;
+
+    font-size:18px;
+
+    line-height:1.3;
+
+    font-weight:700;
+}
+
+
+.augmis-rte-h3 {
+    margin:4px 0 8px;
+
+    font-size:15px;
+
+    line-height:1.35;
+
+    font-weight:600;
+}
+
+
+.augmis-rte-ul,
+.augmis-rte-ol {
+    margin:5px 0 10px;
+
+    padding-left:24px;
+}
+
+
+.augmis-rte-link {
+    color:#0a74d7;
+
+    text-decoration:underline;
+}
+
+
+.augmis-rte-bold {
+    font-weight: 700;
+}
+
+.augmis-rte-italic {
+    font-style: italic;
+}
+
+.augmis-rte-underline {
+    text-decoration-line: underline !important;
+    text-decoration-style: solid !important;
+    text-underline-offset: 2px;
+}
+
+.augmis-rte-strikethrough {
+    text-decoration-line: line-through;
+}
+
+.augmis-rte-underline-strikethrough {
+    text-decoration-line: underline line-through !important;
+    text-underline-offset: 2px;
+}
+
+/*
+ * Fallback for imported/saved HTML.
+ */
+.augmis-rte-editor u {
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+}
+
+.augmis-rte-editor hr {
+    margin: 14px 0;
+
+    border: 0;
+
+    border-top:
+        1px solid #d7e1ea;
+}
+
+
+/* ==========================================================================
+   IMAGE
+========================================================================== */
+
+.augmis-rte-image-node {
+    display: block;
+    width: 100%;
+}
+
+.augmis-rte-image-node img {
+    display: block;
+
+    max-width: 100%;
+    height: auto;
+
+    margin: 10px 0;
+
+    border-radius: 4px;
+}
+
+
+.augmis-rte-image-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.augmis-rte-image-wrapper img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.augmis-rte-image-resize-handle {
+    position: absolute;
+
+    width: 12px;
+    height: 12px;
+
+    right: -5px;
+    bottom: -5px;
+
+    border-radius: 2px;
+
+    background: #2188a0;
+
+    border: 2px solid #ffffff;
+
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.22);
+
+    cursor: nwse-resize;
+}

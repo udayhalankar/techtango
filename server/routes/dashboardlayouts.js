@@ -10,6 +10,114 @@ const { checkSubscription } = require("../middleware/checkSubscription");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+async function isAdminUser(user) {
+  try {
+    const userId =
+      user?.id ??
+      user?.userId ??
+      user?.user_id ??
+      null;
+
+    const email =
+      user?.email ??
+      user?.username ??
+      null;
+
+    let result;
+
+    /*
+     * Prefer the authenticated user ID.
+     */
+    if (userId) {
+      result = await pool.query(
+        `
+        SELECT
+          id,
+          email,
+          role
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+    }
+
+    /*
+     * Fallback to email if the JWT does not
+     * expose the numeric user ID.
+     */
+    else if (email) {
+      result = await pool.query(
+        `
+        SELECT
+          id,
+          email,
+          role
+        FROM users
+        WHERE LOWER(email) = LOWER($1)
+        LIMIT 1
+        `,
+        [email]
+      );
+    }
+
+    else {
+      console.warn(
+        "ADMIN CHECK: no user id/email in req.user",
+        user
+      );
+
+      return false;
+    }
+
+    const dbUser =
+      result?.rows?.[0];
+
+    if (!dbUser) {
+      console.warn(
+        "ADMIN CHECK: user not found",
+        {
+          userId,
+          email,
+        }
+      );
+
+      return false;
+    }
+
+    const role =
+      String(
+        dbUser.role || ""
+      )
+        .trim()
+        .toLowerCase();
+
+    console.log(
+      "ADMIN CHECK:",
+      {
+        id: dbUser.id,
+        email: dbUser.email,
+        role,
+      }
+    );
+
+    return (
+      role === "admin" ||
+      role === "full admin" ||
+      role === "super admin"
+    );
+
+  } catch (err) {
+    console.error(
+      "ADMIN CHECK FAILED",
+      err
+    );
+
+    return false;
+  }
+}
+
 async function ensureLayoutsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS dashboard_layouts (
@@ -165,8 +273,10 @@ router.use(verifyToken, checkSubscription("Business Automation"));
 router.get("/", async (req, res) => {
   try {
     await ensureLayoutsTable();
-    const roles = Array.isArray(req.user?.roles) ? req.user.roles : [];
-    const isAdmin = roles.some((r) => String(r).toLowerCase() === "admin");
+    const isAdmin =
+      await isAdminUser(
+        req.user
+      );
     const tenantId = Number(req.user?.tenant_id) || null;
 
     if (isAdmin) {
@@ -195,11 +305,205 @@ router.get("/", async (req, res) => {
   }
 });
 
+
+/* =============================================================================
+   REGISTER / UPDATE CODE-BASED DASHBOARD TEMPLATE
+============================================================================= */
+
+router.post("/register-template", async (req, res) => {
+  try {
+    await ensureLayoutsTable();
+
+     console.log(
+  "REGISTER TEMPLATE AUTH USER:",
+  req.user
+);
+
+const isAdmin =
+  await isAdminUser(
+    req.user
+  );
+
+if (!isAdmin) {
+  return res.status(403).json({
+    error:
+      "Admin access required to register dashboard templates",
+  });
+}
+
+    const {
+      dashboardName,
+      description,
+      layoutDefinition,
+    } = req.body || {};
+
+    if (!dashboardName) {
+      return res.status(400).json({
+        error:
+          "dashboardName is required",
+      });
+    }
+
+    if (
+      !layoutDefinition ||
+      typeof layoutDefinition !==
+        "object"
+    ) {
+      return res.status(400).json({
+        error:
+          "layoutDefinition is required",
+      });
+    }
+
+    const templateKey =
+      String(
+        layoutDefinition.templateKey ||
+          ""
+      ).trim();
+
+    if (!templateKey) {
+      return res.status(400).json({
+        error:
+          "layoutDefinition.templateKey is required",
+      });
+    }
+
+    if (!layoutDefinition.schema) {
+      return res.status(400).json({
+        error:
+          "layoutDefinition.schema is required",
+      });
+    }
+
+    /*
+     * Look for an existing system template
+     * with the same templateKey.
+     */
+
+    const existing =
+      await pool.query(
+        `
+        SELECT id
+        FROM dashboard_layouts
+        WHERE tenant_id = 0
+          AND layout_definition->>'templateKey' = $1
+        LIMIT 1
+        `,
+        [templateKey]
+      );
+
+    let result;
+
+    /* -------------------------------------------------------------------------
+       UPDATE EXISTING TEMPLATE
+    ------------------------------------------------------------------------- */
+
+    if (existing.rows.length) {
+      result =
+        await pool.query(
+          `
+          UPDATE dashboard_layouts
+          SET
+            dashboard_name = $1,
+            description = $2,
+            layout_definition = $3::jsonb,
+            status = 'Active',
+            modified_by = $4,
+            date_modified = now()
+          WHERE id = $5
+          RETURNING
+            id,
+            tenant_id,
+            dashboard_name,
+            description,
+            layout_definition,
+            status,
+            created_by,
+            date_created,
+            modified_by,
+            date_modified
+          `,
+          [
+            dashboardName,
+            description || null,
+            JSON.stringify(
+              layoutDefinition
+            ),
+            req.user?.id || null,
+            existing.rows[0].id,
+          ]
+        );
+    }
+
+    /* -------------------------------------------------------------------------
+       INSERT NEW TEMPLATE
+    ------------------------------------------------------------------------- */
+
+    else {
+      result =
+        await pool.query(
+          `
+          INSERT INTO dashboard_layouts
+          (
+            tenant_id,
+            dashboard_name,
+            description,
+            layout_definition,
+            status,
+            created_by
+          )
+          VALUES
+          (
+            0,
+            $1,
+            $2,
+            $3::jsonb,
+            'Active',
+            $4
+          )
+          RETURNING
+            id,
+            tenant_id,
+            dashboard_name,
+            description,
+            layout_definition,
+            status,
+            created_by,
+            date_created
+          `,
+          [
+            dashboardName,
+            description || null,
+            JSON.stringify(
+              layoutDefinition
+            ),
+            req.user?.id || null,
+          ]
+        );
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (e) {
+    console.error(
+      "Failed to register dashboard template",
+      e
+    );
+
+    res.status(500).json({
+      error: e.message,
+    });
+  }
+});
+
+
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     await ensureLayoutsTable();
-    const roles = Array.isArray(req.user?.roles) ? req.user.roles : [];
-    const isAdmin = roles.some((r) => String(r).toLowerCase() === "admin");
+    const isAdmin =
+      await isAdminUser(
+        req.user
+      );
     const tenantId = Number(req.user?.tenant_id) || null;
 
     /*

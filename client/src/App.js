@@ -14,7 +14,7 @@ import SessionBoundary from "./components/SessionBoundary";
 import "d3-transition";
 import Home from "./pages/home/Home";
 import LandingPage from "./pages/public/LandingPage";
-import Login from "./pages/Login/Login";
+import Login from "./pages/login/Login";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Register from "./pages/Register/Register";
@@ -123,7 +123,7 @@ export default function App() {
 // import 'd3-transition';
 // import Home from "./pages/home/Home";
 // import LandingPage from "./pages/public/LandingPage";   // ⬅️ add
-// import Login from "./pages/Login/Login";
+// import Login from "./pages/login/Login";
 // import Register from "./pages/Register/Register";
 // import Logout from "./pages/Logout";
 // import AuthWrapper from "./AuthWrapper";

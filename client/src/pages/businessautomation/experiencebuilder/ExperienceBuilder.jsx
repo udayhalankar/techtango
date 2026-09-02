@@ -13,6 +13,7 @@ import {
   IconButton,
   MenuItem,
   Paper,
+  Stack,
   Switch,
   Tab,
   Tabs,
@@ -28,6 +29,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -35,6 +37,7 @@ import api from "../../../services/api";
 import Chart from "chart.js/auto";
 import { useLocation } from "react-router-dom";
 import ShellOptionsModal from "./ShellOptionsModal";
+import ModuleTileGrid from "../../../components/ModuleTileGrid";
 
 const STORAGE_KEY = "experience_builder_pages_v1";
 const PREVIEW_SNAPSHOT_KEY = "experience_builder_preview_snapshot_v1";
@@ -684,6 +687,54 @@ export default function ExperienceBuilder() {
       return name.includes(q) || layout.includes(q) || status.includes(q) || String(page.id || "").includes(q);
     });
   }, [pages, search]);
+
+
+  const experiencePageTiles = useMemo(() => {
+  return (pages || []).map((page) => {
+    const isPublished =
+      String(page.status || "").toLowerCase() ===
+      "published";
+
+    const modifiedDate =
+      page.date_modified ||
+      page.updatedAt ||
+      page.date_created ||
+      page.createdAt;
+
+    return {
+      id: page.id,
+
+      label:
+        page.name ||
+        page.page_name ||
+        "Untitled Experience Page",
+
+      searchText: [
+        page.name,
+        page.page_name,
+        page.layoutName,
+        page.status,
+        page.id,
+        page.description,
+      ]
+        .filter(Boolean)
+        .join(" "),
+
+      page,
+
+      isPublished,
+
+      modifiedDate,
+
+      onClick: () =>
+        window.open(
+          getConfigurePageUrl(page.id),
+          "_blank",
+          "noopener,noreferrer"
+        ),
+    };
+  });
+}, [pages]);
 
   const selectedLayout = useMemo(
     () => layoutOptions.find((layout) => layout.id === selectedLayoutId) || layoutOptions[0],
@@ -2097,176 +2148,356 @@ export default function ExperienceBuilder() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
+      
       {!isPageRoute && (
-        <>
-          <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, py: 4 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              Experience Builder
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-              Create and configure experience pages with cards, URLs, drag/drop, snap and resize.
-            </Typography>
-          </Box>
+  <ModuleTileGrid
+    title="Experience Builder"
+    subtitle="Create and configure experience pages with flexible layouts, reusable shells and enterprise widgets."
+    tiles={experiencePageTiles}
+    searchPlaceholder="Search experience pages"
+    primaryAction={{
+      label: "Create New Page",
+      onClick: openCreateDialog,
+    }}
+    showDefaultFooter={false}
+    renderTileContent={(tile) => {
+      const page = tile.page;
 
-          <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ maxWidth: 1200, mx: "auto", borderRadius: 2, p: 3 }}>
-              <Box
+      if (!page) {
+        return null;
+      }
+
+      const isPublished =
+        tile.isPublished;
+
+      const publishedUrl =
+        page.pageUrl ||
+        getPublishedPageUrl(page.id);
+
+      const formatDate = (value) => {
+        if (!value) {
+          return "-";
+        }
+
+        const date = new Date(value);
+
+        if (
+          Number.isNaN(
+            date.getTime()
+          )
+        ) {
+          return String(value);
+        }
+
+        return date.toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        );
+      };
+
+      const TileRow = ({
+        label,
+        value,
+      }) => (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns:
+              "78px minmax(0,1fr)",
+            columnGap: 0.4,
+            alignItems: "center",
+            height: 18,
+            minWidth: 0,
+          }}
+        >
+          <Typography
+            noWrap
+            sx={{
+              fontSize: 10,
+              color: "#738496",
+              fontWeight: 500,
+            }}
+          >
+            {label}
+          </Typography>
+
+          <Typography
+            noWrap
+            title={String(
+              value ?? "-"
+            )}
+            sx={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow:
+                "ellipsis",
+              whiteSpace: "nowrap",
+
+              fontSize: 10.5,
+              color: "#33485d",
+              fontWeight: 600,
+            }}
+          >
+            {value ?? "-"}
+          </Typography>
+        </Box>
+      );
+
+      return (
+        <>
+          {/* =====================================================
+              PAGE NAME + STATUS
+             ===================================================== */}
+
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            spacing={1}
+          >
+            <Typography
+              noWrap
+              title={
+                page.name ||
+                page.page_name ||
+                ""
+              }
+              sx={{
+                minWidth: 0,
+                flex: 1,
+
+                fontSize: 14,
+                fontWeight: 700,
+                lineHeight: "20px",
+                color: "#172b4d",
+
+                overflow: "hidden",
+                textOverflow:
+                  "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {page.name ||
+                page.page_name ||
+                "Untitled Experience Page"}
+            </Typography>
+
+            {isPublished ? (
+              <Typography
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  flexWrap: "wrap",
+                  flex: "0 0 auto",
+
+                  px: 0.9,
+                  py: 0.25,
+
+                  borderRadius: 999,
+
+                  bgcolor: "#eaf7f0",
+                  color: "#17875b",
+
+                  fontSize: 9.5,
+                  fontWeight: 700,
+
+                  lineHeight: 1.3,
                 }}
               >
-                <Button variant="contained" onClick={openCreateDialog} sx={{ textTransform: "none" }}>
-                  Create New Page
-                </Button>
-                <Box sx={{ flexGrow: 1 }} />
-                <TextField
-                  size="small"
-                  placeholder="Search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  InputProps={{ sx: { bgcolor: "#f8fafc" } }}
-                  sx={{ flex: "1 1 320px", maxWidth: 520 }}
-                />
-              </Box>
+                Published
+              </Typography>
+            ) : null}
+          </Stack>
 
-              <Box sx={{ mt: 3 }}>
-                <Grid container spacing={2}>
-            {filteredPages.map((page) => {
-              const isPublished = String(page.status || "").toLowerCase() === "published";
-              const pageUrl = isPublished
-                ? page.pageUrl || getPublishedPageUrl(page.id)
-                : getConfigurePageUrl(page.id);
-              return (
-                <Grid item key={page.id} xs={12} sm={6} md={3}>
-                  <Paper
-                    elevation={0}
-                    onClick={() => window.open(getConfigurePageUrl(page.id), "_blank", "noopener,noreferrer")}
-                    sx={{
-                      bgcolor: "#ffffff",
-                      color: "#1f355d",
-                      border: "1px solid #2f5fff",
-                      boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
-                      borderRadius: 2,
-                      p: 2,
-                      minHeight: 160,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: 1.5,
-                      cursor: "pointer",
-                      transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
-                        borderColor: "#1a4fd8",
-                      },
-                    }}
-                  >
-                    <Box>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                        <Typography
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: 16,
-                            color: "#1a4fd8",
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {page.name}
-                        </Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                          {isPublished && (
-                            <Typography
-                              sx={{
-                                fontWeight: 700,
-                                fontSize: 15,
-                                color: "#ef6c00",
-                                lineHeight: 1.2,
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Published
-                            </Typography>
-                          )}
-                          {isPublished && (
-                            <IconButton
-                              size="small"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                window.open(pageUrl, "_blank", "noopener,noreferrer");
-                              }}
-                              sx={{
-                                width: 28,
-                                height: 28,
-                                border: "1px solid #9fbaf4",
-                                borderRadius: 1,
-                                color: "#2f7dd6",
-                                "&:hover": {
-                                  bgcolor: "rgba(47,125,214,0.08)",
-                                  borderColor: "#2f7dd6",
-                                },
-                              }}
-                              aria-label="Open published page"
-                            >
-                              <OpenInNewOutlinedIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          )}
-                        </Box>
-                      </Box>
-                      <Typography sx={{ fontSize: 12, color: "#51607d", mt: 1 }}>
-                        Template ID: {page.id}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                        Created by: {page.created_by ?? "-"}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                        Last Modified:{" "}
-                        {page.date_modified
-                          ? new Date(page.date_modified).toLocaleDateString()
-                          : page.date_created
-                            ? new Date(page.date_created).toLocaleDateString()
-                            : "-"}
-                      </Typography>
-                    </Box>
+          {/* =====================================================
+              DESCRIPTION
+             ===================================================== */}
 
-                    <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        sx={{ textTransform: "none" }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          deletePage(page);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        sx={{ textTransform: "none", borderRadius: 1 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.alert("TODO: Manage access");
-                        }}
-                      >
-                        Manage Access
-                      </Button>
-                    </Box>
-                  </Paper>
-                </Grid>
-              );
-            })}
-                </Grid>
-              </Box>
+          <Typography
+            title={
+              page.description || ""
+            }
+            sx={{
+              mt: 0.35,
+
+              minHeight: 26,
+              maxHeight: 26,
+
+              fontSize: 9.8,
+              fontWeight: 400,
+              lineHeight: "13px",
+
+              color: "#8a98a8",
+
+              display:
+                "-webkit-box",
+
+              WebkitBoxOrient:
+                "vertical",
+
+              WebkitLineClamp: 2,
+
+              overflow: "hidden",
+            }}
+          >
+            {page.description || ""}
+          </Typography>
+
+          {/* push metadata/actions downward */}
+
+          <Box
+            sx={{
+              flexGrow: 1,
+            }}
+          />
+
+          {/* =====================================================
+              BOTTOM DETAILS + ACTIONS
+             ===================================================== */}
+
+          <Box
+            sx={{
+              display: "grid",
+
+              gridTemplateColumns:
+                "minmax(0,1fr) auto",
+
+              columnGap: 1,
+
+              alignItems: "end",
+
+              width: "100%",
+
+              minWidth: 0,
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                rowGap: "1px",
+                minWidth: 0,
+              }}
+            >
+              <TileRow
+                label="Page ID"
+                value={page.id}
+              />
+
+              <TileRow
+                label="Layout"
+                value={
+                  page.layoutName ||
+                  "-"
+                }
+              />
+
+              <TileRow
+                label="Modified"
+                value={formatDate(
+                  tile.modifiedDate
+                )}
+              />
             </Box>
-          </Container>
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="flex-end"
+            >
+              {/* OPEN PUBLISHED PAGE */}
+
+              {isPublished ? (
+                <IconButton
+                  size="small"
+                  aria-label="Open published page"
+                  onClick={(event) => {
+                    event.stopPropagation();
+
+                    window.open(
+                      publishedUrl,
+                      "_blank",
+                      "noopener,noreferrer"
+                    );
+                  }}
+                  sx={{
+                    width: 27,
+                    height: 27,
+
+                    border:
+                      "1px solid #b8cce1",
+
+                    borderRadius:
+                      "6px",
+
+                    color:
+                      "#0a6ed1",
+
+                    bgcolor:
+                      "#ffffff",
+
+                    "&:hover": {
+                      bgcolor:
+                        "#edf5fc",
+                    },
+                  }}
+                >
+                  <OpenInNewOutlinedIcon
+                    sx={{
+                      fontSize: 15,
+                    }}
+                  />
+                </IconButton>
+              ) : null}
+
+              {/* DELETE */}
+
+              <Button
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+
+                  deletePage(page);
+                }}
+                sx={{
+                  height: 27,
+                  minHeight: 27,
+
+                  px: 0.9,
+
+                  border:
+                    "1px solid #f0c0bc",
+
+                  borderRadius:
+                    "6px",
+
+                  color:
+                    "#b42318",
+
+                  bgcolor:
+                    "#ffffff",
+
+                  fontSize: 10,
+
+                  textTransform:
+                    "none",
+
+                  "&:hover": {
+                    bgcolor:
+                      "#fdf2f1",
+                  },
+                }}
+              >
+                Delete
+              </Button>
+            </Stack>
+          </Box>
         </>
-      )}
+      );
+    }}
+  />
+)}
+      
 
       {isPageRoute && activePage && (
         <Box sx={{ p: 0 }}>

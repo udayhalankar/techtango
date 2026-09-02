@@ -26,6 +26,52 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import api from "../../../services/api";
 import Chart from "chart.js/auto";
+import {
+  getDashboardTemplate,
+} from "./dashboardTemplates/dashboardTemplateRegistry";
+import AddComponentModal from
+  "./components/AddComponentModal";
+import KpiConfigModal from
+  "./components/KpiConfigModal";
+import DashboardComponentRenderer from
+  "./components/DashboardComponentRenderer";
+
+import ChartConfigModal from
+  "./components/ChartConfigModal";
+
+import DuplicateComponentModal from
+  "./components/DuplicateComponentModal";
+
+import TableConfigModal from
+  "./components/TableConfigModal";
+
+import MediaConfigModal from
+  "./components/MediaConfigModal";
+
+import {
+  findNextCompatibleSlot,
+  getConsumedSlotIds,
+} from "./components/dashboardSlotUtils";
+
+import TextConfigModal from
+  "./components/TextConfigModal";
+
+import {
+  dialogBackdropSx,
+  dialogPaperSx,
+  dialogHeaderSx,
+  dialogTitleSx,
+  dialogSubtitleSx,
+  dialogBodySx,
+  dialogFooterSx,
+  gentleFieldSx,
+  cancelButtonSx,
+  primaryButtonSx,
+  closeIconButtonSx,
+} from "./components/dashboardDialogStyles";
+
+import CrudConfigModal from
+  "./components/CrudConfigModal";
 
 const CHART_TYPES = ["Bar", "H. Bar", "Line", "Pie", "Doughnut"];
 const AGGREGATIONS = ["actual", "count", "avg", "sum"];
@@ -51,26 +97,302 @@ const ChartSlot = React.memo(function ChartSlot({ tag, slotId, props, cfg }) {
     };
 
     const chartType = typeMap[cfg.chartType] || "line";
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: "top", align: "start" } },
-    };
-    if (cfg.chartType === "H. Bar") options.indexAxis = "y";
+    const isCircularChart =
+  cfg.chartType === "Pie" ||
+  cfg.chartType === "Doughnut";
 
-    chartRef.current = new Chart(canvasRef.current, {
-      type: chartType,
-      data: {
-        labels: cfg.labels,
-        datasets: [
-          {
-            label: cfg.chartName || cfg.tableName || "Dataset",
-            data: cfg.values,
+  const options = {
+    responsive: true,
+
+    maintainAspectRatio: false,
+
+    layout: {
+      padding: isCircularChart
+        ? {
+            top: 18,
+            right: 60,
+            bottom: 18,
+            left: 60,
+          }
+        : {
+            top: 6,
+            right: 6,
+            bottom: 6,
+            left: 6,
           },
-        ],
+    },
+
+    plugins: {
+      legend: {
+        /*
+        * Pie/Doughnut gets our custom
+        * labels around the chart instead.
+        */
+        display: !isCircularChart,
+
+        position: "top",
+
+        align: "start",
+
+        labels: {
+          boxWidth: 12,
+          boxHeight: 8,
+
+          padding: 8,
+
+          color: "#65788a",
+
+          font: {
+            size: 9,
+            weight: "400",
+          },
+        },
       },
-      options,
-    });
+    },
+  };
+
+
+const pieCalloutLabels = {
+  id: "pieCalloutLabels",
+
+  afterDatasetsDraw(chart) {
+    if (!isCircularChart) {
+      return;
+    }
+
+    const {
+      ctx,
+      chartArea,
+    } = chart;
+
+    const meta =
+      chart.getDatasetMeta(0);
+
+    if (
+      !meta ||
+      !meta.data ||
+      !meta.data.length
+    ) {
+      return;
+    }
+
+    ctx.save();
+
+    ctx.font =
+      "400 9px Arial, sans-serif";
+
+    ctx.fillStyle =
+      "#65788a";
+
+    ctx.strokeStyle =
+      "#9aacbc";
+
+    ctx.lineWidth = 1;
+
+    meta.data.forEach(
+      (arc, index) => {
+        const props =
+          arc.getProps(
+            [
+              "x",
+              "y",
+              "startAngle",
+              "endAngle",
+              "outerRadius",
+            ],
+            true
+          );
+
+        const angle =
+          (
+            props.startAngle +
+            props.endAngle
+          ) / 2;
+
+        const cos =
+          Math.cos(angle);
+
+        const sin =
+          Math.sin(angle);
+
+        /*
+         * Start at the outer edge
+         * of the pie slice.
+         */
+        const x1 =
+          props.x +
+          cos *
+            props.outerRadius;
+
+        const y1 =
+          props.y +
+          sin *
+            props.outerRadius;
+
+        /*
+         * Small diagonal leader.
+         */
+        const x2 =
+          props.x +
+          cos *
+            (
+              props.outerRadius +
+              10
+            );
+
+        const y2 =
+          props.y +
+          sin *
+            (
+              props.outerRadius +
+              10
+            );
+
+        /*
+         * Horizontal leader.
+         */
+        const rightSide =
+          cos >= 0;
+
+        const x3 =
+          x2 +
+          (
+            rightSide
+              ? 18
+              : -18
+          );
+
+        const y3 =
+          y2;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+          x1,
+          y1
+        );
+
+        ctx.lineTo(
+          x2,
+          y2
+        );
+
+        ctx.lineTo(
+          x3,
+          y3
+        );
+
+        ctx.stroke();
+
+        /*
+         * Compact label
+         */
+        let label =
+          String(
+            cfg.labels?.[
+              index
+            ] ?? ""
+          );
+
+        /*
+         * Convert long JS date
+         * labels into:
+         * 16 Jan 2002
+         */
+        const parsedDate =
+          new Date(label);
+
+        if (
+          !Number.isNaN(
+            parsedDate.getTime()
+          ) &&
+          /GMT|00:00:00|T\d{2}:/.test(
+            label
+          )
+        ) {
+          label =
+            parsedDate.toLocaleDateString(
+              "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }
+            );
+        }
+
+        /*
+         * Safety for long labels.
+         */
+        if (
+          label.length >
+          17
+        ) {
+          label =
+            `${label.slice(
+              0,
+              16
+            )}…`;
+        }
+
+        ctx.textAlign =
+          rightSide
+            ? "left"
+            : "right";
+
+        ctx.textBaseline =
+          "middle";
+
+        ctx.fillText(
+          label,
+
+          x3 +
+            (
+              rightSide
+                ? 4
+                : -4
+            ),
+
+          y3
+        );
+      }
+    );
+
+    ctx.restore();
+  },
+};
+
+    chartRef.current = new Chart(
+  canvasRef.current,
+  {
+    type: chartType,
+
+    data: {
+      labels: cfg.labels,
+
+      datasets: [
+        {
+          label:
+            cfg.chartName ||
+            cfg.tableName ||
+            "Dataset",
+
+          data:
+            cfg.values,
+        },
+      ],
+    },
+
+    options,
+
+    plugins:
+      isCircularChart
+        ? [
+            pieCalloutLabels,
+          ]
+        : [],
+  }
+);
 
     return () => {
       if (chartRef.current) {
@@ -91,11 +413,204 @@ const ChartSlot = React.memo(function ChartSlot({ tag, slotId, props, cfg }) {
   return React.createElement(tag, { ...(props || {}) }, content);
 });
 
+
+
 const SchemaLayout = React.memo(
-  function SchemaLayout({ schema, renderNode, layoutRef }) {
-    return <Box ref={layoutRef}>{renderNode(schema, "root")}</Box>;
+  function SchemaLayout({
+    schema,
+    renderNode,
+    layoutRef,
+  }) {
+    return (
+      <Box
+        ref={layoutRef}
+        sx={{
+          width: "100%",
+          minWidth: 0,
+          maxWidth: "100%",
+
+          /* CHART TITLES */
+
+"& .chart-card h1, \
+ & .chart-card h2, \
+ & .chart-card h3, \
+ & .chart-card h4, \
+ & .chart-card h5, \
+ & .chart-card h6, \
+ & .chart-title": {
+  color: "#40566d !important",
+
+  fontSize: "11.5px !important",
+
+  fontWeight: "600 !important",
+
+  lineHeight: "1.3 !important",
+
+  letterSpacing: "0 !important",
+},
+
+          /*
+           * Prevent uploaded template widths/padding
+           * from increasing the actual page width.
+           */
+          boxSizing: "border-box",
+
+          "&, & *": {
+            boxSizing: "border-box",
+          },
+
+          /*
+           * Main template shell
+           */
+          "& .app": {
+            width: "100% !important",
+            maxWidth: "100% !important",
+            minWidth: "0 !important",
+
+            margin: "0 !important",
+
+            overflow: "hidden",
+          },
+
+          /*
+           * Sidebar
+           */
+          "& .sidebar": {
+            minWidth: "0 !important",
+            maxWidth: "100%",
+
+            bgcolor: "#ffffff",
+
+            borderColor:
+              "#dce3ea !important",
+          },
+
+          /*
+           * Main dashboard area
+           */
+          "& .main, & .content": {
+            minWidth: "0 !important",
+
+            width: "100% !important",
+            maxWidth: "100% !important",
+          },
+
+          /*
+           * Header/title area inside uploaded layout
+           */
+          "& .title": {
+            color: "#172b4d !important",
+
+            fontWeight: "700 !important",
+          },
+
+          "& .subtitle": {
+            color: "#738496 !important",
+          },
+
+          /*
+           * KPI / metric cards
+           */
+          "& .metric, & .kpi, & .kpi-card": {
+            borderColor:
+              "#d9e4ee !important",
+
+            borderRadius:
+              "8px !important",
+
+            boxShadow:
+              "none !important",
+
+            bgcolor:
+              "#ffffff !important",
+          },
+
+          /*
+           * Chart cards
+           */
+          "& .chart-card": {
+            minWidth: "0 !important",
+
+            border:
+              "1px solid #d9e4ee !important",
+
+            borderRadius:
+              "12px !important",
+
+            bgcolor:
+              "#ffffff !important",
+
+            boxShadow:
+              "0 2px 6px rgba(28,45,65,.04) !important",
+
+            overflow: "hidden",
+          },
+
+          /*
+           * Charts themselves must never push
+           * a column wider.
+           */
+          "& canvas": {
+            width: "100% !important",
+            maxWidth: "100% !important",
+          },
+
+          /*
+           * Generic grids coming from uploaded layouts.
+           */
+          "& [style*='grid-template-columns']": {
+            minWidth: "0 !important",
+          },
+
+          /*
+           * Navigation/sidebar buttons
+           */
+          "& .menu button": {
+            minHeight: "38px",
+
+            border:
+              "1px solid #d9e4ee !important",
+
+            borderRadius:
+              "7px !important",
+
+            bgcolor:
+              "#ffffff !important",
+
+            color:
+              "#33485d !important",
+
+            fontSize:
+              "11px !important",
+
+            fontWeight:
+              "600 !important",
+
+            boxShadow:
+              "none !important",
+          },
+
+          "& .menu button:hover": {
+            bgcolor:
+              "#f5f8fb !important",
+
+            borderColor:
+              "#aebfce !important",
+          },
+        }}
+      >
+        {renderNode(
+          schema,
+          "root"
+        )}
+      </Box>
+    );
   },
-  (prev, next) => prev.schema === next.schema && prev.renderNode === next.renderNode
+
+  (prev, next) =>
+    prev.schema === next.schema &&
+    prev.renderNode ===
+      next.renderNode
 );
 
 export default function DashboardViewer() {
@@ -106,6 +621,7 @@ export default function DashboardViewer() {
   const [loading, setLoading] = useState(true);
   const [availableLayouts, setAvailableLayouts] = useState([]);
   const [activeLayoutIndex, setActiveLayoutIndex] = useState(0);
+  
   const [columnsByTable, setColumnsByTable] = useState({});
   const [tables, setTables] = useState([]);
   const [titleConfigOpen, setTitleConfigOpen] = useState(false);
@@ -121,6 +637,82 @@ export default function DashboardViewer() {
     widget: "",
     links: [{ name: "", url: "" }],
   });
+
+  const [
+  textConfigOpen,
+  setTextConfigOpen,
+  ] = useState(false);
+
+  const [
+  mediaConfigOpen,
+  setMediaConfigOpen,
+] =
+  useState(false);
+
+  const [
+  addComponentOpen,
+  setAddComponentOpen,
+  ] = useState(false);
+  const [
+    activeComponentSlot,
+    setActiveComponentSlot,
+  ] = useState(null);
+
+  const [
+  crudConfigOpen,
+  setCrudConfigOpen,
+  ] = useState(false);
+
+  const [
+    crudPages,
+    setCrudPages,
+  ] = useState([]);
+
+  const [
+  duplicateComponentOpen,
+  setDuplicateComponentOpen,
+] = useState(false);
+
+
+const [
+  componentToDuplicate,
+  setComponentToDuplicate,
+] = useState(null);
+
+
+const [
+  componentTableConfigOpen,
+  setComponentTableConfigOpen,
+] = useState(false);
+
+
+const [
+  componentTableData,
+  setComponentTableData,
+] = useState({});
+
+
+  const [
+  kpiConfigOpen,
+  setKpiConfigOpen,
+  ] = useState(false);
+
+  const [
+  componentChartConfigOpen,
+  setComponentChartConfigOpen,
+] = useState(false);
+
+
+const [
+  componentChartData,
+  setComponentChartData,
+] = useState({});
+
+  const [
+    kpiData,
+    setKpiData,
+  ] = useState({});
+
   const [widgetData, setWidgetData] = useState(null);
   const [widgetError, setWidgetError] = useState("");
   const [pageConfig, setPageConfig] = useState({ showSidebar: true, showCharts: [] });
@@ -147,6 +739,7 @@ export default function DashboardViewer() {
   ]);
   const layoutRef = useRef(null);
 
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -161,6 +754,35 @@ export default function DashboardViewer() {
         const layoutsRes = await api.get("/dashboardlayouts");
         const list = Array.isArray(layoutsRes.data) ? layoutsRes.data : [];
         setAvailableLayouts(list);
+
+        try {
+
+  const crudRes =
+    await api.get(
+      "/crudpages"
+    );
+
+
+  setCrudPages(
+    Array.isArray(
+      crudRes.data
+    )
+      ? crudRes.data
+      : []
+  );
+
+} catch (err) {
+
+  console.error(
+    "Failed to load CRUD pages",
+    err
+  );
+
+
+  setCrudPages(
+    []
+  );
+}
       } catch (err) {
         console.error("Failed to load dashboard", err);
         setDashboard(null);
@@ -212,26 +834,592 @@ export default function DashboardViewer() {
   }, [layoutStack, activeLayoutIndex]);
 
   const activeLayout = layoutStack[activeLayoutIndex] || layoutConfig;
+  const activeComponents =
+  useMemo(() => {
+
+    return (
+      activeLayout
+        ?.components ||
+      {}
+    );
+
+  }, [
+    activeLayout
+      ?.components,
+  ]);
+
+
+   useEffect(() => {
+
+  const loadComponentTables =
+    async () => {
+
+      const entries =
+        Object.entries(
+          activeComponents ||
+          {}
+        )
+          .filter(
+            (
+              [
+                ,
+                component,
+              ]
+            ) =>
+              component?.type ===
+              "table"
+          );
+
+
+      if (
+        !entries.length
+      ) {
+
+        setComponentTableData(
+          {}
+        );
+
+        return;
+      }
+
+
+      const results =
+        await Promise.all(
+
+          entries.map(
+            async (
+              [
+                slotId,
+                component,
+              ]
+            ) => {
+
+              try {
+
+                const source =
+                  component
+                    ?.dataSource ||
+                  {};
+
+
+                const res =
+                  await api.post(
+                    `/dashboardbuilder/${dashboardId}/component-table-data`,
+                    {
+                      tableName:
+                        source.tableName,
+
+                      selectedColumns:
+                        source.selectedColumns,
+
+                      sortColumn:
+                        source.sortColumn,
+
+                      sortDirection:
+                        source.sortDirection,
+
+                      rowLimit:
+                        source.rowLimit,
+                    }
+                  );
+
+
+                return [
+                  slotId,
+
+                  {
+                    columns:
+                      res?.data
+                        ?.columns ||
+                      [],
+
+                    rows:
+                      res?.data
+                        ?.rows ||
+                      [],
+                  },
+                ];
+
+              } catch (err) {
+
+                console.error(
+                  `Failed to load component table ${slotId}`,
+                  err
+                );
+
+
+                return [
+                  slotId,
+
+                  {
+                    columns: [],
+                    rows: [],
+                  },
+                ];
+              }
+            }
+          )
+        );
+
+
+      setComponentTableData(
+        Object.fromEntries(
+          results
+        )
+      );
+    };
+
+
+  loadComponentTables();
+
+}, [
+  activeComponents,
+  dashboardId,
+]);
+
+
+  useEffect(() => {
+
+  const loadKpis =
+    async () => {
+
+      const entries =
+        Object.entries(
+          activeComponents ||
+          {}
+        )
+          .filter(
+            (
+              [
+                ,
+                component,
+              ]
+            ) =>
+              component?.type ===
+              "kpi"
+          );
+
+
+      if (
+        !entries.length
+      ) {
+
+        setKpiData({});
+
+        return;
+      }
+
+
+      const results =
+        await Promise.all(
+
+          entries.map(
+            async (
+              [
+                slotId,
+                component,
+              ]
+            ) => {
+
+              try {
+
+                const res =
+                  await api.post(
+                    `/dashboardbuilder/${dashboardId}/kpi-data`,
+                    {
+                      tableName:
+                        component
+                          ?.dataSource
+                          ?.tableName,
+
+                      aggregation:
+                        component
+                          ?.dataSource
+                          ?.aggregation,
+
+                      valueColumn:
+                        component
+                          ?.dataSource
+                          ?.valueColumn,
+                    }
+                  );
+
+
+                return [
+                  slotId,
+
+                  res?.data
+                    ?.value ??
+                    null,
+                ];
+
+              } catch (err) {
+
+                console.error(
+                  `Failed to load KPI ${slotId}`,
+                  err
+                );
+
+
+                return [
+                  slotId,
+                  null,
+                ];
+              }
+            }
+          )
+        );
+
+
+      setKpiData(
+        Object.fromEntries(
+          results
+        )
+      );
+    };
+
+
+  loadKpis();
+
+}, [
+  activeComponents,
+  dashboardId,
+]);
+
+
+
+useEffect(() => {
+
+  const loadComponentCharts =
+    async () => {
+
+      const entries =
+        Object.entries(
+          activeComponents ||
+          {}
+        )
+          .filter(
+            (
+              [
+                ,
+                component,
+              ]
+            ) =>
+              component?.type ===
+              "chart"
+          );
+
+
+      if (
+        !entries.length
+      ) {
+
+        setComponentChartData(
+          {}
+        );
+
+        return;
+      }
+
+
+      const results =
+        await Promise.all(
+
+          entries.map(
+            async (
+              [
+                slotId,
+                component,
+              ]
+            ) => {
+
+              try {
+
+                const source =
+                  component
+                    ?.dataSource ||
+                  {};
+
+
+                const res =
+                  await api.post(
+                    `/dashboardbuilder/${dashboardId}/component-chart-data`,
+                    {
+                      tableName:
+                        source.tableName,
+
+                      xAxis:
+                        source.xAxis,
+
+                      yAxis:
+                        source.yAxis,
+
+                      aggregation:
+                        source.aggregation,
+                    }
+                  );
+
+
+                return [
+                  slotId,
+
+                  {
+                    labels:
+                      res?.data
+                        ?.labels ||
+                      [],
+
+                    values:
+                      res?.data
+                        ?.values ||
+                      [],
+                  },
+                ];
+
+              } catch (err) {
+
+                console.error(
+                  `Failed to load component chart ${slotId}`,
+                  err
+                );
+
+
+                return [
+                  slotId,
+
+                  {
+                    labels: [],
+                    values: [],
+                  },
+                ];
+              }
+            }
+          )
+        );
+
+
+      setComponentChartData(
+        Object.fromEntries(
+          results
+        )
+      );
+    };
+
+
+  loadComponentCharts();
+
+}, [
+  activeComponents,
+  dashboardId,
+]);
+
 
   const layoutDefinition = useMemo(() => {
-    const raw = activeLayout?.layoutDefinition;
-    if (typeof raw === "string") {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        const trimmed = raw.trim();
-        if (trimmed.startsWith("<")) {
-          return { html: raw };
-        }
-        return {};
+
+  const raw =
+    activeLayout?.layoutDefinition;
+
+
+  let parsed = {};
+
+
+  /* =========================================================
+     NORMALIZE DATABASE VALUE
+     ========================================================= */
+
+  if (
+    typeof raw === "string"
+  ) {
+
+    try {
+
+      parsed =
+        JSON.parse(raw);
+
+    } catch {
+
+      const trimmed =
+        raw.trim();
+
+
+      if (
+        trimmed.startsWith("<")
+      ) {
+
+        parsed = {
+          html: raw,
+        };
+
+      } else {
+
+        parsed = {};
       }
     }
-    return raw || {};
-  }, [activeLayout?.layoutDefinition]);
 
-  const layoutHtml = typeof layoutDefinition?.html === "string" ? layoutDefinition.html : "";
-  const layoutSchema = layoutDefinition?.schema || null;
-  const layoutMode = layoutSchema ? "schema" : "missing";
+  } else {
+
+    parsed =
+      raw || {};
+  }
+
+
+  /* =========================================================
+     RESOLVE LOCAL TEMPLATE FILE
+     ========================================================= */
+
+  const templateKey =
+    parsed?.templateKey;
+
+
+  if (templateKey) {
+
+    const localTemplate =
+      getDashboardTemplate(
+        templateKey
+      );
+
+      
+
+    if (localTemplate) {
+
+      return {
+
+        /*
+         * Database properties remain available.
+         */
+        ...parsed,
+
+        /*
+         * But schema/slot structure comes from
+         * the version-controlled template file.
+         */
+        schema:
+          localTemplate.schema,
+
+        slots:
+          localTemplate.slots,
+
+        templateCss:
+          localTemplate.css,
+
+        templateName:
+          localTemplate.name,
+
+        templateVersion:
+          localTemplate.version,
+      };
+    }
+  }
+
+
+  /*
+   * Existing legacy layouts continue working.
+   */
+  return parsed;
+
+}, [
+  activeLayout?.layoutDefinition,
+]);
+
+
+/* =========================================================
+   ALL COMPONENT SLOTS
+
+   Used for layout operations such as Merge Right because
+   the current occupied slot must remain in the ordered list.
+========================================================= */
+
+const allComponentSlots =
+  useMemo(() => {
+
+    const slots =
+      layoutDefinition
+        ?.slots ||
+      [];
+
+
+    return slots
+      .map(
+        (slot) => ({
+          slotId:
+            slot?.id ||
+            slot?.slotId,
+
+          accepts:
+            Array.isArray(
+              slot?.accepts
+            )
+              ? slot.accepts
+              : String(
+                  slot?.accepts ||
+                  ""
+                )
+                  .split(",")
+                  .map(
+                    (item) =>
+                      item.trim()
+                  )
+                  .filter(Boolean),
+        })
+      )
+      .filter(
+        (slot) =>
+          Boolean(
+            slot.slotId
+          )
+      );
+
+  }, [
+    layoutDefinition?.slots,
+  ]);
+
+
+/* =========================================================
+   AVAILABLE / EMPTY COMPONENT SLOTS
+
+   Used for Duplicate and any operation that needs a free
+   destination.
+========================================================= */
+
+const availableComponentSlots =
+  useMemo(() => {
+
+    return allComponentSlots
+      .filter(
+        (slot) =>
+          !activeComponents[
+            slot.slotId
+          ]
+      );
+
+  }, [
+    allComponentSlots,
+    activeComponents,
+  ]);
+
+const consumedComponentSlots =
+  useMemo(
+    () =>
+      getConsumedSlotIds(
+        activeComponents
+      ),
+    [
+      activeComponents,
+    ]
+  );
+
+
+  const layoutHtml =
+  typeof layoutDefinition?.html === "string"
+    ? layoutDefinition.html
+    : "";
+
+const layoutSchema =
+  layoutDefinition?.schema || null;
+
+const layoutMode =
+  layoutSchema ? "schema" : "missing";
+
   const activeChartData = useMemo(() => {
     return Array.isArray(chartDataByLayout[activeLayoutIndex])
       ? chartDataByLayout[activeLayoutIndex]
@@ -282,112 +1470,1649 @@ export default function DashboardViewer() {
     return Array.isArray(activeLayout?.charts) ? activeLayout.charts : [];
   }, [activeLayout?.charts]);
 
-  const renderSchemaNode = useCallback(
-    (node, key) => {
-      const normalizeProps = (rawProps) => {
-        if (!rawProps) return {};
-        if (typeof rawProps.style === "string") {
-          const styleObj = {};
-          rawProps.style
-            .split(";")
-            .map((rule) => rule.trim())
-            .filter(Boolean)
-            .forEach((rule) => {
-              const [prop, value] = rule.split(":").map((part) => part.trim());
-              if (!prop || !value) return;
-              const camel = prop.replace(/-([a-z])/g, (_, chr) => chr.toUpperCase());
-              styleObj[camel] = value;
-            });
-          return { ...rawProps, style: styleObj };
-        }
-        return { ...rawProps };
-      };
+  const openSchemaConfig =
+  useCallback(
+    (
+      target,
+      event
+    ) => {
 
-      const slotId = node?.props?.["data-chart"];
-      if (node?.type === "element" && node?.tag && slotId) {
-        const slotKey = String(slotId);
-        let chartPos = chartSlotIndex[slotKey];
-        if (chartPos === undefined && /^\d+$/.test(slotKey)) {
-          chartPos = Number(slotKey) - 1;
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+
+
+      const root =
+        layoutRef.current;
+
+
+      if (!root) {
+        return;
+      }
+
+
+      const meta =
+        layoutConfig?.meta ||
+        {};
+
+
+      const brand =
+        root.querySelector(
+          "[data-config-target='sidebar']"
+        );
+
+
+      const pageHost =
+        root.querySelector(
+          "[data-config-target='page']"
+        );
+
+
+      const pageTitleEl =
+        pageHost?.querySelector(
+          ".title"
+        );
+
+
+      const pageSubtitleEl =
+        pageHost?.querySelector(
+          ".subtitle"
+        );
+
+
+      const sidebarSubtitleEl =
+        brand?.querySelector(
+          "small"
+        );
+
+
+      const showSidebar =
+        meta.showSidebar !==
+        false;
+
+
+      /* =====================================================
+         SIDEBAR
+      ===================================================== */
+
+      if (
+        target ===
+        "sidebar"
+      ) {
+
+        const currentLinks =
+          Array.isArray(
+            meta.sidebarLinks
+          ) &&
+          meta.sidebarLinks.length
+            ? meta.sidebarLinks
+            : Array.from(
+                root.querySelectorAll(
+                  ".menu button"
+                )
+              ).map(
+                (button) => ({
+                  name:
+                    button
+                      .textContent
+                      ?.trim() ||
+                    "",
+
+                  url: "",
+                })
+              );
+
+
+        setTitleFields({
+          sidebarTitle:
+            meta.sidebarTitle ||
+            brand
+              ?.childNodes?.[0]
+              ?.textContent
+              ?.trim() ||
+            "",
+
+          sidebarSubtitle:
+            meta.sidebarSubtitle ||
+            sidebarSubtitleEl
+              ?.textContent
+              ?.trim() ||
+            "",
+
+          pageTitle:
+            meta.pageTitle ||
+            pageTitleEl
+              ?.textContent
+              ?.trim() ||
+            "",
+
+          pageSubtitle:
+            meta.pageSubtitle ||
+            pageSubtitleEl
+              ?.textContent
+              ?.trim() ||
+            "",
+
+          showSidebar,
+        });
+
+
+        setSidebarConfig({
+          widget:
+            meta.sidebarWidget ||
+            "",
+
+          links:
+            currentLinks.length
+              ? currentLinks
+              : [
+                  {
+                    name: "",
+                    url: "",
+                  },
+                ],
+        });
+
+
+        setTitleConfigTarget(
+          "sidebar"
+        );
+
+
+        setTitleConfigOpen(
+          true
+        );
+
+
+        return;
+      }
+
+
+      /* =====================================================
+         PAGE
+      ===================================================== */
+
+      const activeHiddenCharts =
+        activeLayoutIndex ===
+        0
+          ? meta.hiddenCharts
+          : additionalLayouts[
+              activeLayoutIndex -
+                1
+            ]?.hiddenCharts;
+
+
+      const hiddenCharts =
+        Array.isArray(
+          activeHiddenCharts
+        )
+          ? activeHiddenCharts
+          : [];
+
+
+      const nextShowCharts =
+        Array.from({
+          length:
+            chartSlotCount ||
+            0,
+        }).map(
+          (_, index) =>
+            hiddenCharts[
+              index
+            ] !== true
+        );
+
+
+      setTitleFields({
+        sidebarTitle:
+          meta.sidebarTitle ||
+          "",
+
+        sidebarSubtitle:
+          meta.sidebarSubtitle ||
+          "",
+
+        pageTitle:
+          meta.pageTitle ||
+          pageTitleEl
+            ?.textContent
+            ?.trim() ||
+          "",
+
+        pageSubtitle:
+          meta.pageSubtitle ||
+          pageSubtitleEl
+            ?.textContent
+            ?.trim() ||
+          "",
+
+        showSidebar,
+      });
+
+
+      setPageConfig({
+        showSidebar,
+
+        showCharts:
+          nextShowCharts,
+      });
+
+
+      setTitleConfigTarget(
+        "page"
+      );
+
+
+      setTitleConfigOpen(
+        true
+      );
+
+    },
+    [
+      layoutConfig,
+      activeLayoutIndex,
+      additionalLayouts,
+      chartSlotCount,
+    ]
+  );
+
+  const renderSchemaNode =
+  useCallback(
+    (node, key) => {
+
+      const normalizeProps =
+        (rawProps) => {
+
+          if (!rawProps) {
+            return {};
+          }
+
+          if (
+            typeof rawProps.style ===
+            "string"
+          ) {
+
+            const styleObj = {};
+
+            rawProps.style
+              .split(";")
+              .map(
+                (rule) =>
+                  rule.trim()
+              )
+              .filter(Boolean)
+              .forEach(
+                (rule) => {
+
+                  const [
+                    prop,
+                    value,
+                  ] =
+                    rule
+                      .split(":")
+                      .map(
+                        (part) =>
+                          part.trim()
+                      );
+
+                  if (
+                    !prop ||
+                    !value
+                  ) {
+                    return;
+                  }
+
+                  const camel =
+                    prop.replace(
+                      /-([a-z])/g,
+                      (_, chr) =>
+                        chr.toUpperCase()
+                    );
+
+                  styleObj[
+                    camel
+                  ] =
+                    value;
+                }
+              );
+
+            return {
+              ...rawProps,
+              style: styleObj,
+            };
+          }
+
+          return {
+            ...rawProps,
+          };
+        };
+
+
+      if (!node) {
+        return null;
+      }
+
+
+      /* ============================================================
+         GENERIC COMPONENT SLOT
+      ============================================================ */
+
+      const isComponentSlot =
+        node?.type ===
+          "element" &&
+        node?.tag &&
+        String(
+          node?.props?.[
+            "data-component-slot"
+          ] || ""
+        ) === "true";
+
+
+      if (isComponentSlot) {
+
+        const slotId =
+          String(
+            node?.props?.[
+              "data-slot"
+            ] || ""
+          );
+
+
+        const accepts =
+  String(
+    node?.props?.[
+      "data-accepts"
+    ] || ""
+  )
+    .split(",")
+    .map(
+      (item) =>
+        item.trim()
+    )
+    .filter(Boolean);
+
+
+const configuredComponent =
+  activeComponents[
+    slotId
+  ] ||
+  null;
+
+
+const isConsumedSlot =
+  consumedComponentSlots.has(
+    slotId
+  );
+
+
+if (
+  isConsumedSlot &&
+  !configuredComponent
+) {
+  return null;
+}
+
+
+const nextMergeSlot =
+  configuredComponent
+    ? findNextCompatibleSlot({
+        slots:
+          allComponentSlots,
+
+        currentSlotId:
+          slotId,
+
+        componentType:
+          configuredComponent
+            ?.type,
+
+        components:
+          activeComponents,
+      })
+    : null;
+
+
+
+if (
+  configuredComponent?.type ===
+  "crud"
+) {
+
+  console.log(
+    "MERGE DEBUG",
+    {
+      currentSlotId:
+        slotId,
+
+      componentType:
+        configuredComponent.type,
+
+      allComponentSlots,
+
+      nextMergeSlot,
+
+      activeComponentKeys:
+        Object.keys(
+          activeComponents ||
+          {}
+        ),
+
+      consumed:
+        Array.from(
+          consumedComponentSlots
+        ),
+    }
+  );
+}
+
+console.log(
+  "BOTTOM-1 COMPONENT",
+  activeComponents["bottom-1"]
+);
+
+
+
+
+const normalizedProps =
+          normalizeProps(
+            node.props
+          );
+
+
+        /*
+         * Remove any accidental React event
+         * props supplied by the schema.
+         */
+        const slotProps = {
+          ...normalizedProps,
+
+          key,
+
+          onClick: (
+            event
+          ) => {
+
+            event.stopPropagation();
+
+
+            setActiveComponentSlot({
+              slotId,
+              accepts,
+            });
+
+
+            setAddComponentOpen(
+              true
+            );
+          },
+        };
+
+
+        if (
+  configuredComponent
+) {
+
+  const normalizedProps =
+    normalizeProps(
+      node.props
+    );
+
+
+  return React.createElement(
+    node.tag,
+
+    {
+      ...normalizedProps,
+
+      key,
+
+      style: {
+  ...normalizedProps?.style,
+
+  ...(Number(
+    configuredComponent
+      ?.layout
+      ?.span
+  ) > 1
+    ? {
+        gridColumnStart:
+          "auto",
+
+        gridColumnEnd:
+          `span ${Number(
+            configuredComponent
+              ?.layout
+              ?.span
+          )}`,
+
+        width:
+          "100%",
+
+        maxWidth:
+          "100%",
+      }
+    : {}),
+},
+      
+    },
+
+    <DashboardComponentRenderer
+      component={
+        configuredComponent
+      }
+
+      dashboardId={
+        dashboardId
+      }
+
+
+      value={
+        kpiData[
+          slotId
+        ]
+      }
+
+
+      data={
+        componentChartData[
+          slotId
+        ]
+      }
+
+
+      tableData={
+        componentTableData[
+          slotId
+        ]
+      }
+
+
+      /* =====================================================
+         CONFIGURE
+      ===================================================== */
+
+      onConfigure={() => {
+
+        setActiveComponentSlot({
+          slotId,
+          accepts,
+        });
+
+        if (
+            configuredComponent.type ===
+            "text"
+          ) {
+
+            setTextConfigOpen(
+              true
+            );
+
+            return;
+          }
+
+
+        if (
+          configuredComponent.type ===
+          "kpi"
+        ) {
+
+          setKpiConfigOpen(
+            true
+          );
+
+          return;
         }
-        const cfg = chartPos !== undefined ? activeChartData[chartPos] : null;
-        const normalizedProps = normalizeProps(node.props);
-        return (
-          <ChartSlot key={key} tag={node.tag} slotId={slotKey} props={normalizedProps} cfg={cfg} />
+
+
+        if (
+          configuredComponent.type ===
+          "chart"
+        ) {
+
+          setComponentChartConfigOpen(
+            true
+          );
+
+          return;
+        }
+
+        if (
+            configuredComponent.type ===
+            "crud"
+          ) {
+
+            setCrudConfigOpen(
+              true
+            );
+
+            return;
+          }
+
+
+        if (
+          configuredComponent.type ===
+          "table"
+        ) {
+
+          setComponentTableConfigOpen(
+            true
+          );
+
+          return;
+        }
+      }}
+
+
+      /* =====================================================
+         DUPLICATE
+      ===================================================== */
+
+      onDuplicate={() => {
+
+        setActiveComponentSlot({
+          slotId,
+          accepts,
+        });
+
+
+        setComponentToDuplicate(
+          configuredComponent
+        );
+
+
+        setDuplicateComponentOpen(
+          true
+        );
+      }}
+
+
+      /* =====================================================
+         MERGE RIGHT
+      ===================================================== */
+
+      canMergeRight={
+        Boolean(
+          nextMergeSlot
+        )
+      }
+
+
+      onMergeRight={async () => {
+
+        if (
+          !nextMergeSlot
+        ) {
+          return;
+        }
+
+
+        const mergedSlots =
+          Array.isArray(
+            configuredComponent
+              ?.layout
+              ?.mergedSlots
+          )
+            ? configuredComponent
+                .layout
+                .mergedSlots
+            : [];
+
+
+        const nextComponents = {
+          ...activeComponents,
+
+          [slotId]: {
+            ...configuredComponent,
+
+            layout: {
+              ...configuredComponent
+                ?.layout,
+
+              span:
+                Number(
+                  configuredComponent
+                    ?.layout
+                    ?.span ||
+                  1
+                ) + 1,
+
+              mergedSlots: [
+                ...mergedSlots,
+
+                nextMergeSlot
+                  .slotId,
+              ],
+            },
+          },
+        };
+
+
+        let nextLayout = {
+          ...(layoutConfig ||
+            {}),
+        };
+
+
+        /* PRIMARY LAYOUT */
+
+        if (
+          activeLayoutIndex ===
+          0
+        ) {
+
+          nextLayout = {
+            ...nextLayout,
+
+            components:
+              nextComponents,
+          };
+
+        }
+
+        /* ADDITIONAL LAYOUT */
+
+        else {
+
+          const nextAdditional = [
+            ...additionalLayouts,
+          ];
+
+
+          nextAdditional[
+            activeLayoutIndex -
+              1
+          ] = {
+            ...nextAdditional[
+              activeLayoutIndex -
+                1
+            ],
+
+            components:
+              nextComponents,
+          };
+
+
+          nextLayout = {
+            ...nextLayout,
+
+            meta: {
+              ...nextLayout.meta,
+
+              additionalLayouts:
+                nextAdditional,
+            },
+          };
+        }
+
+
+        await saveLayout(
+          nextLayout
+        );
+      }}
+
+
+      /* =====================================================
+         REMOVE
+      ===================================================== */
+
+      onRemove={async () => {
+
+        const confirmed =
+          window.confirm(
+            "Remove this component from the dashboard?"
+          );
+
+
+        if (
+          !confirmed
+        ) {
+          return;
+        }
+
+
+        const nextComponents = {
+          ...activeComponents,
+        };
+
+
+        delete nextComponents[
+          slotId
+        ];
+
+
+        let nextLayout = {
+          ...(layoutConfig ||
+            {}),
+        };
+
+
+        /* PRIMARY LAYOUT */
+
+        if (
+          activeLayoutIndex ===
+          0
+        ) {
+
+          nextLayout = {
+            ...nextLayout,
+
+            components:
+              nextComponents,
+          };
+
+        }
+
+        /* ADDITIONAL LAYOUT */
+
+        else {
+
+          const nextAdditional = [
+            ...additionalLayouts,
+          ];
+
+
+          nextAdditional[
+            activeLayoutIndex -
+              1
+          ] = {
+            ...nextAdditional[
+              activeLayoutIndex -
+                1
+            ],
+
+            components:
+              nextComponents,
+          };
+
+
+          nextLayout = {
+            ...nextLayout,
+
+            meta: {
+              ...nextLayout.meta,
+
+              additionalLayouts:
+                nextAdditional,
+            },
+          };
+        }
+
+
+        await saveLayout(
+          nextLayout
+        );
+      }}
+    />
+  );
+}
+
+
+
+
+  
+
+        return React.createElement(
+          node.tag,
+
+          slotProps,
+
+          <div
+            className=
+              "dashboard-empty-slot"
+
+            role="button"
+
+            tabIndex={0}
+
+            onKeyDown={(
+              event
+            ) => {
+
+              if (
+                event.key ===
+                  "Enter" ||
+                event.key ===
+                  " "
+              ) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                setActiveComponentSlot({
+                  slotId,
+                  accepts,
+                });
+
+
+                setAddComponentOpen(
+                  true
+                );
+              }
+            }}
+          >
+
+            <div
+              className=
+                "dashboard-empty-slot-icon"
+            >
+              +
+            </div>
+
+
+            <div
+              className=
+                "dashboard-empty-slot-title"
+            >
+              Add Component
+            </div>
+
+
+            <div
+              className=
+                "dashboard-empty-slot-help"
+            >
+              {accepts.join(
+                " · "
+              )}
+            </div>
+
+          </div>
         );
       }
-      if (!node) return null;
-      if (node.type === "text") return node.text;
-      const children = Array.isArray(node.children)
-        ? node.children.map((child, idx) => renderSchemaNode(child, `${key}-${idx}`))
-        : null;
-      if (node.type === "fragment") {
-        return <React.Fragment key={key}>{children}</React.Fragment>;
-      }
-      if (node.type === "element" && node.tag) {
-        const normalizedProps = normalizeProps(node.props);
-        const voidTags = new Set(["br", "hr"]);
-        if (voidTags.has(node.tag)) {
-          return React.createElement(node.tag, { key, ...(normalizedProps || {}) });
+
+
+      /* ============================================================
+         LEGACY CHART SLOT
+      ============================================================ */
+
+      const slotId =
+        node?.props?.[
+          "data-chart"
+        ];
+
+
+      if (
+        node?.type ===
+          "element" &&
+        node?.tag &&
+        slotId
+      ) {
+
+        const slotKey =
+          String(slotId);
+
+
+        let chartPos =
+          chartSlotIndex[
+            slotKey
+          ];
+
+
+        if (
+          chartPos ===
+            undefined &&
+          /^\d+$/.test(
+            slotKey
+          )
+        ) {
+
+          chartPos =
+            Number(
+              slotKey
+            ) - 1;
         }
-        return React.createElement(node.tag, { key, ...(normalizedProps || {}) }, children);
+
+
+        const cfg =
+          chartPos !==
+          undefined
+            ? activeChartData[
+                chartPos
+              ]
+            : null;
+
+
+        const normalizedProps =
+          normalizeProps(
+            node.props
+          );
+
+
+        return (
+          <ChartSlot
+            key={key}
+
+            tag={
+              node.tag
+            }
+
+            slotId={
+              slotKey
+            }
+
+            props={
+              normalizedProps
+            }
+
+            cfg={
+              cfg
+            }
+          />
+        );
       }
+
+
+      /* ============================================================
+         TEXT
+      ============================================================ */
+
+      if (
+        node.type ===
+        "text"
+      ) {
+        return node.text;
+      }
+
+
+      /* ============================================================
+         CHILDREN
+      ============================================================ */
+
+      const children =
+        Array.isArray(
+          node.children
+        )
+          ? node.children.map(
+              (
+                child,
+                idx
+              ) =>
+                renderSchemaNode(
+                  child,
+                  `${key}-${idx}`
+                )
+            )
+          : null;
+
+
+      /* ============================================================
+         FRAGMENT
+      ============================================================ */
+
+      if (
+        node.type ===
+        "fragment"
+      ) {
+
+        return (
+          <React.Fragment
+            key={key}
+          >
+            {children}
+          </React.Fragment>
+        );
+      }
+
+
+    /* ============================================================
+   STANDARD ELEMENT
+============================================================ */
+
+if (
+  node.type ===
+    "element" &&
+  node.tag
+) {
+
+  /*
+   * IMPORTANT:
+   * Normalize props FIRST.
+   * Everything below depends on this object.
+   */
+  const normalizedProps =
+    normalizeProps(
+      node.props
+    );
+
+
+  /* ==========================================================
+     VOID ELEMENTS
+  ========================================================== */
+
+  const voidTags =
+    new Set([
+      "br",
+      "hr",
+    ]);
+
+
+  if (
+    voidTags.has(
+      node.tag
+    )
+  ) {
+
+    return React.createElement(
+      node.tag,
+      {
+        key,
+        ...normalizedProps,
+      }
+    );
+  }
+
+
+  /* ==========================================================
+     CONFIGURATION TARGET
+
+     Supported schema markers:
+
+     data-config-target="sidebar"
+     data-config-target="page"
+  ========================================================== */
+
+  const configTarget =
+  String(
+    normalizedProps?.[
+      "data-config-target"
+    ] ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+
+  const isConfigTarget =
+    configTarget ===
+      "sidebar" ||
+    configTarget ===
+      "page";
+
+
+  /* ==========================================================
+     CONFIG BUTTON
+  ========================================================== */
+
+  const configButton =
+    isConfigTarget
+      ? (
+          <button
+            key={
+              `${key}-config-btn`
+            }
+
+            type="button"
+
+            className=
+              "schema-config-btn"
+
+            title={
+              configTarget ===
+              "sidebar"
+                ? "Configure sidebar"
+                : "Configure dashboard"
+            }
+
+            aria-label={
+              configTarget ===
+              "sidebar"
+                ? "Configure sidebar"
+                : "Configure dashboard"
+            }
+
+            onClick={(
+              event
+            ) =>
+              openSchemaConfig(
+                configTarget,
+                event
+              )
+            }
+
+            style={{
+              position:
+                "absolute",
+
+              top: "0px",
+
+              right: "0px",
+
+              width: "27px",
+
+              height: "27px",
+
+              padding: "0",
+
+              display:
+                "flex",
+
+              alignItems:
+                "center",
+
+              justifyContent:
+                "center",
+
+              border:
+                "1px solid #d7e1ea",
+
+              borderRadius:
+                "7px",
+
+              background:
+                "#ffffff",
+
+              color:
+                "#73879a",
+
+              fontSize:
+                "18px",
+
+              fontWeight:
+                600,
+
+              lineHeight: 1,
+
+              cursor:
+                "pointer",
+
+              boxShadow:
+                "0 2px 7px rgba(28,48,68,.08)",
+
+              zIndex: 20,
+            }}
+          >
+            ⋮
+          </button>
+        )
+      : null;
+
+
+  /* ==========================================================
+     CONFIG TARGET STYLE
+
+     Reserve space for the ellipsis without affecting
+     unrelated schema elements.
+  ========================================================== */
+
+  const elementStyle =
+    isConfigTarget
+      ? {
+          ...(
+            normalizedProps
+              ?.style ||
+            {}
+          ),
+
+          position:
+            "relative",
+
+          overflow:
+            "visible",
+
+          paddingRight:
+            configTarget ===
+            "sidebar"
+              ? "34px"
+              : "38px",
+        }
+      : normalizedProps
+          ?.style;
+
+
+  /* ==========================================================
+     FINAL ELEMENT
+  ========================================================== */
+
+  return React.createElement(
+    node.tag,
+
+    {
+      key,
+
+      ...normalizedProps,
+
+      ...(elementStyle
+        ? {
+            style:
+              elementStyle,
+          }
+        : {}),
+    },
+
+    isConfigTarget
+      ? [
+          children,
+
+          configButton,
+        ]
+      : children
+  );
+}
+
+
+
       return null;
     },
-    [activeChartData, chartSlotIndex]
+
+    [
+  activeChartData,
+
+  chartSlotIndex,
+
+  activeComponents,
+
+  kpiData,
+
+  componentChartData,
+
+  componentTableData,
+
+  consumedComponentSlots,
+
+  allComponentSlots,
+
+  layoutConfig,
+
+  activeLayoutIndex,
+
+  additionalLayouts,
+
+  openSchemaConfig,
+]
   );
 
   useEffect(() => {
     if (!layoutRef.current) return;
     const root = layoutRef.current;
     if (!root || layoutMode !== "schema") return;
-    root.querySelectorAll(".db-config-btn").forEach((btn) => btn.remove());
+    
 
-    const ensureButton = (target, onClick) => {
-      if (!target) return;
-      if (!target.style.position) target.style.position = "relative";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "db-config-btn";
-      btn.innerHTML =
-        '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>';
-      btn.setAttribute("aria-label", "Configure");
-      btn.style.position = "absolute";
-      btn.style.top = "8px";
-      btn.style.right = "8px";
-      btn.style.width = "20px";
-      btn.style.height = "20px";
-      btn.style.borderRadius = "4px";
-      btn.style.border = "0";
-      btn.style.background = "transparent";
-      btn.style.color = "#777777";
-      btn.style.fontSize = "16px";
-      btn.style.lineHeight = "16px";
-      btn.style.cursor = "pointer";
-      btn.style.display = "flex";
-      btn.style.alignItems = "center";
-      btn.style.justifyContent = "center";
-      btn.style.zIndex = "2";
-      btn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        onClick();
-      });
-      target.appendChild(btn);
-    };
+    
+
+    const ensureButton = (
+  target,
+  onClick,
+  options = {}
+) => {
+
+  if (!target) {
+    return;
+  }
+
+
+  const {
+    top = 6,
+    right = 6,
+    title = "Configure",
+  } = options;
+
+
+  /*
+   * Do not add the same configuration
+   * button twice.
+   */
+  const existing =
+    Array.from(
+      target.children || []
+    ).find(
+      (child) =>
+        child?.classList?.contains(
+          "db-config-btn"
+        )
+    );
+
+
+  if (existing) {
+    return;
+  }
+
+
+  const computed =
+    window.getComputedStyle(
+      target
+    );
+
+
+  if (
+    computed.position ===
+    "static"
+  ) {
+    target.style.position =
+      "relative";
+  }
+
+
+  const btn =
+    document.createElement(
+      "button"
+    );
+
+
+  btn.type =
+    "button";
+
+
+  btn.className =
+    "db-config-btn";
+
+
+  btn.setAttribute(
+    "aria-label",
+    title
+  );
+
+
+  btn.setAttribute(
+    "title",
+    title
+  );
+
+
+  btn.innerHTML = `
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="5" r="1.8"></circle>
+      <circle cx="12" cy="12" r="1.8"></circle>
+      <circle cx="12" cy="19" r="1.8"></circle>
+    </svg>
+  `;
+
+
+  Object.assign(
+    btn.style,
+    {
+      position:
+        "absolute",
+
+      top:
+        `${top}px`,
+
+      right:
+        `${right}px`,
+
+      width:
+        "26px",
+
+      height:
+        "26px",
+
+      padding:
+        "0",
+
+      border:
+        "1px solid rgba(211,222,232,.9)",
+
+      borderRadius:
+        "7px",
+
+      background:
+        "rgba(255,255,255,.94)",
+
+      color:
+        "#75889a",
+
+      cursor:
+        "pointer",
+
+      display:
+        "flex",
+
+      alignItems:
+        "center",
+
+      justifyContent:
+        "center",
+
+      boxShadow:
+        "0 2px 7px rgba(28,48,68,.08)",
+
+      zIndex:
+        "999",
+    }
+  );
+
+
+  btn.addEventListener(
+    "mouseenter",
+    () => {
+
+      btn.style.background =
+        "#f4f8fb";
+
+      btn.style.color =
+        "#476982";
+    }
+  );
+
+
+  btn.addEventListener(
+    "mouseleave",
+    () => {
+
+      btn.style.background =
+        "rgba(255,255,255,.94)";
+
+      btn.style.color =
+        "#75889a";
+    }
+  );
+
+
+  btn.addEventListener(
+    "click",
+    (event) => {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+
+      onClick?.();
+    }
+  );
+
+
+  target.appendChild(
+    btn
+  );
+};
 
     const meta = layoutConfig?.meta || {};
     const activeHiddenCharts =
       activeLayoutIndex === 0
         ? meta.hiddenCharts
         : additionalLayouts[activeLayoutIndex - 1]?.hiddenCharts;
-    const brand = root.querySelector(".brand");
-    const sidebar = root.querySelector(".sidebar");
-    const appShell = root.querySelector(".app");
-    const pageTitleEl = root.querySelector(".title");
-    const pageSubtitleEl = root.querySelector(".subtitle");
+    const brand =
+  root.querySelector(
+    "[data-config-target='sidebar']"
+  ) ||
+  root.querySelector(
+    ".brand"
+  ) ||
+  root.querySelector(
+    ".sidebar"
+  );
+
+
+const sidebar =
+  root.querySelector(
+    ".sidebar"
+  );
+
+
+const appShell =
+  root.querySelector(
+    ".app"
+  );
+
+
+const pageConfigHost =
+  root.querySelector(
+    "[data-config-target='page']"
+  ) ||
+  root.querySelector(
+    ".dashboard-page-header"
+  );
+
+
+const pageTitleEl =
+  pageConfigHost
+    ?.querySelector(
+      ".title"
+    ) ||
+  root.querySelector(
+    ".page-title"
+  ) ||
+  root.querySelector(
+    ".title"
+  ) ||
+  root.querySelector(
+    ".dashboard-title"
+  );
+
+
+const pageSubtitleEl =
+  pageConfigHost
+    ?.querySelector(
+      ".subtitle"
+    ) ||
+  root.querySelector(
+    ".page-subtitle"
+  ) ||
+  root.querySelector(
+    ".subtitle"
+  ) ||
+  root.querySelector(
+    ".dashboard-subtitle"
+  );
+
+
+
     const showSidebar = meta.showSidebar !== false;
     if (sidebar) sidebar.style.display = showSidebar ? "" : "none";
-    if (appShell) appShell.style.gridTemplateColumns = showSidebar ? "" : "1fr";
+    
+    if (appShell) {
+          appShell.style.width =
+            "100%";
+
+          appShell.style.maxWidth =
+            "100%";
+
+          appShell.style.minWidth =
+            "0";
+
+          appShell.style.gridTemplateColumns =
+            showSidebar
+              ? "minmax(190px, 250px) minmax(0, 1fr)"
+              : "minmax(0, 1fr)";
+        }
+
     if (brand && meta.sidebarTitle) {
       const small = brand.querySelector("small");
       brand.childNodes[0].textContent = meta.sidebarTitle;
@@ -476,53 +3201,32 @@ export default function DashboardViewer() {
       }
     }
 
-    if (brand) {
-      ensureButton(brand, () => {
-        const small = brand.querySelector("small");
-        const currentLinks =
-          Array.isArray(meta.sidebarLinks) && meta.sidebarLinks.length
-            ? meta.sidebarLinks
-            : Array.from(root.querySelectorAll(".menu button")).map((btn) => ({
-                name: btn.textContent?.trim() || "",
-                url: "",
-              }));
-        setTitleFields({
-          sidebarTitle: meta.sidebarTitle || brand.childNodes[0]?.textContent?.trim() || "",
-          sidebarSubtitle: meta.sidebarSubtitle || small?.textContent?.trim() || "",
-          pageTitle: meta.pageTitle || pageTitleEl?.textContent?.trim() || "",
-          pageSubtitle: meta.pageSubtitle || pageSubtitleEl?.textContent?.trim() || "",
-          showSidebar,
-        });
-        setSidebarConfig({
-          widget: meta.sidebarWidget || "",
-          links: currentLinks.length ? currentLinks : [{ name: "", url: "" }],
-        });
-        setTitleConfigTarget("sidebar");
-        setTitleConfigOpen(true);
-      });
-    }
 
-    if (pageTitleEl) {
-      ensureButton(pageTitleEl, () => {
-        const small = brand?.querySelector("small");
-        const hiddenCharts = Array.isArray(activeHiddenCharts) ? activeHiddenCharts : [];
-        const nextShowCharts = Array.from({ length: chartSlotCount || 0 }).map(
-          (_, i) => hiddenCharts[i] !== true
-        );
-        setTitleFields({
-          sidebarTitle: meta.sidebarTitle || brand?.childNodes[0]?.textContent?.trim() || "",
-          sidebarSubtitle: meta.sidebarSubtitle || small?.textContent?.trim() || "",
-          pageTitle: meta.pageTitle || pageTitleEl?.textContent?.trim() || "",
-          pageSubtitle: meta.pageSubtitle || pageSubtitleEl?.textContent?.trim() || "",
-          showSidebar,
-        });
-        setPageConfig({ showSidebar, showCharts: nextShowCharts });
-        setTitleConfigTarget("page");
-        setTitleConfigOpen(true);
-      });
-    }
 
+
+
+ 
     const slots = Array.from(layoutRef.current.querySelectorAll("[data-chart]"));
+
+    slots.forEach((slot) => {
+  slot.style.minWidth = "0";
+  slot.style.maxWidth = "100%";
+  slot.style.overflow = "hidden";
+
+  const chartCard =
+    slot.closest(
+      ".chart-card"
+    );
+
+  if (chartCard) {
+    chartCard.style.minWidth =
+      "0";
+
+    chartCard.style.maxWidth =
+      "100%";
+  }
+});
+
     const hiddenCharts = Array.isArray(activeHiddenCharts) ? activeHiddenCharts : [];
 
     slots.forEach((slot, idx) => {
@@ -635,16 +3339,67 @@ export default function DashboardViewer() {
 
   // addChartGridContainer removed per request.
 
-  const loadColumns = async (tableName) => {
-    if (!tableName || columnsByTable[tableName]) return;
-    try {
-      const res = await api.get(`/db/columns/${tableName}`);
-      const cols = res?.data?.columns || [];
-      setColumnsByTable((prev) => ({ ...prev, [tableName]: cols }));
-    } catch {
-      setColumnsByTable((prev) => ({ ...prev, [tableName]: [] }));
-    }
-  };
+  const loadColumns =
+  useCallback(
+    async (tableName) => {
+
+      if (!tableName) {
+        return;
+      }
+
+
+      /*
+       * Do not reload columns already
+       * available in state.
+       */
+      if (
+        columnsByTable[
+          tableName
+        ]
+      ) {
+        return;
+      }
+
+
+      try {
+
+        const res =
+          await api.get(
+            `/db/columns/${tableName}`
+          );
+
+
+        const cols =
+          res?.data?.columns ||
+          [];
+
+
+        setColumnsByTable(
+          (prev) => ({
+            ...prev,
+
+            [tableName]:
+              cols,
+          })
+        );
+
+      } catch {
+
+        setColumnsByTable(
+          (prev) => ({
+            ...prev,
+
+            [tableName]:
+              [],
+          })
+        );
+      }
+    },
+
+    [
+      columnsByTable,
+    ]
+  );
 
   const resetExtraLayoutForm = () => {
     setExtraLayoutId("");
@@ -779,21 +3534,42 @@ export default function DashboardViewer() {
   }
 
   const layoutContent =
-    layoutMode === "schema" && layoutSchema ? (
-      <SchemaLayout schema={layoutSchema} renderNode={renderSchemaNode} layoutRef={layoutRef} />
-    ) : (
-      <Box
-        sx={{
-          minHeight: "60vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 2,
-        }}
-      >
-        <Typography>Layout schema is missing for this dashboard.</Typography>
-      </Box>
-    );
+  layoutMode === "schema" &&
+  layoutSchema ? (
+    <>
+      {layoutDefinition?.templateCss && (
+        <style>
+          {layoutDefinition.templateCss}
+        </style>
+      )}
+
+      <SchemaLayout
+        schema={layoutSchema}
+        renderNode={renderSchemaNode}
+        layoutRef={layoutRef}
+      />
+    </>
+  ) : (
+    <Box
+      sx={{
+        minHeight: "60vh",
+
+        display: "flex",
+
+        alignItems: "center",
+
+        justifyContent:
+          "center",
+
+        p: 2,
+      }}
+    >
+      <Typography>
+        Layout schema is missing for this dashboard.
+      </Typography>
+    </Box>
+  );
+
   const canSwitchLayouts = layoutStack.length > 1;
   const activeLayoutLabel =
     activeLayout?.layoutName ||
@@ -803,25 +3579,53 @@ export default function DashboardViewer() {
     activeLayout?.layoutId || (activeLayoutIndex === 0 ? "primary" : "unknown");
 
   return (
-    <Box sx={{ p: 0, position: "relative" }}>
+  <Box
+  sx={{
+    position: "relative",
+
+    minHeight: "100vh",
+
+    width: "100%",
+
+    bgcolor: "#ffffff",
+
+    p: 0,
+    m: 0,
+  }}
+>
       {canSwitchLayouts && (
         <Box
-          sx={{
-            position: "fixed",
-            top: 120,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1,
-            py: 0.5,
-            borderRadius: 999,
-            border: "1px solid #c7cbd3",
-            bgcolor: "#fff",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-          }}
+          
+        sx={{
+  position: "fixed",
+
+  top: 122,
+
+  left: "50%",
+
+  transform: "translateX(-50%)",
+
+  zIndex: 1200,
+
+  display: "flex",
+
+  alignItems: "center",
+
+  gap: 0.6,
+
+  px: 0.7,
+  py: 0.4,
+
+  borderRadius: "9px",
+
+  border: "1px solid #d9e4ee",
+
+  bgcolor: "rgba(255,255,255,.96)",
+
+  boxShadow:
+    "0 5px 16px rgba(25,48,72,.10)",
+}}
+
         >
           <Box
             role="button"
@@ -835,9 +3639,28 @@ export default function DashboardViewer() {
           >
             <ArrowBackIosNewIcon fontSize="inherit" />
           </Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 600 }}>
-            {activeLayoutLabel} (ID: {activeLayoutId}) {activeLayoutIndex + 1}/{layoutStack.length}
-          </Typography>
+          <Typography
+  noWrap
+  sx={{
+    minWidth: 150,
+    maxWidth: 280,
+
+    px: 0.8,
+
+    textAlign: "center",
+
+    fontSize: 10.5,
+
+    fontWeight: 600,
+
+    color: "#53677b",
+  }}
+>
+  {activeLayoutLabel}
+  {" · "}
+  {activeLayoutIndex + 1}/
+  {layoutStack.length}
+</Typography>
           <Box
             role="button"
             aria-label="Next layout"
@@ -852,390 +3675,1401 @@ export default function DashboardViewer() {
           </Box>
         </Box>
       )}
-      {layoutContent}
+      
+      
+      
+<Box
+  sx={{
+    width: "100%",
 
-      <Dialog open={titleConfigOpen} onClose={() => setTitleConfigOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Configure Titles</DialogTitle>
-        <DialogContent sx={{ display: "grid", gap: 2, pt: 4 }}>
-          {titleConfigTarget === "sidebar" && (
-            <>
-              {/*
-              <Select
-                value={sidebarConfig.widget}
-                displayEmpty
-                onChange={(e) =>
-                  setSidebarConfig((prev) => ({ ...prev, widget: e.target.value }))
-                }
-              >
-                <MenuItem value="">Select Widget</MenuItem>
-                <MenuItem value="ticker">BSE/NSE Ticker</MenuItem>
-                <MenuItem value="weather">Local Weather</MenuItem>
-                <MenuItem value="time">Local Time</MenuItem>
-                <MenuItem value="news">Financial News Flashes</MenuItem>
-                <MenuItem value="sports">Sports News</MenuItem>
-                <MenuItem value="exchange">Current Exchange Rate</MenuItem>
-                <MenuItem value="bullion">Bullion Exchange Rate</MenuItem>
-              </Select>
-              */}
-              <TextField
-                label="Sidebar Title"
-                value={titleFields.sidebarTitle}
-                onChange={(e) => setTitleFields((prev) => ({ ...prev, sidebarTitle: e.target.value }))}
-                InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                sx={{ mt: 0.5 }}
-                fullWidth
-              />
-              <TextField
-                label="Sidebar Description"
-                value={titleFields.sidebarSubtitle}
-                onChange={(e) => setTitleFields((prev) => ({ ...prev, sidebarSubtitle: e.target.value }))}
-                InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                sx={{ mt: 0.5 }}
-                fullWidth
-              />
-              <Box sx={{ display: "grid", gap: 1 }}>
-                {sidebarConfig.links.map((link, idx) => (
-                  <Box key={`link-${idx}`} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                    <TextField
-                      label="Link Name"
-                      value={link.name}
-                      onChange={(e) =>
-                        setSidebarConfig((prev) => {
-                          const next = [...prev.links];
-                          next[idx] = { ...next[idx], name: e.target.value };
-                          return { ...prev, links: next };
-                        })
-                      }
-                      InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Link URL"
-                      value={link.url}
-                      onChange={(e) =>
-                        setSidebarConfig((prev) => {
-                          const next = [...prev.links];
-                          next[idx] = { ...next[idx], url: e.target.value };
-                          return { ...prev, links: next };
-                        })
-                      }
-                      InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                      fullWidth
-                    />
-                    <Button
-                      variant="text"
-                      onClick={() =>
-                        setSidebarConfig((prev) => ({
-                          ...prev,
-                          links: prev.links.filter((_, i) => i !== idx),
-                        }))
-                      }
-                    >
-                      -
-                    </Button>
-                  </Box>
-                ))}
-                <Button
-                  variant="text"
-                  onClick={() =>
-                    setSidebarConfig((prev) => ({
-                      ...prev,
-                      links: [...prev.links, { name: "", url: "" }],
-                    }))
-                  }
+    maxWidth: "100%",
+
+    m: 0,
+
+    p: 0,
+
+    overflow: "hidden",
+
+    bgcolor: "#ffffff",
+  }}
+>
+  {layoutContent}
+</Box>
+      
+      
+      {/* <Box
+  sx={{
+    width: {
+      xs: "98%",
+      sm: "96%",
+      md: "94%",
+      lg: "92%",
+      xl: "90%",
+    },
+
+    maxWidth: "1600px",
+
+    mx: "auto",
+
+    bgcolor: "#ffffff",
+
+    border:
+      "1px solid #dfe5eb",
+
+    borderRadius:
+      "12px",
+
+    overflow: "hidden",
+
+    boxShadow:
+      "0 2px 8px rgba(28,45,65,.04)",
+  }}
+>
+  {layoutContent}
+</Box> */}
+
+ 
+
+{/* ========================================================================
+    CONFIGURE SIDEBAR / DASHBOARD
+======================================================================== */}
+
+<Dialog
+  open={titleConfigOpen}
+  onClose={() =>
+    setTitleConfigOpen(false)
+  }
+  maxWidth={false}
+  BackdropProps={{
+    sx: dialogBackdropSx,
+  }}
+  PaperProps={{
+    sx: {
+      ...dialogPaperSx,
+      width: "min(760px, 92vw)",
+      maxHeight: "88vh",
+    },
+  }}
+>
+  {/* ======================================================================
+      HEADER
+  ====================================================================== */}
+
+  <Box sx={dialogHeaderSx}>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={dialogTitleSx}>
+        {titleConfigTarget === "sidebar"
+          ? "Configure Sidebar"
+          : "Configure Dashboard"}
+      </Typography>
+
+      <Typography sx={dialogSubtitleSx}>
+        {titleConfigTarget === "sidebar"
+          ? "Configure sidebar titles, descriptions and navigation links."
+          : "Configure dashboard titles, visibility and additional layouts."}
+      </Typography>
+    </Box>
+
+    <Button
+      onClick={() =>
+        setTitleConfigOpen(false)
+      }
+      sx={closeIconButtonSx}
+    >
+      ×
+    </Button>
+  </Box>
+
+  {/* ======================================================================
+      BODY
+  ====================================================================== */}
+
+  <DialogContent
+    sx={{
+      ...dialogBodySx,
+
+      display: "grid",
+      gap: 1.5,
+
+      overflowY: "auto",
+    }}
+  >
+    {/* ====================================================================
+        SIDEBAR CONFIGURATION
+    ==================================================================== */}
+
+    {titleConfigTarget === "sidebar" && (
+      <>
+        <TextField
+          label="Sidebar Title"
+          value={
+            titleFields.sidebarTitle
+          }
+          onChange={(e) =>
+            setTitleFields(
+              (prev) => ({
+                ...prev,
+                sidebarTitle:
+                  e.target.value,
+              })
+            )
+          }
+          fullWidth
+          sx={gentleFieldSx}
+        />
+
+        <TextField
+          label="Sidebar Description"
+          value={
+            titleFields.sidebarSubtitle
+          }
+          onChange={(e) =>
+            setTitleFields(
+              (prev) => ({
+                ...prev,
+                sidebarSubtitle:
+                  e.target.value,
+              })
+            )
+          }
+          fullWidth
+          multiline
+          minRows={2}
+          sx={{
+            ...gentleFieldSx,
+
+            "& .MuiOutlinedInput-root":
+              {
+                ...gentleFieldSx[
+                  "& .MuiOutlinedInput-root"
+                ],
+
+                minHeight: 64,
+                height: "auto",
+                alignItems: "flex-start",
+              },
+          }}
+        />
+
+        {/* ================================================================
+            NAVIGATION LINKS
+        ================================================================ */}
+
+        <Box>
+          <Typography
+            sx={{
+              mb: 0.7,
+
+              fontSize: 10.5,
+              fontWeight: 600,
+
+              color: "#53677b",
+            }}
+          >
+            Navigation Links
+          </Typography>
+
+          <Box
+            sx={{
+              p: 1.4,
+
+              display: "grid",
+              gap: 1,
+
+              border:
+                "1px solid #dce5ed",
+
+              borderRadius: "9px",
+
+              bgcolor: "#ffffff",
+            }}
+          >
+            {sidebarConfig.links.map(
+              (link, idx) => (
+                <Box
+                  key={`sidebar-link-${idx}`}
+                  sx={{
+                    display: "grid",
+
+                    gridTemplateColumns: {
+                      xs:
+                        "minmax(0,1fr)",
+
+                      sm:
+                        "minmax(0,1fr) minmax(0,1.35fr) 34px",
+                    },
+
+                    gap: 1,
+
+                    alignItems: "center",
+                  }}
                 >
-                  + Add Link
-                </Button>
-              </Box>
-            </>
-          )}
-          {titleConfigTarget === "page" && (
-            <>
-              <TextField
-                label="Page Title"
-                value={titleFields.pageTitle}
-                onChange={(e) => setTitleFields((prev) => ({ ...prev, pageTitle: e.target.value }))}
-                InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                sx={{ mt: 0.5 }}
-                fullWidth
+                  <TextField
+                    label="Link Name"
+                    value={link.name}
+                    onChange={(e) =>
+                      setSidebarConfig(
+                        (prev) => {
+                          const next = [
+                            ...prev.links,
+                          ];
+
+                          next[idx] = {
+                            ...next[idx],
+
+                            name:
+                              e.target
+                                .value,
+                          };
+
+                          return {
+                            ...prev,
+                            links: next,
+                          };
+                        }
+                      )
+                    }
+                    fullWidth
+                    sx={gentleFieldSx}
+                  />
+
+                  <TextField
+                    label="Link URL"
+                    value={link.url}
+                    onChange={(e) =>
+                      setSidebarConfig(
+                        (prev) => {
+                          const next = [
+                            ...prev.links,
+                          ];
+
+                          next[idx] = {
+                            ...next[idx],
+
+                            url:
+                              e.target
+                                .value,
+                          };
+
+                          return {
+                            ...prev,
+                            links: next,
+                          };
+                        }
+                      )
+                    }
+                    fullWidth
+                    sx={gentleFieldSx}
+                  />
+
+                  <Button
+                    disabled={
+                      sidebarConfig.links
+                        .length <= 1
+                    }
+                    onClick={() =>
+                      setSidebarConfig(
+                        (prev) => ({
+                          ...prev,
+
+                          links:
+                            prev.links.filter(
+                              (
+                                _,
+                                linkIndex
+                              ) =>
+                                linkIndex !==
+                                idx
+                            ),
+                        })
+                      )
+                    }
+                    title="Remove link"
+                    sx={{
+                      minWidth: 34,
+                      width: 34,
+                      height: 34,
+
+                      p: 0,
+
+                      border:
+                        "1px solid #ead6d3",
+
+                      borderRadius: "7px",
+
+                      color: "#b42318",
+
+                      bgcolor: "#ffffff",
+
+                      fontSize: 17,
+                      fontWeight: 400,
+
+                      textTransform:
+                        "none",
+
+                      "&:hover": {
+                        bgcolor:
+                          "#fff4f2",
+
+                        borderColor:
+                          "#dfb9b4",
+                      },
+
+                      "&.Mui-disabled": {
+                        opacity: 0.3,
+                      },
+                    }}
+                  >
+                    ×
+                  </Button>
+                </Box>
+              )
+            )}
+
+            <Button
+              onClick={() =>
+                setSidebarConfig(
+                  (prev) => ({
+                    ...prev,
+
+                    links: [
+                      ...prev.links,
+
+                      {
+                        name: "",
+                        url: "",
+                      },
+                    ],
+                  })
+                )
+              }
+              sx={{
+                justifySelf:
+                  "start",
+
+                minHeight: 31,
+
+                mt: 0.2,
+
+                px: 1.25,
+
+                border:
+                  "1px solid #d8e2eb",
+
+                borderRadius: "6px",
+
+                bgcolor: "#f7fafc",
+
+                color: "#52718c",
+
+                fontSize: 10,
+                fontWeight: 600,
+
+                textTransform:
+                  "none",
+
+                "&:hover": {
+                  bgcolor:
+                    "#eef5fa",
+
+                  borderColor:
+                    "#c4d5e2",
+                },
+              }}
+            >
+              + Add Link
+            </Button>
+          </Box>
+        </Box>
+      </>
+    )}
+
+    {/* ====================================================================
+        PAGE / DASHBOARD CONFIGURATION
+    ==================================================================== */}
+
+    {titleConfigTarget === "page" && (
+      <>
+        <TextField
+          label="Page Title"
+          value={
+            titleFields.pageTitle
+          }
+          onChange={(e) =>
+            setTitleFields(
+              (prev) => ({
+                ...prev,
+
+                pageTitle:
+                  e.target.value,
+              })
+            )
+          }
+          fullWidth
+          sx={gentleFieldSx}
+        />
+
+        <TextField
+          label="Page Description"
+          value={
+            titleFields.pageSubtitle
+          }
+          onChange={(e) =>
+            setTitleFields(
+              (prev) => ({
+                ...prev,
+
+                pageSubtitle:
+                  e.target.value,
+              })
+            )
+          }
+          fullWidth
+          multiline
+          minRows={2}
+          sx={{
+            ...gentleFieldSx,
+
+            "& .MuiOutlinedInput-root":
+              {
+                ...gentleFieldSx[
+                  "& .MuiOutlinedInput-root"
+                ],
+
+                minHeight: 64,
+                height: "auto",
+                alignItems: "flex-start",
+              },
+          }}
+        />
+
+        {/* ================================================================
+            VISIBILITY
+        ================================================================ */}
+
+        <Box
+          sx={{
+            p: 1.4,
+
+            border:
+              "1px solid #dce5ed",
+
+            borderRadius: "9px",
+
+            bgcolor: "#ffffff",
+          }}
+        >
+          <Typography
+            sx={{
+              mb: 0.75,
+
+              fontSize: 10.5,
+
+              fontWeight: 600,
+
+              color: "#53677b",
+            }}
+          >
+            Visibility
+          </Typography>
+
+          <Box
+            sx={{
+              display: "grid",
+
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm:
+                  "repeat(2,minmax(0,1fr))",
+              },
+
+              columnGap: 1.5,
+              rowGap: 0.3,
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={Boolean(
+                    pageConfig.showSidebar
+                  )}
+                  onChange={(e) =>
+                    setPageConfig(
+                      (prev) => ({
+                        ...prev,
+
+                        showSidebar:
+                          e.target
+                            .checked,
+                      })
+                    )
+                  }
+                  sx={{
+                    p: 0.6,
+
+                    "& .MuiSvgIcon-root":
+                      {
+                        fontSize: 17,
+                      },
+                  }}
+                />
+              }
+              label="Show Side Bar"
+              sx={{
+                m: 0,
+
+                "& .MuiFormControlLabel-label":
+                  {
+                    fontSize: 10.5,
+
+                    color: "#52677b",
+                  },
+              }}
+            />
+
+            {pageConfig.showCharts.map(
+              (
+                checked,
+                idx
+              ) => (
+                <FormControlLabel
+                  key={`chart-${idx}`}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={Boolean(
+                        checked
+                      )}
+                      onChange={(e) =>
+                        setPageConfig(
+                          (prev) => {
+                            const next = [
+                              ...prev.showCharts,
+                            ];
+
+                            next[idx] =
+                              e.target.checked;
+
+                            return {
+                              ...prev,
+
+                              showCharts:
+                                next,
+                            };
+                          }
+                        )
+                      }
+                      sx={{
+                        p: 0.6,
+
+                        "& .MuiSvgIcon-root":
+                          {
+                            fontSize: 17,
+                          },
+                      }}
+                    />
+                  }
+                  label={`Show Chart ${
+                    idx + 1
+                  }`}
+                  sx={{
+                    m: 0,
+
+                    "& .MuiFormControlLabel-label":
+                      {
+                        fontSize: 10.5,
+
+                        color:
+                          "#52677b",
+                      },
+                  }}
+                />
+              )
+            )}
+          </Box>
+        </Box>
+
+        {/* ================================================================
+            ADDITIONAL DASHBOARD LAYOUT
+        ================================================================ */}
+
+        <Accordion
+          disableGutters
+          elevation={0}
+          sx={{
+            border:
+              "1px solid #dce5ed",
+
+            borderRadius:
+              "9px !important",
+
+            overflow: "hidden",
+
+            bgcolor: "#ffffff",
+
+            "&:before": {
+              display: "none",
+            },
+          }}
+        >
+          <AccordionSummary
+            expandIcon={
+              <ExpandMoreIcon
+                sx={{
+                  fontSize: 18,
+
+                  color:
+                    "#71869a",
+                }}
               />
-              <TextField
-                label="Page Description"
-                value={titleFields.pageSubtitle}
-                onChange={(e) => setTitleFields((prev) => ({ ...prev, pageSubtitle: e.target.value }))}
-                InputLabelProps={{ shrink: true, sx: { top: 2 } }}
-                sx={{ mt: 0.5 }}
-                fullWidth
-              />
+            }
+            sx={{
+              minHeight: 42,
+
+              px: 1.4,
+
+              bgcolor:
+                "#f8fafc",
+
+              borderBottom:
+                "1px solid transparent",
+
+              "&.Mui-expanded": {
+                minHeight: 42,
+
+                borderBottom:
+                  "1px solid #e4ebf1",
+              },
+
+              "& .MuiAccordionSummary-content":
+                {
+                  my: 0.7,
+                },
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 10.8,
+
+                  fontWeight: 600,
+
+                  color: "#40566d",
+                }}
+              >
+                Add Additional Dashboard
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.1,
+
+                  fontSize: 9.5,
+
+                  color: "#91a0af",
+                }}
+              >
+                Add another dashboard layout to this viewer.
+              </Typography>
+            </Box>
+          </AccordionSummary>
+
+          <AccordionDetails
+            sx={{
+              p: 1.5,
+            }}
+          >
+            {/* ============================================================
+                SELECT LAYOUT
+            ============================================================ */}
+
+            <Typography
+              sx={{
+                mb: 0.8,
+
+                fontSize: 10.5,
+
+                fontWeight: 600,
+
+                color: "#53677b",
+              }}
+            >
+              Select Layout
+            </Typography>
+
+            <Grid
+              container
+              spacing={1.2}
+            >
+              {availableLayouts.map(
+                (layout) => {
+                  const isSelected =
+                    layout.id ===
+                    extraLayoutId;
+
+                  const def =
+                    typeof layout.layout_definition ===
+                    "string"
+                      ? (() => {
+                          try {
+                            return JSON.parse(
+                              layout.layout_definition
+                            );
+                          } catch {
+                            return {};
+                          }
+                        })()
+                      : layout.layout_definition ||
+                        {};
+
+                  const previewHtml =
+                    typeof def?.html ===
+                    "string"
+                      ? def.html
+                      : "";
+
+                  return (
+                    <Grid
+                      item
+                      key={layout.id}
+                      xs={12}
+                      sm={6}
+                      md={4}
+                    >
+                      <Box
+                        onClick={() =>
+                          setExtraLayoutId(
+                            layout.id
+                          )
+                        }
+                        sx={{
+                          p: 0.9,
+
+                          cursor:
+                            "pointer",
+
+                          border:
+                            isSelected
+                              ? "1px solid #72a9d2"
+                              : "1px solid #d9e4ee",
+
+                          borderRadius:
+                            "8px",
+
+                          bgcolor:
+                            isSelected
+                              ? "#f1f8fd"
+                              : "#ffffff",
+
+                          transition:
+                            "all .15s ease",
+
+                          "&:hover": {
+                            borderColor:
+                              "#a9bfd2",
+
+                            bgcolor:
+                              "#f8fbfd",
+                          },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            height: 105,
+
+                            position:
+                              "relative",
+
+                            overflow:
+                              "hidden",
+
+                            border:
+                              "1px solid #e1e8ef",
+
+                            borderRadius:
+                              "6px",
+
+                            bgcolor:
+                              "#f5f7fa",
+                          }}
+                        >
+                          {previewHtml ? (
+                            <Box
+                              sx={{
+                                transform:
+                                  "scale(0.28)",
+
+                                transformOrigin:
+                                  "top left",
+
+                                width: "357%",
+
+                                height:
+                                  "357%",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  previewHtml,
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                position:
+                                  "absolute",
+
+                                inset: 14,
+
+                                border:
+                                  "1px solid #d4dee7",
+
+                                borderRadius:
+                                  "4px",
+                              }}
+                            />
+                          )}
+                        </Box>
+
+                        <Typography
+                          noWrap
+                          sx={{
+                            mt: 0.65,
+
+                            textAlign:
+                              "center",
+
+                            fontSize:
+                              9.8,
+
+                            fontWeight:
+                              isSelected
+                                ? 600
+                                : 500,
+
+                            color:
+                              isSelected
+                                ? "#326f9b"
+                                : "#687d90",
+                          }}
+                        >
+                          {layout.dashboard_name ||
+                            `Layout ${layout.id}`}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  );
+                }
+              )}
+            </Grid>
+
+            {/* ============================================================
+                SELECT DATA MODELS
+            ============================================================ */}
+
+            <Box
+              sx={{
+                mt: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  mb: 0.8,
+
+                  fontSize: 10.5,
+
+                  fontWeight: 600,
+
+                  color: "#53677b",
+                }}
+              >
+                Select Data Models
+              </Typography>
+
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+
                   gap: 1,
                 }}
               >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={Boolean(pageConfig.showSidebar)}
-                      onChange={(e) =>
-                        setPageConfig((prev) => ({ ...prev, showSidebar: e.target.checked }))
-                      }
-                    />
-                  }
-                  label="Show Side Bar"
-                />
-                {pageConfig.showCharts.map((checked, idx) => (
-                  <FormControlLabel
-                    key={`chart-${idx}`}
-                    control={
-                      <Checkbox
-                        checked={Boolean(checked)}
+                {extraChartRows.map(
+                  (
+                    row,
+                    idx
+                  ) => (
+                    <Box
+                      key={`extra-row-${idx}`}
+                      sx={{
+                        p: 1,
+
+                        display:
+                          "grid",
+
+                        gridTemplateColumns: {
+                          xs: "1fr",
+
+                          md:
+                            "1.25fr .9fr 1fr 1fr 1fr auto",
+                        },
+
+                        gap: 0.8,
+
+                        alignItems:
+                          "center",
+
+                        border:
+                          "1px solid #e1e8ef",
+
+                        borderRadius:
+                          "7px",
+
+                        bgcolor:
+                          "#fbfcfd",
+                      }}
+                    >
+                      <Select
+                        size="small"
+                        value={
+                          row.tableName
+                        }
+                        displayEmpty
+                        onChange={(e) => {
+                          handleExtraRowChange(
+                            idx,
+                            "tableName",
+                            e.target.value
+                          );
+
+                          handleExtraRowChange(
+                            idx,
+                            "xAxis",
+                            ""
+                          );
+
+                          handleExtraRowChange(
+                            idx,
+                            "yAxis",
+                            ""
+                          );
+
+                          loadColumns(
+                            e.target.value
+                          );
+                        }}
+                        sx={{
+                          ...gentleFieldSx,
+
+                          minWidth: 0,
+                        }}
+                      >
+                        <MenuItem value="">
+                          Select Table
+                        </MenuItem>
+
+                        {tables.map(
+                          (t) => (
+                            <MenuItem
+                              key={t}
+                              value={t}
+                            >
+                              {t}
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+
+                      <Select
+                        size="small"
+                        value={
+                          row.chartType
+                        }
+                        displayEmpty
                         onChange={(e) =>
-                          setPageConfig((prev) => {
-                            const next = [...prev.showCharts];
-                            next[idx] = e.target.checked;
-                            return { ...prev, showCharts: next };
-                          })
+                          handleExtraRowChange(
+                            idx,
+                            "chartType",
+                            e.target.value
+                          )
+                        }
+                        sx={{
+                          ...gentleFieldSx,
+
+                          minWidth: 0,
+                        }}
+                      >
+                        <MenuItem value="">
+                          Chart Type
+                        </MenuItem>
+
+                        {CHART_TYPES.map(
+                          (t) => (
+                            <MenuItem
+                              key={t}
+                              value={t}
+                            >
+                              {t}
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+
+                      <TextField
+                        size="small"
+                        value={
+                          row.chartName
+                        }
+                        placeholder="Chart Name"
+                        onChange={(e) =>
+                          handleExtraRowChange(
+                            idx,
+                            "chartName",
+                            e.target.value
+                          )
+                        }
+                        sx={
+                          gentleFieldSx
                         }
                       />
-                    }
-                    label={`Show Chart ${idx + 1}`}
-                  />
-                ))}
-              </Box>
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Add Additional Dashboard to Layout</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ mb: 1 }}>Select Layout</Typography>
-                  <Grid container spacing={2}>
-                    {availableLayouts.map((layout) => {
-                      const isSelected = layout.id === extraLayoutId;
-                      const def =
-                        typeof layout.layout_definition === "string"
-                          ? (() => {
-                              try {
-                                return JSON.parse(layout.layout_definition);
-                              } catch {
-                                return {};
+
+                      <Select
+                        size="small"
+                        value={
+                          row.xAxis
+                        }
+                        displayEmpty
+                        disabled={
+                          !row.tableName
+                        }
+                        onChange={(e) =>
+                          handleExtraRowChange(
+                            idx,
+                            "xAxis",
+                            e.target.value
+                          )
+                        }
+                        sx={{
+                          ...gentleFieldSx,
+
+                          minWidth: 0,
+                        }}
+                      >
+                        <MenuItem value="">
+                          X-Axis
+                        </MenuItem>
+
+                        {(columnsByTable[
+                          row.tableName
+                        ] || []).map(
+                          (c) => (
+                            <MenuItem
+                              key={
+                                c.column_name
                               }
-                            })()
-                          : layout.layout_definition || {};
-                      const previewHtml = typeof def?.html === "string" ? def.html : "";
-                      return (
-                        <Grid item key={layout.id} xs={12} md={4}>
-                          <Box
-                            onClick={() => setExtraLayoutId(layout.id)}
+                              value={
+                                c.column_name
+                              }
+                            >
+                              {
+                                c.column_name
+                              }
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+
+                      <Select
+                        size="small"
+                        value={
+                          row.yAxis
+                        }
+                        displayEmpty
+                        disabled={
+                          !row.tableName
+                        }
+                        onChange={(e) =>
+                          handleExtraRowChange(
+                            idx,
+                            "yAxis",
+                            e.target.value
+                          )
+                        }
+                        sx={{
+                          ...gentleFieldSx,
+
+                          minWidth: 0,
+                        }}
+                      >
+                        <MenuItem value="">
+                          Y-Axis
+                        </MenuItem>
+
+                        {(columnsByTable[
+                          row.tableName
+                        ] || []).map(
+                          (c) => (
+                            <MenuItem
+                              key={
+                                c.column_name
+                              }
+                              value={
+                                c.column_name
+                              }
+                            >
+                              {
+                                c.column_name
+                              }
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+
+                      <Box
+                        sx={{
+                          display:
+                            "flex",
+
+                          alignItems:
+                            "center",
+
+                          gap: 0.25,
+                        }}
+                      >
+                        {idx ===
+                          extraChartRows.length -
+                            1 && (
+                          <Button
+                            onClick={
+                              handleAddExtraRow
+                            }
+                            title="Add row"
                             sx={{
-                              border: isSelected ? "2px solid #2f7dd6" : "1px solid #c7cbd3",
-                              borderRadius: 2,
-                              p: 1.5,
-                              cursor: "pointer",
-                              position: "relative",
+                              minWidth: 30,
+                              width: 30,
+                              height: 30,
+
+                              p: 0,
+
+                              color:
+                                "#477899",
+
+                              bgcolor:
+                                "#eef5fa",
+
+                              borderRadius:
+                                "6px",
                             }}
                           >
-                            <Box
+                            <AddCircleOutlineIcon
                               sx={{
-                                border: "1px solid #c7cbd3",
-                                height: 140,
-                                position: "relative",
-                                bgcolor: "#f5f7fb",
-                                overflow: "hidden",
+                                fontSize: 17,
                               }}
-                            >
-                              {previewHtml ? (
-                                <Box
-                                  sx={{
-                                    transform: "scale(0.35)",
-                                    transformOrigin: "top left",
-                                    width: "280%",
-                                    height: "280%",
-                                  }}
-                                  dangerouslySetInnerHTML={{ __html: previewHtml }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{ position: "absolute", inset: 18, border: "1px solid #c7cbd3" }}
-                                />
-                              )}
-                            </Box>
-                            <Typography variant="caption" display="block" align="center" sx={{ mt: 1 }}>
-                              {layout.dashboard_name || `Layout ${layout.id}`}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
+                            />
+                          </Button>
+                        )}
 
-                  <Box sx={{ mt: 3 }}>
-                    <Typography sx={{ mb: 1 }}>Select Data Models</Typography>
-                    <Box sx={{ display: "grid", gap: 2 }}>
-                      {extraChartRows.map((row, idx) => (
-                        <Box
-                          key={`extra-row-${idx}`}
-                          sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "nowrap" }}
-                        >
-                          <Select
-                            size="small"
-                            value={row.tableName}
-                            displayEmpty
-                            onChange={(e) => {
-                              handleExtraRowChange(idx, "tableName", e.target.value);
-                              handleExtraRowChange(idx, "xAxis", "");
-                              handleExtraRowChange(idx, "yAxis", "");
-                              loadColumns(e.target.value);
+                        {extraChartRows.length >
+                          1 && (
+                          <Button
+                            onClick={() =>
+                              handleRemoveExtraRow(
+                                idx
+                              )
+                            }
+                            title="Remove row"
+                            sx={{
+                              minWidth: 30,
+                              width: 30,
+                              height: 30,
+
+                              p: 0,
+
+                              color:
+                                "#b42318",
+
+                              bgcolor:
+                                "#fff3f1",
+
+                              borderRadius:
+                                "6px",
                             }}
-                            sx={{ minWidth: 200 }}
                           >
-                            <MenuItem value="">Select Table</MenuItem>
-                            {tables.map((t) => (
-                              <MenuItem key={t} value={t}>
-                                {t}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <Select
-                            size="small"
-                            value={row.chartType}
-                            displayEmpty
-                            onChange={(e) => handleExtraRowChange(idx, "chartType", e.target.value)}
-                            sx={{ minWidth: 160 }}
-                          >
-                            <MenuItem value="">Chart Type</MenuItem>
-                            {CHART_TYPES.map((t) => (
-                              <MenuItem key={t} value={t}>
-                                {t}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <TextField
-                            size="small"
-                            value={row.chartName}
-                            placeholder="Chart Name"
-                            onChange={(e) => handleExtraRowChange(idx, "chartName", e.target.value)}
-                            sx={{ minWidth: 180 }}
-                          />
-                          <Select
-                            size="small"
-                            value={row.xAxis}
-                            displayEmpty
-                            onChange={(e) => handleExtraRowChange(idx, "xAxis", e.target.value)}
-                            sx={{ minWidth: 180 }}
-                            disabled={!row.tableName}
-                          >
-                            <MenuItem value="">X-Axis (Column)</MenuItem>
-                            {(columnsByTable[row.tableName] || []).map((c) => (
-                              <MenuItem key={c.column_name} value={c.column_name}>
-                                {c.column_name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <Select
-                            size="small"
-                            value={row.yAxis}
-                            displayEmpty
-                            onChange={(e) => handleExtraRowChange(idx, "yAxis", e.target.value)}
-                            sx={{ minWidth: 180 }}
-                            disabled={!row.tableName}
-                          >
-                            <MenuItem value="">Y-Axis (Column)</MenuItem>
-                            {(columnsByTable[row.tableName] || []).map((c) => (
-                              <MenuItem key={c.column_name} value={c.column_name}>
-                                {c.column_name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          {idx === extraChartRows.length - 1 && (
-                            <Button
-                              onClick={handleAddExtraRow}
-                              variant="text"
-                              sx={{ minWidth: 0, p: 0.5 }}
-                            >
-                              <AddCircleOutlineIcon />
-                            </Button>
-                          )}
-                          {extraChartRows.length > 1 && (
-                            <Button
-                              onClick={() => handleRemoveExtraRow(idx)}
-                              variant="text"
-                              sx={{ minWidth: 0, p: 0.5 }}
-                            >
-                              <RemoveCircleOutlineIcon />
-                            </Button>
-                          )}
-                        </Box>
-                      ))}
+                            <RemoveCircleOutlineIcon
+                              sx={{
+                                fontSize: 17,
+                              }}
+                            />
+                          </Button>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
+                  )
+                )}
+              </Box>
+            </Box>
 
-                  <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-                    <Button variant="contained" onClick={handleAddAdditionalLayout}>
-                      Add Dashboard Layout
-                    </Button>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTitleConfigOpen(false)} variant="outlined">
-            Close
-          </Button>
-          <Button
-            onClick={async () => {
-              const meta = layoutConfig?.meta || {};
-              const nextHiddenCharts =
-                titleConfigTarget === "page"
-                  ? pageConfig.showCharts.map((show) => !show)
-                  : activeLayoutIndex === 0
-                    ? meta.hiddenCharts
-                    : additionalLayouts[activeLayoutIndex - 1]?.hiddenCharts;
-              let nextAdditionalLayouts = additionalLayouts;
-              if (activeLayoutIndex > 0 && titleConfigTarget === "page") {
-                nextAdditionalLayouts = [...additionalLayouts];
-                const entry = {
-                  ...(nextAdditionalLayouts[activeLayoutIndex - 1] || {}),
-                  hiddenCharts: nextHiddenCharts,
-                };
-                nextAdditionalLayouts[activeLayoutIndex - 1] = entry;
-              }
-              const nextLayout = {
-                ...(layoutConfig || {}),
-                meta: {
-                  ...meta,
-                  sidebarTitle: titleFields.sidebarTitle,
-                  sidebarSubtitle: titleFields.sidebarSubtitle,
-                  pageTitle: titleFields.pageTitle,
-                  pageSubtitle: titleFields.pageSubtitle,
-                  showSidebar:
-                    titleConfigTarget === "page"
-                      ? pageConfig.showSidebar
-                      : titleFields.showSidebar,
-                  hiddenCharts: activeLayoutIndex === 0 ? nextHiddenCharts : meta.hiddenCharts,
-                  sidebarWidget:
-                    titleConfigTarget === "sidebar"
-                      ? sidebarConfig.widget
-                      : layoutConfig?.meta?.sidebarWidget,
-                  sidebarLinks:
-                    titleConfigTarget === "sidebar"
-                      ? sidebarConfig.links
-                      : layoutConfig?.meta?.sidebarLinks,
-                  additionalLayouts: nextAdditionalLayouts,
-                },
-              };
-              await saveLayout(nextLayout);
-              setTitleConfigOpen(false);
-            }}
-            variant="contained"
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Box
+              sx={{
+                mt: 1.4,
+
+                display: "flex",
+
+                justifyContent:
+                  "flex-end",
+              }}
+            >
+              <Button
+                onClick={
+                  handleAddAdditionalLayout
+                }
+                variant="contained"
+                sx={{
+                  ...primaryButtonSx,
+
+                  height: 34,
+
+                  fontSize: 10.5,
+                }}
+              >
+                Add Dashboard Layout
+              </Button>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      </>
+    )}
+  </DialogContent>
+
+  {/* ======================================================================
+      FOOTER
+  ====================================================================== */}
+
+  <DialogActions sx={dialogFooterSx}>
+    <Button
+      onClick={() =>
+        setTitleConfigOpen(false)
+      }
+      sx={cancelButtonSx}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      onClick={async () => {
+        /*
+         * DO NOT CHANGE THIS SAVE LOGIC.
+         */
+
+        const meta =
+          layoutConfig?.meta || {};
+
+        const nextHiddenCharts =
+          titleConfigTarget ===
+          "page"
+            ? pageConfig.showCharts.map(
+                (show) => !show
+              )
+            : activeLayoutIndex ===
+              0
+              ? meta.hiddenCharts
+              : additionalLayouts[
+                  activeLayoutIndex -
+                    1
+                ]?.hiddenCharts;
+
+        let nextAdditionalLayouts =
+          additionalLayouts;
+
+        if (
+          activeLayoutIndex > 0 &&
+          titleConfigTarget ===
+            "page"
+        ) {
+          nextAdditionalLayouts = [
+            ...additionalLayouts,
+          ];
+
+          const entry = {
+            ...(nextAdditionalLayouts[
+              activeLayoutIndex -
+                1
+            ] || {}),
+
+            hiddenCharts:
+              nextHiddenCharts,
+          };
+
+          nextAdditionalLayouts[
+            activeLayoutIndex -
+              1
+          ] = entry;
+        }
+
+        const nextLayout = {
+          ...(layoutConfig || {}),
+
+          meta: {
+            ...meta,
+
+            sidebarTitle:
+              titleFields.sidebarTitle,
+
+            sidebarSubtitle:
+              titleFields.sidebarSubtitle,
+
+            pageTitle:
+              titleFields.pageTitle,
+
+            pageSubtitle:
+              titleFields.pageSubtitle,
+
+            showSidebar:
+              titleConfigTarget ===
+              "page"
+                ? pageConfig.showSidebar
+                : titleFields.showSidebar,
+
+            hiddenCharts:
+              activeLayoutIndex ===
+              0
+                ? nextHiddenCharts
+                : meta.hiddenCharts,
+
+            sidebarWidget:
+              titleConfigTarget ===
+              "sidebar"
+                ? sidebarConfig.widget
+                : layoutConfig?.meta
+                    ?.sidebarWidget,
+
+            sidebarLinks:
+              titleConfigTarget ===
+              "sidebar"
+                ? sidebarConfig.links
+                : layoutConfig?.meta
+                    ?.sidebarLinks,
+
+            additionalLayouts:
+              nextAdditionalLayouts,
+          },
+        };
+
+        await saveLayout(
+          nextLayout
+        );
+
+        setTitleConfigOpen(
+          false
+        );
+      }}
+      variant="contained"
+      sx={primaryButtonSx}
+    >
+      Save Changes
+    </Button>
+  </DialogActions>
+</Dialog>
+
 
       <Dialog open={chartConfigOpen} onClose={() => setChartConfigOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Configure Chart</DialogTitle>
@@ -1415,6 +5249,1057 @@ export default function DashboardViewer() {
           </Button>
         </DialogActions>
       </Dialog>
+
+
+      <AddComponentModal
+  open={
+    addComponentOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  onClose={() => {
+    setAddComponentOpen(
+      false
+    );
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSelect={(
+  componentType,
+  slot
+) => {
+
+  setAddComponentOpen(
+    false
+  );
+
+
+  setActiveComponentSlot(
+    slot
+  );
+
+
+  if (
+  componentType ===
+  "text"
+) {
+
+  setTextConfigOpen(
+    true
+  );
+
+  return;
+}
+
+
+if (
+  componentType ===
+  "media"
+) {
+
+  setMediaConfigOpen(
+    true
+  );
+
+  return;
+}
+
+
+  if (
+  componentType ===
+  "kpi"
+) {
+
+  setKpiConfigOpen(
+    true
+  );
+
+  return;
+}
+
+
+if (
+  componentType ===
+  "chart"
+) {
+
+  setComponentChartConfigOpen(
+    true
+  );
+
+  return;
+}
+
+
+if (
+  componentType ===
+  "table"
+) {
+  setComponentTableConfigOpen(
+    true
+  );
+
+  return;
+}
+
+if (
+  componentType ===
+  "crud"
+) {
+
+  setCrudConfigOpen(
+    true
+  );
+
+  return;
+}
+
+
+console.log(
+  "Component configuration not yet implemented:",
+  componentType
+);
+}}
+
+/>
+
+<KpiConfigModal
+  open={
+    kpiConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  tables={
+    tableOptions
+  }
+
+  columnsByTable={
+    columnsByTable
+  }
+
+  loadColumns={
+    loadColumns
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setKpiConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig || {}),
+    };
+
+
+    /* PRIMARY LAYOUT */
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+
+    }
+
+    /* ADDITIONAL LAYOUT */
+
+    else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setKpiConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+
+<TableConfigModal
+  open={
+    componentTableConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  tables={
+    tableOptions
+  }
+
+  columnsByTable={
+    columnsByTable
+  }
+
+  loadColumns={
+    loadColumns
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setComponentTableConfigOpen(
+      false
+    );
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig || {}),
+    };
+
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+        components:
+          nextComponents,
+      };
+
+    } else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setComponentTableConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+<ChartConfigModal
+  open={
+    componentChartConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  tables={
+    tableOptions
+  }
+
+  columnsByTable={
+    columnsByTable
+  }
+
+  loadColumns={
+    loadColumns
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setComponentChartConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig || {}),
+    };
+
+
+    /* PRIMARY LAYOUT */
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+
+    }
+
+    /* ADDITIONAL LAYOUT */
+
+    else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setComponentChartConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>  
+
+<CrudConfigModal
+  open={
+    crudConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  pages={
+    crudPages
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setCrudConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig ||
+        {}),
+    };
+
+
+    /* PRIMARY */
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+
+    }
+
+    /* ADDITIONAL */
+
+    else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setCrudConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+<DuplicateComponentModal
+  open={
+    duplicateComponentOpen
+  }
+
+  component={
+    componentToDuplicate
+  }
+
+  sourceSlotId={
+    activeComponentSlot
+      ?.slotId
+  }
+
+  availableSlots={
+    availableComponentSlots
+  }
+
+  onClose={() => {
+
+    setDuplicateComponentOpen(
+      false
+    );
+
+    setComponentToDuplicate(
+      null
+    );
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onDuplicate={async (
+    destinationSlotId
+  ) => {
+
+    if (
+      !destinationSlotId ||
+      !componentToDuplicate
+    ) {
+      return;
+    }
+
+
+    /*
+     * Deep copy because component configuration
+     * contains nested dataSource / format objects.
+     */
+    const duplicatedComponent =
+      JSON.parse(
+        JSON.stringify(
+          componentToDuplicate
+        )
+      );
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [destinationSlotId]:
+        duplicatedComponent,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig || {}),
+    };
+
+
+    /* PRIMARY LAYOUT */
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+    }
+
+
+    /* ADDITIONAL LAYOUT */
+
+    else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setDuplicateComponentOpen(
+      false
+    );
+
+
+    setComponentToDuplicate(
+      null
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+<MediaConfigModal
+  open={
+    mediaConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setMediaConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig ||
+        {}),
+    };
+
+
+    /* PRIMARY LAYOUT */
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+
+    }
+
+    /* ADDITIONAL LAYOUT */
+
+    else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setMediaConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+
+<TextConfigModal
+  open={
+    textConfigOpen
+  }
+
+  slot={
+    activeComponentSlot
+  }
+
+  initialConfig={
+    activeComponentSlot
+      ?.slotId
+      ? activeComponents[
+          activeComponentSlot
+            .slotId
+        ]
+      : null
+  }
+
+  onClose={() => {
+
+    setTextConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+
+  onSave={async (
+    component,
+    slot
+  ) => {
+
+    const slotId =
+      slot?.slotId;
+
+
+    if (!slotId) {
+      return;
+    }
+
+
+    const nextComponents = {
+      ...activeComponents,
+
+      [slotId]:
+        component,
+    };
+
+
+    let nextLayout = {
+      ...(layoutConfig ||
+        {}),
+    };
+
+
+    if (
+      activeLayoutIndex ===
+      0
+    ) {
+
+      nextLayout = {
+        ...nextLayout,
+
+        components:
+          nextComponents,
+      };
+
+    } else {
+
+      const nextAdditional = [
+        ...additionalLayouts,
+      ];
+
+
+      nextAdditional[
+        activeLayoutIndex -
+          1
+      ] = {
+        ...nextAdditional[
+          activeLayoutIndex -
+            1
+        ],
+
+        components:
+          nextComponents,
+      };
+
+
+      nextLayout = {
+        ...nextLayout,
+
+        meta: {
+          ...nextLayout.meta,
+
+          additionalLayouts:
+            nextAdditional,
+        },
+      };
+    }
+
+
+    await saveLayout(
+      nextLayout
+    );
+
+
+    setTextConfigOpen(
+      false
+    );
+
+
+    setActiveComponentSlot(
+      null
+    );
+  }}
+/>
+
+
     </Box>
   );
 }

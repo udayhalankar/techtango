@@ -1,272 +1,32 @@
-/* --- Top Header Bar (Logo area) --- */
-.header-bar {
-  background-color: #3d4f5f; /* Dark blue/gray */
-  color: #fff;
-  padding: 10px 20px;
-  display: flex;
-  align-items: center;
+/* src/pages/home/home.scss */
+
+.augmis-home {
+  width: 100%;
+  min-height: 100vh;
+  background: #f5f6f7;
 }
 
-.header-bar .logo {
-  display: flex;
-  align-items: center;
+/* Keep MUI typography clean and enterprise-like */
+.augmis-home,
+.augmis-home * {
+  box-sizing: border-box;
 }
 
-.header-bar .logo img {
-  height: 30px;
-  margin-right: 10px;
+/* Optional subtle scrollbar */
+.augmis-home ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.header-bar .tagline {
-  font-size: 14px;
-  color: #cfd8dc;
+.augmis-home ::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-
-/* --- Nav Menu Below --- */
-.nav-bar {
-  background-color: #a8d1fb; /* Light gray */
-  display: flex;
-  align-content: center;
-  justify-content: center; /* 👈 This centers the nav items */
-  padding: 10px 20px;
-  margin-bottom: 5px;
-}
-
-.nav-bar button,
-.nav-bar a {
-  background: none;
-  border: none;
-  font-size: 16px;
-  margin-right: 30px;
-  cursor: pointer;
-  color: #000;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.nav-bar button:hover,
-.nav-bar a:hover {
-  color: #007bff; /* Hover color */
-  text-decoration: underline;
-}
-
-.home-page {
-  font-family: Arial, sans-serif;
-  background-color: #e3e3e3;
-  padding: 10px 250px 10px 250px;
-  color: #333;
- 
-}
-
-.top-nav {
-  border-bottom: 2px solid #ddd;
-  margin-bottom: 20px;
-  
-
-  button, .nav-link {
-    background: none;
-    border: none;
-    font-size: 16px;
-    margin-right: 15px;
-    cursor: pointer;
-    color: #333;
-    text-decoration: none;
-  }
-
-  button:hover, .nav-link:hover {
-    color: #007bff;
-    text-decoration: underline;
-  }
-}
-
-.top-section {
-  display: flex;
-  justify-content: space-between;
-  height: 300px;
-  gap: 10px;
-  height: 300px;
-  margin-bottom: 20px;
-}
-
-.banner {
-  flex: 1;
-  background: linear-gradient(165deg, #d0e3f3, #ffffff );
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.banner h2 {
-  margin: 0 0 10px;
-}
-
-.app-title {
-  font-weight: bold;
-  font-size: 18px;
-  color: #0056b3;
-}
-
-.details-btn {
-  margin-top: 10px;
-  background-color: #facc15;
-  border: none;
-  padding: 8px 16px;
-  cursor: pointer;
+.augmis-home ::-webkit-scrollbar-thumb {
+  background: #c8d0d8;
   border-radius: 4px;
 }
 
-.phone-image {
-  margin-top: 20px;
-  font-size: 40px;
-}
-
-.meetings {
-  width: 350px;
-  background: #f6fde0;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.meetings h3 {
-  margin: 0 0 10px;
-  color: #c53030;
-}
-
-.meetings table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.meetings th {
-  text-align: left;
-  border-bottom: 1px solid #ccc;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.meetings td {
-  font-size: 13px;
-  padding: 4px 0;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.card {
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.card-link {
-  display: block;
-  text-decoration: none;
-  color: inherit; /* keeps text color the same */
-  height: 100%;
-  width: 100%;
-}
-
-.proposal {
-  background-color: #fde68a;
-}
-
-.joc, .minutes, .assignments {
-  background-color: #e5e7eb;
-}
-
-.my-assignments {
-  background-color: #bfdbfe;
-}
-
-.bottom-info {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  height: 180px;
-  margin-bottom: 20px;
-}
-
-.info-box {
-  background: #f6fde0;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.info-box h4 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-.info-box ul {
-  padding: 0;
-  list-style: none;
-}
-
-.info-box li {
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.slider-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin: 20px 0;
-}
-
-.cards-slider {
-  display: flex;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE 10+ */
-}
-
-.cards-slider::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-.card {
-  max-width: 222px; /* adjust width to show 5 items total */
-  flex: 0 0 auto;
-  margin: 0 10px;
-  background: #b3d9ff;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.slider-arrow {
-  background: #d3e4f67b;
-  color: #f47575;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 30%;
-  z-index: 1;
-}
-
-.slider-arrow.left {
-  margin-right: -45px;
-}
-
-.slider-arrow.right {
-  margin-left: -40px;
-}
-
-.add-btn {
-  background-color: #007bff;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  justify-content: right; /* 👈 This centers the nav items */
-  cursor: pointer;
-  transition: background 0.2s;
-  
+.augmis-home ::-webkit-scrollbar-thumb:hover {
+  background: #aeb9c4;
 }
