@@ -123,9 +123,24 @@ export function endSession(options = {}) {
 }
 
 export function handleAuthError(error, options = {}) {
-  const status = error?.response?.status;
-  if (status === 401 || status === 403) {
+  const status =
+    error?.response?.status;
+
+  /*
+   * 401 = authentication/session problem.
+   * Only this should terminate the session.
+   */
+  if (status === 401) {
     endSession(options);
   }
+
+  /*
+   * 403 = user is authenticated but is not
+   * allowed to perform this particular action.
+   *
+   * DO NOT logout.
+   * DO NOT redirect to /login.
+   */
+
   return Promise.reject(error);
 }

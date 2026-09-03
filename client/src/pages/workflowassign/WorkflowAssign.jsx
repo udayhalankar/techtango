@@ -337,7 +337,7 @@ function InitiateFormDialog({ open, onClose, workflow, onCreated }) {
       <ReusableFormModal
         open={open}
         onClose={() => onClose?.(false)}
-        maxWidth={950}
+        maxWidth={720}
         icon="🤝"
         title={`Start: ${workflow?.workflow_map_name || workflow?.workflow_name || `Workflow #${workflow?.id || ""}`}`}
         subtitle="Complete the workflow initiation form below and attach supporting files if required."

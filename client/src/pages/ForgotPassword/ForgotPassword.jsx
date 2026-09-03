@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import logo from "../../components/navbar/ttlogo.png";
-import heroImage from "../Login/loginpage.png";
+import heroImage from "../login/loginpage.png";
 import "./ForgotPassword.scss";
 
 export default function ForgotPassword() {

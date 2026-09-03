@@ -11,38 +11,29 @@
 #   Every 30 minutes
 #
 # Retention:
-#   - Keep latest 20 rolling full ZIP backups
-#   - Preserve the latest successful backup from each previous day
-#     in a separate DAILY archive folder
+#   Latest 20 ZIP backups
 #
 # IMPORTANT:
 # - Source files are READ ONLY.
 # - No Git commit/push/pull/reset/clean/restore is performed.
-# - Only old ZIP files in the rolling backup folder are deleted.
+# - Only old ZIP files in the backup directory are deleted.
 # ============================================================
 
-$RepoPath         = "D:\Uday_Documents\00_TechtangoRJS"
-$BackupRoot       = "D:\Backups\00_TechtangoRJS"
-$RollingBackupDir = Join-Path $BackupRoot "rolling"
-$DailyBackupDir   = Join-Path $BackupRoot "daily"
-
+$RepoPath   = "D:\Uday_Documents\00_TechtangoRJS"
+$BackupPath = "D:\Backups\00_TechtangoRJS"
 $KeepCopies = 20
 
 # ------------------------------------------------------------
-# Create backup folders
+# Create backup destination if it does not exist
 # ------------------------------------------------------------
 
-foreach ($Path in @($BackupRoot, $RollingBackupDir, $DailyBackupDir)) {
-
-    if (!(Test-Path $Path)) {
-        New-Item -ItemType Directory -Path $Path -Force | Out-Null
-    }
+if (!(Test-Path $BackupPath)) {
+    New-Item -ItemType Directory -Path $BackupPath -Force | Out-Null
 }
 
-$LogFile = Join-Path $BackupRoot "local-backup.log"
+$LogFile = Join-Path $BackupPath "local-backup.log"
 
 function Write-BackupLog {
-
     param([string]$Message)
 
     $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -53,8 +44,6 @@ function Write-BackupLog {
 
 Write-BackupLog "============================================================"
 Write-BackupLog "Local ZIP backup started."
-
-$ZipPath = $null
 
 try {
 
@@ -75,28 +64,29 @@ try {
     }
 
     # --------------------------------------------------------
-    # Generate full backup filename
+    # Generate backup filename
+    # Example:
+    # TechtangoRJS_2026-08-21_235500.zip
     # --------------------------------------------------------
 
     $Timestamp = Get-Date -Format "yyyy-MM-dd_HHmmss"
-
-    $ZipName = "TechtangoRJS_$Timestamp.zip"
-
-    $ZipPath = Join-Path $RollingBackupDir $ZipName
+    $ZipName   = "TechtangoRJS_$Timestamp.zip"
+    $ZipPath   = Join-Path $BackupPath $ZipName
 
     Write-BackupLog "Source: $RepoPath"
     Write-BackupLog "Target: $ZipPath"
 
     # --------------------------------------------------------
-    # Get the same file universe considered by Git backup:
+    # Obtain EXACT Git-visible file inventory
     #
-    # tracked files
-    # +
-    # untracked files
-    # -
-    # ignored files
+    # -c = cached/tracked
+    # -o = other/untracked
+    # --exclude-standard = respect .gitignore
     #
-    # Equivalent in scope to what git add -A would see,
+    # This closely mirrors the files considered by:
+    #
+    #     git add -A
+    #
     # without actually staging anything.
     # --------------------------------------------------------
 
@@ -108,11 +98,11 @@ try {
 
     $Files = @(
         $Files |
-            Where-Object {
-                $_ -and
-                (Test-Path (Join-Path $RepoPath $_) -PathType Leaf)
-            } |
-            Sort-Object -Unique
+        Where-Object {
+            $_ -and
+            (Test-Path (Join-Path $RepoPath $_) -PathType Leaf)
+        } |
+        Sort-Object -Unique
     )
 
     if ($Files.Count -eq 0) {
@@ -122,7 +112,9 @@ try {
     Write-BackupLog "Files to backup: $($Files.Count)"
 
     # --------------------------------------------------------
-    # Create full ZIP
+    # Create ZIP directly from repository files
+    #
+    # No temporary copy of the project is created.
     # --------------------------------------------------------
 
     Add-Type -AssemblyName System.IO.Compression
@@ -130,7 +122,6 @@ try {
 
     $ZipStream = $null
     $Archive   = $null
-    $Added     = 0
 
     try {
 
@@ -147,6 +138,8 @@ try {
             $false
         )
 
+        $Added = 0
+
         foreach ($RelativeFile in $Files) {
 
             $SourceFile = Join-Path $RepoPath $RelativeFile
@@ -155,6 +148,7 @@ try {
                 continue
             }
 
+            # ZIP paths should use forward slashes
             $EntryName = $RelativeFile.Replace("\", "/")
 
             [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
@@ -166,6 +160,7 @@ try {
 
             $Added++
         }
+
     }
     finally {
 
@@ -179,7 +174,7 @@ try {
     }
 
     # --------------------------------------------------------
-    # Validate created ZIP
+    # Validate ZIP
     # --------------------------------------------------------
 
     if (!(Test-Path $ZipPath)) {
@@ -197,96 +192,30 @@ try {
     Write-BackupLog "ZIP size: $([math]::Round($ZipInfo.Length / 1MB, 2)) MB"
 
     # --------------------------------------------------------
-    # DAILY ARCHIVE
+    # Retention
     #
-    # Preserve the latest backup from every previous calendar
-    # day before rolling retention removes old ZIPs.
-    #
-    # Example:
-    # If yesterday had backups at:
-    # 22:45
-    # 23:15
-    # 23:45
-    #
-    # then 23:45 becomes:
-    #
-    # TechtangoRJS_DAILY_2026-08-20.zip
-    # --------------------------------------------------------
-
-    $Today = (Get-Date).Date
-
-    $RollingBackups = @(
-        Get-ChildItem `
-            -Path $RollingBackupDir `
-            -Filter "TechtangoRJS_*.zip" `
-            -File |
-            Sort-Object LastWriteTime -Descending
-    )
-
-    $PreviousDayGroups = @(
-        $RollingBackups |
-            Where-Object {
-                $_.LastWriteTime.Date -lt $Today
-            } |
-            Group-Object {
-                $_.LastWriteTime.ToString("yyyy-MM-dd")
-            }
-    )
-
-    foreach ($DayGroup in $PreviousDayGroups) {
-
-        $LatestForDay = $DayGroup.Group |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-
-        if (!$LatestForDay) {
-            continue
-        }
-
-        $DayStamp = $LatestForDay.LastWriteTime.ToString("yyyy-MM-dd")
-
-        $DailyName = "TechtangoRJS_DAILY_$DayStamp.zip"
-
-        $DailyPath = Join-Path $DailyBackupDir $DailyName
-
-        if (!(Test-Path $DailyPath)) {
-
-            Copy-Item `
-                -LiteralPath $LatestForDay.FullName `
-                -Destination $DailyPath
-
-            Write-BackupLog "Daily archive created: $DailyName"
-        }
-    }
-
-    # --------------------------------------------------------
-    # ROLLING RETENTION
-    #
-    # Keep latest 20 rolling ZIPs only.
-    #
-    # DAILY archive ZIPs are NEVER touched here.
+    # Keep newest 20 copies.
+    # Delete ONLY TechtangoRJS_*.zip files from BackupPath.
     # --------------------------------------------------------
 
     $ExistingBackups = @(
         Get-ChildItem `
-            -Path $RollingBackupDir `
+            -Path $BackupPath `
             -Filter "TechtangoRJS_*.zip" `
             -File |
-            Sort-Object LastWriteTime -Descending
+        Sort-Object LastWriteTime -Descending
     )
 
-    Write-BackupLog "Rolling copies before retention: $($ExistingBackups.Count)"
+    Write-BackupLog "Backup copies before retention: $($ExistingBackups.Count)"
 
     if ($ExistingBackups.Count -gt $KeepCopies) {
 
-        $OldBackups = @(
-            $ExistingBackups |
-                Select-Object -Skip $KeepCopies
-        )
+        $OldBackups = $ExistingBackups |
+            Select-Object -Skip $KeepCopies
 
         foreach ($OldBackup in $OldBackups) {
 
-            Write-BackupLog "Removing old rolling backup: $($OldBackup.Name)"
+            Write-BackupLog "Removing old backup: $($OldBackup.Name)"
 
             Remove-Item `
                 -LiteralPath $OldBackup.FullName `
@@ -294,49 +223,28 @@ try {
         }
     }
 
-    # --------------------------------------------------------
-    # Final backup counts
-    # --------------------------------------------------------
-
-    $RollingRemaining = @(
+    $Remaining = @(
         Get-ChildItem `
-            -Path $RollingBackupDir `
+            -Path $BackupPath `
             -Filter "TechtangoRJS_*.zip" `
             -File
     )
 
-    $DailyRemaining = @(
-        Get-ChildItem `
-            -Path $DailyBackupDir `
-            -Filter "TechtangoRJS_DAILY_*.zip" `
-            -File
-    )
-
-    Write-BackupLog "Rolling copies retained: $($RollingRemaining.Count)"
-    Write-BackupLog "Daily archive copies retained: $($DailyRemaining.Count)"
-
+    Write-BackupLog "Backup copies retained: $($Remaining.Count)"
     Write-BackupLog "LOCAL BACKUP SUCCESSFUL."
 }
 catch {
 
     Write-BackupLog "LOCAL BACKUP FAILED: $($_.Exception.Message)"
 
-    # --------------------------------------------------------
-    # Remove only incomplete ZIP from CURRENT run
-    # --------------------------------------------------------
-
+    # Remove incomplete ZIP from this run, if one exists.
     if ($ZipPath -and (Test-Path $ZipPath)) {
 
         try {
-
-            Remove-Item `
-                -LiteralPath $ZipPath `
-                -Force
-
+            Remove-Item -LiteralPath $ZipPath -Force
             Write-BackupLog "Incomplete ZIP removed."
         }
         catch {
-
             Write-BackupLog "WARNING: Could not remove incomplete ZIP."
         }
     }

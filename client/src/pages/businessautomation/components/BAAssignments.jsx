@@ -12,6 +12,7 @@ import {
   Container ,
   CardContent,
   Chip,
+  Stack,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -39,6 +40,8 @@ import CommentOutlinedIcon from "@mui/icons-material/CommentOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import api from "../../../services/api"; // adjust if different
 import { materializeLayout } from "../simple_workflowbuilder/components/simpleWorkflowFormLayouts";
+
+
 
 /* ----------------------------- small utilities ----------------------------- */
 
@@ -639,6 +642,161 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
     return c !== "audit_trail" && c !== "step_comments";
   });
   const assignmentLike = presentation === "reusableModal";
+
+  /* ============================================================
+   REUSABLE MODAL PRESENTATION
+   Presentation only - no workflow/form logic changes
+============================================================ */
+
+const detailFields = normalFields.filter((f) => {
+  const type = String(
+    f?.input_type || f?.data_type || ""
+  ).toLowerCase();
+
+  const column = String(
+    f?.column || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const isAttachment =
+    type === "attachment" ||
+    type === "file";
+
+  const isComments =
+    column === "step_comments" ||
+    column === "comments" ||
+    column === "comment";
+
+  return !isAttachment && !isComments;
+});
+
+const attachmentFields = normalFields.filter((f) => {
+  const type = String(
+    f?.input_type || f?.data_type || ""
+  ).toLowerCase();
+
+  return type === "attachment" || type === "file";
+});
+
+
+const runtimeCommentsField =
+  commentsField ||
+  normalFields.find((f) => {
+    const column = String(
+      f?.column || ""
+    )
+      .trim()
+      .toLowerCase();
+
+    return (
+      column === "step_comments" ||
+      column === "comments" ||
+      column === "comment"
+    );
+  });
+
+const RuntimeSectionCard = ({
+  title,
+  subtitle,
+  icon,
+  children,
+}) => (
+  <Box
+    sx={{
+      border: "1px solid #cfddea",
+      borderRadius: "7px",
+      overflow: "hidden",
+      bgcolor: "#ffffff",
+      boxShadow: "none",
+    }}
+  >
+    {/* CARD HEADER */}
+
+    <Box
+      sx={{
+        minHeight: 31,
+
+        px: 1.25,
+
+        display: "flex",
+        alignItems: "center",
+
+        gap: 0.7,
+
+        background:
+          "linear-gradient(#f8fbfd,#eef5fa)",
+
+        borderBottom:
+          "1px solid #cfddea",
+      }}
+    >
+      {icon && (
+        <Box
+          sx={{
+            width: 17,
+            height: 17,
+
+            display: "grid",
+            placeItems: "center",
+
+            flexShrink: 0,
+
+            color: "#0d4f82",
+
+            "& .MuiSvgIcon-root": {
+              fontSize: 13,
+            },
+          }}
+        >
+          {icon}
+        </Box>
+      )}
+
+      <Box>
+        <Typography
+          sx={{
+            fontSize: 10,
+            lineHeight: 1.1,
+
+            fontWeight: 800,
+
+            color: "#0d4f82",
+          }}
+        >
+          {title}
+        </Typography>
+
+        {subtitle && (
+          <Typography
+            sx={{
+              mt: 0.1,
+
+              fontSize: 7.5,
+
+              color: "#7b8d9c",
+            }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+
+    {/* CARD BODY */}
+
+    <Box
+      sx={{
+        p: 1.25,
+      }}
+    >
+      {children}
+    </Box>
+  </Box>
+);  
+
+
+
   // Respect forced one-column layout or explicit layoutSections from saved form view
   const twoCols = (oneColumn || (Array.isArray(layoutSections) && layoutSections.length > 0))
     ? false
@@ -1069,189 +1227,1320 @@ const DynamicStepForm = React.forwardRef(function DynamicStepForm(
 
   const cs = { border:true, width:1, color:'#d1d5db', radius:12, ...(containerStyle || {}) };
 
-  return (
-    <Box
-      component="form"
-      ref={formRef}
-      onSubmit={submit}
-      className={assignmentLike ? "rfm-form" : undefined}
-      sx={{
-        mt: 1,
-        ...(cs.border === false
-          ? {}
-          : {
-              border: `${cs.width || 1}px solid ${cs.color || '#d1d5db'}`,
-              borderRadius: cs.radius != null ? cs.radius : 12,
-              p: 2,
-            }),
-      }}
-    >
-      {canvasModel && canvasModel.kind === 'canvas_v1' ? (
-        (()=>{
-          const findSec = (id) => (canvasModel.sections||[]).find(s=> String(s.id).toLowerCase()===id);
-          const findMeta = (name) => (Array.isArray(fields) ? fields.find(f=>String(f.column||'').toLowerCase()===String(name||'').toLowerCase()) : null);
+ return (
+  <Box
+    component="form"
+    ref={formRef}
+    onSubmit={submit}
+    className={
+      assignmentLike
+        ? "rfm-form"
+        : undefined
+    }
+    sx={
+      assignmentLike
+        ? {
+            width: "100%",
 
-          const renderCanvasItems = (sec) => {
-            if (!sec) return null;
-            const cols = Math.max(24, Number(sec.grid?.cols || 72));
-            const rowH = Math.max(6, Number(sec.grid?.rowHeight || 8));
-            const style = { display:'grid', gridTemplateColumns:`repeat(${cols}, minmax(0,1fr))`, gridAutoRows:`${rowH}px`, gap:1 };
-            return (
-              <div style={style}>
-                {(sec.items||[]).map((it,idx)=>{
-                  const sItem={ gridColumn:`${(it.x||0)+1} / span ${Math.max(1, it.w||1)}`, gridRow:`${(it.y||0)+1} / span ${Math.max(1, it.h||1)}` };
-                  const t = String(it.type||'').toLowerCase();
-                  if (t==='field'){
-                    const meta=findMeta(it.field);
-                    if (!meta || !meta.visible) return null;
-                    return <div key={it.id||idx} style={sItem}>{renderField(meta, idx, 'normal')}</div>;
-                  }
-                  if (t==='text') {
-                    const styleText = {
-                      ...sItem,
-                      padding:4,
-                      textAlign: it.props?.textAlign || 'left',
-                      color: it.props?.color || undefined,
-                      background: it.props?.backgroundColor || undefined,
-                      fontWeight: it.props?.fontWeight || undefined,
-                      fontStyle: it.props?.italic ? 'italic' : undefined,
-                      textDecoration: it.props?.underline ? 'underline' : undefined,
-                      fontSize: it.props?.fontSize ? Number(it.props.fontSize) : undefined,
-                    };
-                    const textHtml = it.props?.html || it.props?.text || '';
-                    return (
-                      <div
-                        key={it.id||idx}
-                        style={styleText}
-                        dangerouslySetInnerHTML={{ __html: textHtml }}
-                      />
-                    );
-                  }
-                  if (t==='image') return <div key={it.id||idx} style={{...sItem, padding:4}}><img alt={it.props?.alt||''} src={it.props?.src||''} style={{maxWidth:'100%',maxHeight:it.props?.maxHeight||64,objectFit:'contain'}}/></div>;
-                  if (t==='line') return <div key={it.id||idx} style={{...sItem, paddingTop: (rowH/2)-1}}><div style={{height:Math.max(1, Number(it.props?.thickness||2)), background: it.props?.color||'#cbd5e1'}}/></div>;
-                  return <div key={it.id||idx} style={sItem}/>;
-                })}
-              </div>
-            );
-          };
+            m: 0,
+            p: 0,
 
-          const header = renderCanvasItems(findSec('header'));
-          const main = renderCanvasItems(findSec('main')) || renderCanvasItems(findSec('details'));
-          const footer = renderCanvasItems(findSec('footer'));
+            border: 0,
 
-          return (
-            <>
-              {header}
-              {main}
-              {footer}
-            </>
-          );
-        })()
-      ) : Array.isArray(layoutSections) && layoutSections.length > 0 ? (
-        <Box>
-          {layoutSections.map((sec, sIdx) => (
-            <Box key={`sec_${sIdx}`} sx={{ mb: 1.5 }}>
-              <Grid container spacing={2}>
-                {(sec.columns || [])
-                  .filter((c) => {
-                    if (!c) return false;
-                    const hasFields = Array.isArray(c.fields) && c.fields.length > 0;
-                    const hasBlocks = sec.id === 'header' && Array.isArray(c.blocks) && c.blocks.length > 0;
-                    return Number(c.span) > 0 && (hasFields || hasBlocks);
-                  })
-                  .map((col, cIdx) => (
-                    <Grid
-                      key={`c_${cIdx}`}
-                      item
-                      xs={12}
-                      md={Math.min(Math.max(Number(col.span || 1), 1), 4) * 3}
-                    >
-                      {/* Header blocks render before fields */}
-                      {sec.id === 'header' && Array.isArray(col.blocks) && col.blocks.map((blk, bi) => {
-                        const t = String(blk?.type || '').toLowerCase();
-                        if (t === 'image' && blk?.src) {
-                          return (
-                            <Grid key={`hb_img_${bi}`} item xs={12}>
-                              <img
-                                src={blk.src}
-                                alt={blk.alt || ''}
-                                style={{ maxWidth: '100%', maxHeight: blk.maxHeight || 64, objectFit: 'contain', display: 'block' }}
-                              />
-                            </Grid>
-                          );
-                        }
-                        if (t === 'text' && blk?.html) {
-                          return (
-                            <Grid key={`hb_txt_${bi}`} item xs={12}>
-                              <div
-                                style={{ textAlign: blk.align || 'left', color: blk.color || undefined }}
-                                dangerouslySetInnerHTML={{ __html: blk.html }}
-                              />
-                            </Grid>
-                          );
-                        }
-                        if (t === 'line') {
-                          const h = Math.max(1, Number(blk.thickness || 2));
-                          return (
-                            <Grid key={`hb_line_${bi}`} item xs={12}>
-                              <div style={{ height: h, background: blk.color || '#cbd5e1', margin: `${blk.marginY ?? 8}px 0` }} />
-                            </Grid>
-                          );
-                        }
-                        return null;
-                      })}
-                      <Grid container spacing={2}>
-                        {col.fields.map((fp, fIdx) => {
-                          const name = String(fp.field || "").trim().toLowerCase();
-                          const meta = visible.find(
-                            (mf) => String(mf.column || "").trim().toLowerCase() === name
-                          );
-                          if (!meta) return null;
-                          return renderField(meta, fIdx, "normal");
-                        })}
-                      </Grid>
-                    </Grid>
-                  ))}
+            bgcolor: "transparent",
+
+            /* ================================================
+               COMPACT FIELD PRESENTATION
+            ================================================ */
+
+            "& .rfm-field": {
+              minWidth: 0,
+            },
+
+            "& .rfm-field-label": {
+              mb: "5px",
+
+              fontSize: "8px",
+              lineHeight: 1,
+
+              fontWeight: 800,
+
+              letterSpacing: ".35px",
+
+              color: "#5d7184",
+            },
+
+            "& .MuiOutlinedInput-root": {
+              minHeight: 31,
+
+              borderRadius: "4px",
+
+              bgcolor: "#ffffff",
+
+              "& fieldset": {
+                borderColor: "#bfd1e0",
+              },
+
+              "&:hover fieldset": {
+                borderColor: "#9ebbd1",
+              },
+
+              "&.Mui-focused fieldset": {
+                borderColor: "#62a8d8",
+                borderWidth: "1px",
+              },
+
+              "&.Mui-disabled": {
+                bgcolor: "#fafafa",
+
+                "& fieldset": {
+                  borderColor: "#e1e5e8",
+                },
+              },
+            },
+
+            "& .MuiInputBase-input": {
+              px: 1,
+
+              py: "6px",
+
+              fontSize: "10px",
+
+              color: "#29435a",
+            },
+
+            "& .MuiInputBase-input.Mui-disabled": {
+              WebkitTextFillColor:
+                "#8d969e",
+
+              color: "#8d969e",
+            },
+
+            "& .MuiSelect-select": {
+              py: "6px !important",
+
+              px: "9px !important",
+
+              fontSize: "10px",
+            },
+
+            "& .MuiFormHelperText-root": {
+              minHeight: 0,
+
+              mt: 0.25,
+
+              mx: 0,
+
+              fontSize: 7.5,
+            },
+
+            "& .MuiFormControlLabel-label": {
+              fontSize: 9,
+              color: "#405a6d",
+            },
+
+            "& .MuiCheckbox-root, & .MuiRadio-root": {
+              p: 0.35,
+
+              "& .MuiSvgIcon-root": {
+                fontSize: 16,
+              },
+            },
+          }
+        : {
+            mt: 1,
+
+            ...(cs.border === false
+              ? {}
+              : {
+                  border: `${
+                    cs.width || 1
+                  }px solid ${
+                    cs.color ||
+                    "#d1d5db"
+                  }`,
+
+                  borderRadius:
+                    cs.radius != null
+                      ? cs.radius
+                      : 12,
+
+                  p: 2,
+                }),
+          }
+    }
+  >
+
+    {/* ======================================================
+        NEW SIMPLE RUNTIME PRESENTATION
+    ====================================================== */}
+
+    {assignmentLike ? (
+
+      <Stack
+        spacing={1.15}
+      >
+
+        {/* ==================================================
+            DETAILS
+        ================================================== */}
+
+        <RuntimeSectionCard
+          title="Details"
+          subtitle="Enter the required form information."
+          icon={
+            <AccountTreeIcon />
+          }
+        >
+
+          {detailFields.length ? (
+
+            <Grid
+                container
+                columnSpacing={1.25}
+                rowSpacing={1.15}
+              >
+                {detailFields.map((f, idx) => (
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                    key={f.column || `detail_${idx}`}
+                    sx={{
+                      minWidth: 0,
+
+                      /* renderField already returns its own Grid item.
+                        Flatten that grid item so THIS grid controls the 2-column layout */
+                      "& > .MuiGrid-root": {
+                        flexBasis: "100% !important",
+                        maxWidth: "100% !important",
+                        width: "100% !important",
+                        padding: "0 !important",
+                      },
+                    }}
+                  >
+                    {renderField(
+                      f,
+                      idx,
+                      "normal"
+                    )}
+                  </Grid>
+                ))}
               </Grid>
 
-              {/* Ensure comments appear in MAIN above audit trail */}
-              {String(sec.id || '').toLowerCase() === 'main' && (
-                <Grid item xs={12}>
-                  <Grid container spacing={2}>
-                    {commentsField && renderField(commentsField, 9991, 'comments')}
-                    {auditField && renderField(auditField, 9990, 'audit')}
-                  </Grid>
-                </Grid>
-              )}
-            </Box>
-          ))}
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {normalFields.map((f, idx) => renderField(f, idx, "normal"))}
-          {commentsField &&
-            renderField(
-              commentsField,
-              normalFields.length,
-              "comments"
+          ) : (
+
+            <Typography
+              sx={{
+                fontSize: 8.5,
+
+                color: "#82909c",
+              }}
+            >
+              No detail fields configured.
+            </Typography>
+
+          )}
+
+        </RuntimeSectionCard>
+
+
+        {/* ==================================================
+            UPLOAD
+        ================================================== */}
+
+        {(attachmentsAllowed ||
+          attachmentFields.length > 0) && (
+
+          <RuntimeSectionCard
+            title="Upload"
+            subtitle="Attach supporting documents where required."
+            icon={
+              <AttachFileIcon />
+            }
+          >
+
+            {/* Explicit attachment fields from schema */}
+
+            {attachmentFields.length >
+              0 && (
+
+              <Grid
+                container
+
+                columnSpacing={1.25}
+                rowSpacing={1}
+              >
+                {attachmentFields.map(
+                  (f, idx) =>
+                    renderField(
+                      f,
+                      idx,
+                      "normal"
+                    )
+                )}
+              </Grid>
+
             )}
-          {auditField && renderField(auditField, normalFields.length + (commentsField ? 1 : 0), "audit")}
-        </Grid>
-      )}
 
-      {attachmentsAllowed && <FilePicker />}
-      {children}
 
-      {showPrimaryButton && (
-        <Box display="flex" gap={1} mt={2} className={assignmentLike ? "rfm-actions" : undefined}>
-          <Button type="submit" variant="contained">
-            {primaryActionLabel}
-          </Button>
-        </Box>
-      )}
-    </Box>
-  );
+            {/* Existing generic staged-file mechanism */}
 
+            {attachmentsAllowed && (
+              <Box
+                sx={{
+                  mt:
+                    attachmentFields.length
+                      ? 1
+                      : 0,
+
+                  minHeight: 58,
+
+                  px: 1.1,
+                  py: 0.9,
+
+                  display: "flex",
+
+                  alignItems: "center",
+
+                  justifyContent:
+                    "space-between",
+
+                  gap: 1,
+
+                  border:
+                    "1px dashed #b8cad8",
+
+                  borderRadius:
+                    "4px",
+
+                  bgcolor:
+                    "#fbfcfd",
+                }}
+              >
+
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 9,
+
+                      fontWeight: 700,
+
+                      color:
+                        "#405a6d",
+                    }}
+                  >
+                    Upload supporting documents
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      mt: 0.15,
+
+                      fontSize: 7.5,
+
+                      color:
+                        "#81909c",
+                    }}
+                  >
+                    Select one or more files.
+                  </Typography>
+                </Box>
+
+
+                <Button
+                  component="label"
+
+                  variant="outlined"
+
+                  size="small"
+
+                  sx={{
+                    minHeight: 29,
+
+                    px: 1.15,
+
+                    borderRadius:
+                      "3px",
+
+                    textTransform:
+                      "none",
+
+                    fontSize: 8.5,
+
+                    fontWeight: 700,
+                  }}
+                >
+                  Browse
+
+                  <input
+                    hidden
+
+                    type="file"
+
+                    multiple
+
+                    onChange={(e) => {
+
+                      const files =
+                        Array.from(
+                          e.target.files ||
+                            []
+                        );
+
+                      setStagedFiles(
+                        (prev) => [
+                          ...prev,
+                          ...files,
+                        ]
+                      );
+
+                      e.target.value =
+                        "";
+                    }}
+                  />
+                </Button>
+
+              </Box>
+            )}
+
+
+            {!!stagedFiles.length && (
+
+              <Stack
+                spacing={0.5}
+
+                sx={{
+                  mt: 0.7,
+                }}
+              >
+
+                {stagedFiles.map(
+                  (file, index) => (
+
+                    <Box
+                      key={`staged_${index}_${file?.name || "file"}`}
+
+                      sx={{
+                        minHeight: 27,
+
+                        px: 0.8,
+
+                        display:
+                          "flex",
+
+                        alignItems:
+                          "center",
+
+                        justifyContent:
+                          "space-between",
+
+                        gap: 1,
+
+                        border:
+                          "1px solid #e1e8ed",
+
+                        borderRadius:
+                          "3px",
+
+                        bgcolor:
+                          "#fafcfd",
+                      }}
+                    >
+
+                      <Typography
+                        sx={{
+                          minWidth: 0,
+
+                          overflow:
+                            "hidden",
+
+                          textOverflow:
+                            "ellipsis",
+
+                          whiteSpace:
+                            "nowrap",
+
+                          fontSize:
+                            8.5,
+
+                          color:
+                            "#526b7e",
+                        }}
+                      >
+                        {file?.name ||
+                          `File ${
+                            index + 1
+                          }`}
+                      </Typography>
+
+
+                      <Button
+                        size="small"
+
+                        variant="text"
+
+                        onClick={() => {
+
+                          setStagedFiles(
+                            (previous) =>
+                              previous.filter(
+                                (
+                                  _file,
+                                  fileIndex
+                                ) =>
+                                  fileIndex !==
+                                  index
+                              )
+                          );
+
+                        }}
+
+                        sx={{
+                          minWidth: 0,
+
+                          px: 0.5,
+
+                          fontSize: 8,
+
+                          textTransform:
+                            "none",
+                        }}
+                      >
+                        Remove
+                      </Button>
+
+                    </Box>
+
+                  )
+                )}
+
+              </Stack>
+
+            )}
+
+          </RuntimeSectionCard>
+
+        )}
+
+
+        {/* ==================================================
+            COMMENTS
+            Only rendered if configured in schema.
+            Nothing hardcoded.
+        ================================================== */}
+
+        {runtimeCommentsField && (
+
+              <RuntimeSectionCard
+                title="Comments"
+                subtitle="Add comments or supporting notes."
+                icon={
+                  <CommentOutlinedIcon />
+                }
+              >
+
+                <Grid
+                  container
+                  spacing={0}
+                  sx={{
+                    "& > .MuiGrid-root": {
+                      flexBasis: "100% !important",
+                      maxWidth: "100% !important",
+                      width: "100% !important",
+                      padding: "0 !important",
+                    },
+                  }}
+                >
+                  {renderField(
+                    runtimeCommentsField,
+                    9991,
+                    "comments"
+                  )}
+                </Grid>
+
+              </RuntimeSectionCard>
+
+            )}
+
+
+        {/* ==================================================
+            AUDIT - retain existing behaviour if schema
+            exposes it.
+        ================================================== */}
+
+        {auditField && (
+
+          <Box>
+            {renderField(
+              auditField,
+              9990,
+              "audit"
+            )}
+          </Box>
+
+        )}
+
+
+        {/* ==================================================
+            EXISTING CHILD CONTENT
+            Review selector / existing attachments /
+            route information etc. remains untouched.
+        ================================================== */}
+
+        {children && (
+          <Box>
+            {children}
+          </Box>
+        )}
+
+
+        {/* ==================================================
+            EXISTING PRIMARY ACTION
+        ================================================== */}
+
+        {showPrimaryButton && (
+
+          <Box
+            sx={{
+              pt: 0.2,
+
+              display: "flex",
+
+              justifyContent:
+                "flex-end",
+            }}
+          >
+            <Button
+              type="submit"
+
+              variant="contained"
+
+              size="small"
+
+              sx={{
+                minHeight: 30,
+
+                px: 1.4,
+
+                borderRadius:
+                  "3px",
+
+                textTransform:
+                  "none",
+
+                fontSize: 9,
+
+                fontWeight: 700,
+
+                bgcolor:
+                  "#0879df",
+
+                boxShadow:
+                  "none",
+
+                "&:hover": {
+                  bgcolor:
+                    "#066dc8",
+
+                  boxShadow:
+                    "none",
+                },
+              }}
+            >
+              {primaryActionLabel}
+            </Button>
+          </Box>
+
+        )}
+
+      </Stack>
+
+    ) : (
+
+      /* ======================================================
+         EXISTING RENDERING
+         LEAVE THIS LOGIC EXACTLY AS IT WAS
+      ====================================================== */
+
+      <>
+
+        {canvasModel &&
+        canvasModel.kind ===
+          "canvas_v1" ? (
+
+          (() => {
+
+            const findSec = (
+              id
+            ) =>
+              (
+                canvasModel.sections ||
+                []
+              ).find(
+                (s) =>
+                  String(
+                    s.id
+                  ).toLowerCase() ===
+                  id
+              );
+
+
+            const findMeta = (
+              name
+            ) =>
+              Array.isArray(
+                fields
+              )
+                ? fields.find(
+                    (f) =>
+                      String(
+                        f.column ||
+                          ""
+                      ).toLowerCase() ===
+                      String(
+                        name ||
+                          ""
+                      ).toLowerCase()
+                  )
+                : null;
+
+
+            const renderCanvasItems =
+              (sec) => {
+
+                if (!sec)
+                  return null;
+
+                const cols =
+                  Math.max(
+                    24,
+                    Number(
+                      sec.grid
+                        ?.cols ||
+                        72
+                    )
+                  );
+
+                const rowH =
+                  Math.max(
+                    6,
+                    Number(
+                      sec.grid
+                        ?.rowHeight ||
+                        8
+                    )
+                  );
+
+
+                const style = {
+                  display:
+                    "grid",
+
+                  gridTemplateColumns:
+                    `repeat(${cols}, minmax(0,1fr))`,
+
+                  gridAutoRows:
+                    `${rowH}px`,
+
+                  gap: 1,
+                };
+
+
+                return (
+                  <div
+                    style={
+                      style
+                    }
+                  >
+
+                    {(sec.items ||
+                      []).map(
+                      (
+                        it,
+                        idx
+                      ) => {
+
+                        const sItem =
+                          {
+                            gridColumn:
+                              `${
+                                (it.x ||
+                                  0) +
+                                1
+                              } / span ${Math.max(
+                                1,
+                                it.w ||
+                                  1
+                              )}`,
+
+                            gridRow:
+                              `${
+                                (it.y ||
+                                  0) +
+                                1
+                              } / span ${Math.max(
+                                1,
+                                it.h ||
+                                  1
+                              )}`,
+                          };
+
+
+                        const t =
+                          String(
+                            it.type ||
+                              ""
+                          ).toLowerCase();
+
+
+                        if (
+                          t ===
+                          "field"
+                        ) {
+
+                          const meta =
+                            findMeta(
+                              it.field
+                            );
+
+                          if (
+                            !meta ||
+                            !meta.visible
+                          )
+                            return null;
+
+                          return (
+                            <div
+                              key={
+                                it.id ||
+                                idx
+                              }
+                              style={
+                                sItem
+                              }
+                            >
+                              {renderField(
+                                meta,
+                                idx,
+                                "normal"
+                              )}
+                            </div>
+                          );
+                        }
+
+
+                        if (
+                          t ===
+                          "text"
+                        ) {
+
+                          const styleText =
+                            {
+                              ...sItem,
+
+                              padding:
+                                4,
+
+                              textAlign:
+                                it
+                                  .props
+                                  ?.textAlign ||
+                                "left",
+
+                              color:
+                                it
+                                  .props
+                                  ?.color ||
+                                undefined,
+
+                              background:
+                                it
+                                  .props
+                                  ?.backgroundColor ||
+                                undefined,
+
+                              fontWeight:
+                                it
+                                  .props
+                                  ?.fontWeight ||
+                                undefined,
+
+                              fontStyle:
+                                it
+                                  .props
+                                  ?.italic
+                                  ? "italic"
+                                  : undefined,
+
+                              textDecoration:
+                                it
+                                  .props
+                                  ?.underline
+                                  ? "underline"
+                                  : undefined,
+
+                              fontSize:
+                                it
+                                  .props
+                                  ?.fontSize
+                                  ? Number(
+                                      it
+                                        .props
+                                        .fontSize
+                                    )
+                                  : undefined,
+                            };
+
+
+                          const textHtml =
+                            it
+                              .props
+                              ?.html ||
+                            it
+                              .props
+                              ?.text ||
+                            "";
+
+
+                          return (
+                            <div
+                              key={
+                                it.id ||
+                                idx
+                              }
+
+                              style={
+                                styleText
+                              }
+
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  textHtml,
+                              }}
+                            />
+                          );
+                        }
+
+
+                        if (
+                          t ===
+                          "image"
+                        )
+                          return (
+                            <div
+                              key={
+                                it.id ||
+                                idx
+                              }
+
+                              style={{
+                                ...sItem,
+
+                                padding:
+                                  4,
+                              }}
+                            >
+                              <img
+                                alt={
+                                  it
+                                    .props
+                                    ?.alt ||
+                                  ""
+                                }
+
+                                src={
+                                  it
+                                    .props
+                                    ?.src ||
+                                  ""
+                                }
+
+                                style={{
+                                  maxWidth:
+                                    "100%",
+
+                                  maxHeight:
+                                    it
+                                      .props
+                                      ?.maxHeight ||
+                                    64,
+
+                                  objectFit:
+                                    "contain",
+                                }}
+                              />
+                            </div>
+                          );
+
+
+                        if (
+                          t ===
+                          "line"
+                        )
+                          return (
+                            <div
+                              key={
+                                it.id ||
+                                idx
+                              }
+
+                              style={{
+                                ...sItem,
+
+                                paddingTop:
+                                  rowH /
+                                    2 -
+                                  1,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  height:
+                                    Math.max(
+                                      1,
+                                      Number(
+                                        it
+                                          .props
+                                          ?.thickness ||
+                                          2
+                                      )
+                                    ),
+
+                                  background:
+                                    it
+                                      .props
+                                      ?.color ||
+                                    "#cbd5e1",
+                                }}
+                              />
+                            </div>
+                          );
+
+
+                        return (
+                          <div
+                            key={
+                              it.id ||
+                              idx
+                            }
+
+                            style={
+                              sItem
+                            }
+                          />
+                        );
+
+                      }
+                    )}
+
+                  </div>
+                );
+              };
+
+
+            const header =
+              renderCanvasItems(
+                findSec(
+                  "header"
+                )
+              );
+
+            const main =
+              renderCanvasItems(
+                findSec(
+                  "main"
+                )
+              ) ||
+              renderCanvasItems(
+                findSec(
+                  "details"
+                )
+              );
+
+            const footer =
+              renderCanvasItems(
+                findSec(
+                  "footer"
+                )
+              );
+
+
+            return (
+              <>
+                {header}
+                {main}
+                {footer}
+              </>
+            );
+
+          })()
+
+        ) : Array.isArray(
+            layoutSections
+          ) &&
+          layoutSections.length >
+            0 ? (
+
+          <Box>
+
+            {layoutSections.map(
+              (
+                sec,
+                sIdx
+              ) => (
+
+                <Box
+                  key={`sec_${sIdx}`}
+
+                  sx={{
+                    mb: 1.5,
+                  }}
+                >
+
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+
+                    {(sec.columns ||
+                      [])
+                      .filter(
+                        (c) => {
+
+                          if (!c)
+                            return false;
+
+                          const hasFields =
+                            Array.isArray(
+                              c.fields
+                            ) &&
+                            c
+                              .fields
+                              .length >
+                              0;
+
+                          const hasBlocks =
+                            sec.id ===
+                              "header" &&
+                            Array.isArray(
+                              c.blocks
+                            ) &&
+                            c
+                              .blocks
+                              .length >
+                              0;
+
+                          return (
+                            Number(
+                              c.span
+                            ) > 0 &&
+                            (hasFields ||
+                              hasBlocks)
+                          );
+
+                        }
+                      )
+                      .map(
+                        (
+                          col,
+                          cIdx
+                        ) => (
+
+                          <Grid
+                            key={`c_${cIdx}`}
+
+                            item
+
+                            xs={12}
+
+                            md={
+                              Math.min(
+                                Math.max(
+                                  Number(
+                                    col.span ||
+                                      1
+                                  ),
+                                  1
+                                ),
+                                4
+                              ) *
+                              3
+                            }
+                          >
+
+                            <Grid
+                              container
+                              spacing={2}
+                            >
+
+                              {(
+                                col.fields ||
+                                []
+                              ).map(
+                                (
+                                  fp,
+                                  fIdx
+                                ) => {
+
+                                  const name =
+                                    String(
+                                      fp.field ||
+                                        ""
+                                    )
+                                      .trim()
+                                      .toLowerCase();
+
+                                  const meta =
+                                    visible.find(
+                                      (
+                                        mf
+                                      ) =>
+                                        String(
+                                          mf.column ||
+                                            ""
+                                        )
+                                          .trim()
+                                          .toLowerCase() ===
+                                        name
+                                    );
+
+                                  if (
+                                    !meta
+                                  )
+                                    return null;
+
+                                  return renderField(
+                                    meta,
+                                    fIdx,
+                                    "normal"
+                                  );
+
+                                }
+                              )}
+
+                            </Grid>
+
+                          </Grid>
+
+                        )
+                      )}
+
+                  </Grid>
+
+
+                  {String(
+                    sec.id ||
+                      ""
+                  ).toLowerCase() ===
+                    "main" && (
+
+                    <Grid
+                      item
+                      xs={12}
+                    >
+
+                      <Grid
+                        container
+                        spacing={2}
+                      >
+
+                        {commentsField &&
+                          renderField(
+                            commentsField,
+                            9991,
+                            "comments"
+                          )}
+
+                        {auditField &&
+                          renderField(
+                            auditField,
+                            9990,
+                            "audit"
+                          )}
+
+                      </Grid>
+
+                    </Grid>
+                  )}
+
+                </Box>
+
+              )
+            )}
+
+          </Box>
+
+        ) : (
+
+          <Grid
+            container
+            spacing={2}
+          >
+
+            {normalFields.map(
+              (
+                f,
+                idx
+              ) =>
+                renderField(
+                  f,
+                  idx,
+                  "normal"
+                )
+            )}
+
+            {commentsField &&
+              renderField(
+                commentsField,
+                normalFields.length,
+                "comments"
+              )}
+
+            {auditField &&
+              renderField(
+                auditField,
+                normalFields.length +
+                  (commentsField
+                    ? 1
+                    : 0),
+                "audit"
+              )}
+
+          </Grid>
+
+        )}
+
+
+        {attachmentsAllowed && (
+          <FilePicker />
+        )}
+
+
+        {children}
+
+
+        {showPrimaryButton && (
+          <Box
+            display="flex"
+            gap={1}
+            mt={2}
+          >
+            <Button
+              type="submit"
+              variant="contained"
+            >
+              {primaryActionLabel}
+            </Button>
+          </Box>
+        )}
+
+      </>
+
+    )}
+
+  </Box>
+);
 });
 
 
@@ -1665,6 +2954,9 @@ console.log(
 
 <DynamicStepForm
   schema={schema}
+
+  presentation="reusableModal"
+
   attachmentsAllowed={attachmentsAllowedFlag}
   oneColumn={oneColumnFromLayout}
   canvasModel={canvasLayout}
@@ -2945,6 +4237,7 @@ const execContainerStyle = isTerminateStep
               return (
                 <DynamicStepForm
                   ref={formRef}
+                  presentation="reusableModal"
                   schema={displaySchema}
                   initial={initialValues}
                   canvasModel={execCanvasLayout}

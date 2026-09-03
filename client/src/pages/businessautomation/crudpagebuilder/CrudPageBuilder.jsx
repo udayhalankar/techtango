@@ -1,42 +1,105 @@
 // src/pages/businessautomation/crudpagebuilder/CrudPageBuilder.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
+
 import ReusableFormModal from "../../../components/ReusableFormModal";
+
 import { useParams } from "react-router-dom";
+
 import api from "../../../services/api";
+
 import {
-  Box, Button, Card, CardContent, Container, Divider, Dialog, DialogTitle, DialogContent, Grid, Stack, Typography, Paper,
-  TextField, Autocomplete, OutlinedInput, InputAdornment, List, ListItemButton, ListItemText,
-  Table, TableBody, TableCell, TableHead, TableRow, ToggleButton, ToggleButtonGroup,
-  Menu, MenuItem, Tabs, Tab, IconButton, Checkbox, FormControlLabel, FormControl, InputLabel, Select, RadioGroup, Radio,
-  ListItem
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Stack,
+  Typography,
+  Paper,
+  TextField,
+  Autocomplete,
+  OutlinedInput,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemText,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
+  Menu,
+  MenuItem,
+  Tabs,
+  Tab,
+  IconButton,
+  Checkbox,
+  FormControlLabel,
+  FormControl,
+  InputLabel,
+  Select,
+  RadioGroup,
+  Radio,
+  ListItem,
 } from "@mui/material";
+
 import {
   DataGrid,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
-  useGridApiRef
+  useGridApiRef,
 } from "@mui/x-data-grid";
+
 import { BarChart } from "@mui/x-charts/BarChart";
+
 import { LineChart } from "@mui/x-charts/LineChart";
+
 import { PieChart } from "@mui/x-charts/PieChart";
+
 import SearchIcon from "@mui/icons-material/Search";
+
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
+
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
+
 import TableRowsIcon from "@mui/icons-material/TableRows";
+
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+
 import CloseIcon from "@mui/icons-material/Close";
+
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+
 import * as XLSX from "xlsx";
+
 import SecureFileUploader from "../../../components/SecureFileUploader";
+
+import ModuleTileGrid from "../../../components/ModuleTileGrid";
 
 /* -----------------------------------------------------------------------------
    LAYOUT CONSTANTS
@@ -198,7 +261,7 @@ export default function CrudPageBuilder() {
   const [tablePage, setTablePage] = useState(0);
   const [tablePageSize, setTablePageSize] = useState(5);
   const PER_PAGE = 8;
-  const [recordsView, setRecordsView] = useState("grid");
+  const [recordsView, setRecordsView] = useState("table");
   const apiRef = useGridApiRef();
   const [exportMenuPosition, setExportMenuPosition] = useState(null);
   const [chartX, setChartX] = useState("");
@@ -315,6 +378,444 @@ export default function CrudPageBuilder() {
       .filter((d) => d.label !== "");
   }, [chartRows, chartX, chartY]);
 
+
+
+
+const renderRecordTileContent = (tile) => {
+  const record = tile.record || {};
+
+  /* ---------------------------------------------------------
+     FIND COLUMN CASE-INSENSITIVELY
+  --------------------------------------------------------- */
+
+  const findColumn = (...names) => {
+    const wanted = names.map((name) =>
+      String(name).toLowerCase()
+    );
+
+    return (columns || []).find((column) =>
+      wanted.includes(
+        String(column).toLowerCase()
+      )
+    );
+  };
+
+  /* ---------------------------------------------------------
+     AUDIT FIELDS
+  --------------------------------------------------------- */
+
+  const createdByField = findColumn(
+    "created_by"
+  );
+
+  const createdDateField = findColumn(
+    "date_created",
+    "created_at"
+  );
+
+  const modifiedByField = findColumn(
+    "modified_by",
+    "updated_by"
+  );
+
+  const modifiedDateField = findColumn(
+    "date_modified",
+    "modified_at",
+    "updated_at"
+  );
+
+  const statusField =
+    tile.statusField ||
+    findColumn("status");
+
+  /* ---------------------------------------------------------
+     DATE FORMAT
+  --------------------------------------------------------- */
+
+  const formatTileDate = (value) => {
+    if (!value) return "-";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return date.toLocaleDateString(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
+  /* ---------------------------------------------------------
+     AUDIT ROW
+  --------------------------------------------------------- */
+
+  const TileRow = ({
+    label,
+    value,
+  }) => (
+    <Box
+      sx={{
+        display: "grid",
+
+        /*
+          Tight label/value spacing
+        */
+        gridTemplateColumns:
+          "72px minmax(0, 1fr)",
+
+        alignItems: "center",
+
+        columnGap: 0.3,
+
+        minWidth: 0,
+
+        height: 17,
+      }}
+    >
+      <Typography
+        noWrap
+        sx={{
+          fontSize: 9.8,
+
+          color: "#738496",
+
+          fontWeight: 500,
+
+          lineHeight: 1,
+        }}
+      >
+        {label}
+      </Typography>
+
+      <Typography
+        noWrap
+        title={String(
+          value ?? "-"
+        )}
+        sx={{
+          minWidth: 0,
+
+          overflow: "hidden",
+
+          textOverflow: "ellipsis",
+
+          whiteSpace: "nowrap",
+
+          fontSize: 10.3,
+
+          color: "#33485d",
+
+          fontWeight: 600,
+
+          lineHeight: 1,
+        }}
+      >
+        {value ?? "-"}
+      </Typography>
+    </Box>
+  );
+
+  /* ---------------------------------------------------------
+     TILE
+  --------------------------------------------------------- */
+
+  return (
+    <>
+      {/* TITLE */}
+
+      <Typography
+        title={tile.label}
+        noWrap
+        sx={{
+          width: "100%",
+
+          minHeight: 22,
+
+          display: "flex",
+
+          alignItems: "center",
+
+          overflow: "hidden",
+
+          textOverflow: "ellipsis",
+
+          whiteSpace: "nowrap",
+
+          fontSize: 14,
+
+          fontWeight: 700,
+
+          lineHeight: "20px",
+
+          color: "#172b4d",
+
+          pr: 1,
+
+          pt: "1px",
+        }}
+      >
+        {tile.label}
+      </Typography>
+
+      {/* STATUS */}
+
+      {statusField &&
+      record?.[statusField] !== null &&
+      record?.[statusField] !== undefined &&
+      String(
+        record[statusField]
+      ).trim() !== "" ? (
+        <Typography
+          noWrap
+          title={String(
+            record[statusField]
+          )}
+          sx={{
+            mt: 0.15,
+
+            width: "100%",
+
+            overflow: "hidden",
+
+            textOverflow:
+              "ellipsis",
+
+            whiteSpace: "nowrap",
+
+            fontSize: 10,
+
+            fontWeight: 700,
+
+            lineHeight: 1.1,
+
+            color: "#c62828",
+
+            textTransform:
+              "uppercase",
+          }}
+        >
+          {String(
+            record[statusField]
+          )}
+        </Typography>
+      ) : null}
+
+      {/* 
+        THIS FLEX SPACE IS IMPORTANT.
+
+        It pushes the audit information
+        and Actions button to the bottom.
+      */}
+
+      <Box
+        sx={{
+          flexGrow: 1,
+          minHeight: 0,
+        }}
+      />
+
+      {/* =====================================================
+          BOTTOM AREA
+
+          Audit fields and Actions share the same bottom edge.
+         ===================================================== */}
+
+      <Box
+        sx={{
+          display: "grid",
+
+          gridTemplateColumns:
+            "minmax(0, 1fr) auto",
+
+          alignItems: "end",
+
+          columnGap: 1,
+
+          minWidth: 0,
+
+          width: "100%",
+        }}
+      >
+        {/* AUDIT FIELDS */}
+
+        <Box
+          sx={{
+            display: "grid",
+
+            /*
+              Very tight spacing between all
+              four rows.
+            */
+            rowGap: "1px",
+
+            minWidth: 0,
+
+            pb: 0,
+          }}
+        >
+          <TileRow
+            label="Created By"
+            value={
+              createdByField
+                ? record[
+                    createdByField
+                  ]
+                : "-"
+            }
+          />
+
+          <TileRow
+            label="Date Created"
+            value={
+              createdDateField
+                ? formatTileDate(
+                    record[
+                      createdDateField
+                    ]
+                  )
+                : "-"
+            }
+          />
+
+          <TileRow
+            label="Modified By"
+            value={
+              modifiedByField
+                ? record[
+                    modifiedByField
+                  ]
+                : "-"
+            }
+          />
+
+          <TileRow
+            label="Date Modified"
+            value={
+              modifiedDateField
+                ? formatTileDate(
+                    record[
+                      modifiedDateField
+                    ]
+                  )
+                : "-"
+            }
+          />
+        </Box>
+
+        {/* ACTIONS */}
+
+        <Button
+          size="small"
+          endIcon={
+            <ExpandMoreIcon />
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+
+            setRecordMenuAnchor(
+              event.currentTarget
+            );
+
+            setRecordMenuRow(
+              record
+            );
+          }}
+          sx={{
+            height: 26,
+
+            minHeight: 26,
+
+            px: 1,
+
+            mb: 0,
+
+            borderRadius: "6px",
+
+            bgcolor: "#eaf3fc",
+
+            color: "#0a6ed1",
+
+            textTransform: "none",
+
+            fontSize: 10.5,
+
+            fontWeight: 700,
+
+            lineHeight: 1,
+
+            alignSelf: "end",
+
+            "& .MuiButton-endIcon":
+              {
+                ml: 0.45,
+              },
+
+            "&:hover": {
+              bgcolor: "#dcecfb",
+            },
+          }}
+        >
+          Actions
+        </Button>
+      </Box>
+    </>
+  );
+};
+
+
+
+
+
+const recordsViewSelector = (
+  <ToggleButtonGroup
+    size="small"
+    exclusive
+    value={recordsView}
+    onChange={(_event, value) =>
+      value && setRecordsView(value)
+    }
+    sx={{
+      height: 36,
+
+      "& .MuiToggleButton-root": {
+        width: 38,
+        p: 0,
+
+        borderColor: "#d6dde5",
+
+        color: "#63778b",
+
+        "&.Mui-selected": {
+          bgcolor: "#eaf3fc",
+          color: "#0a6ed1",
+        },
+
+        "&.Mui-selected:hover": {
+          bgcolor: "#dfedfb",
+        },
+      },
+    }}
+  >
+    <ToggleButton value="grid">
+      <ViewModuleIcon
+        sx={{ fontSize: 17 }}
+      />
+    </ToggleButton>
+
+    <ToggleButton value="table">
+      <TableRowsIcon
+        sx={{ fontSize: 17 }}
+      />
+    </ToggleButton>
+  </ToggleButtonGroup>
+);
+
   const RecordsToolbar = () => (
     <GridToolbarContainer
       sx={{
@@ -329,7 +830,7 @@ export default function CrudPageBuilder() {
           minHeight: 32,
           px: 1.15,
           border: "1px solid #C9D8E8",
-          borderRadius: "8px",
+          borderRadius: "4px",
           textTransform: "none",
           fontSize: 12.5,
           fontWeight: 600,
@@ -360,7 +861,7 @@ export default function CrudPageBuilder() {
           width: 380,
           height: 36,
           bgcolor: "#FFFFFF",
-          borderRadius: "8px",
+          borderRadius: "4px",
           "& .MuiOutlinedInput-notchedOutline": {
             borderColor: "#C9D8E8",
           },
@@ -410,7 +911,7 @@ export default function CrudPageBuilder() {
         }}
         PaperProps={{
           sx: {
-            borderRadius: "8px",
+            borderRadius: "4px",
             mt: 0.5,
             border: "1px solid #DCE6F0",
             boxShadow: "0 8px 24px rgba(15, 23, 42, 0.10)",
@@ -694,6 +1195,98 @@ export default function CrudPageBuilder() {
     setRecModalOpen(true);
   };
 
+const recordTiles = useMemo(() => {
+  const SYSTEM_FIELDS = new Set([
+    "id",
+    "seq",
+    "date_created",
+    "created_at",
+    "created_by",
+    "date_modified",
+    "modified_at",
+    "modified_by",
+    "updated_at",
+    "updated_by",
+  ]);
+
+  /*
+    First BUSINESS column becomes the tile title.
+
+    Example columns:
+    id
+    fullname
+    age
+    dob
+    city
+    created_by
+    date_created
+
+    => title field = fullname
+  */
+  const titleField =
+    (columns || []).find(
+      (column) =>
+        !SYSTEM_FIELDS.has(
+          String(column).toLowerCase()
+        ) &&
+        String(column).toLowerCase() !==
+          String(pkName).toLowerCase()
+    ) || pkName;
+
+  /*
+    Find status column regardless of case.
+    Supports STATUS / status / Status.
+  */
+  const statusField =
+    (columns || []).find(
+      (column) =>
+        String(column).toLowerCase() ===
+        "status"
+    ) || null;
+
+  return rows.map((record, index) => {
+    const id =
+      record?.[pkName] ??
+      record?.id ??
+      index;
+
+    const titleValue =
+      record?.[titleField];
+
+    return {
+      id,
+
+      label:
+        titleValue !== null &&
+        titleValue !== undefined &&
+        String(titleValue).trim() !== ""
+          ? String(titleValue)
+          : `Record ${id}`,
+
+      titleField,
+
+      statusField,
+
+      record,
+
+      searchText: Object.values(
+        record || {}
+      )
+        .map((value) =>
+          String(value ?? "")
+        )
+        .join(" "),
+
+      onClick: () =>
+        openView(record),
+    };
+  });
+}, [
+  rows,
+  columns,
+  pkName,
+]);
+
   const handleSaveRecord = async () => {
     try {
       const modeKey = recMode === "edit" ? "edit" : "create";
@@ -845,7 +1438,7 @@ export default function CrudPageBuilder() {
                 width: 30,
                 height: 30,
                 border: "1px solid #C9D8E8",
-                borderRadius: "8px",
+                borderRadius: "4px",
                 color: "#0B6BCB",
                 bgcolor: "#FFFFFF",
                 "&:hover": {
@@ -868,7 +1461,7 @@ export default function CrudPageBuilder() {
                 width: 30,
                 height: 30,
                 border: "1px solid #C9D8E8",
-                borderRadius: "8px",
+                borderRadius: "4px",
                 color: "#0B6BCB",
                 bgcolor: "#FFFFFF",
                 "&:hover": {
@@ -893,1001 +1486,1843 @@ export default function CrudPageBuilder() {
     }, {});
   }, [columns, pkName]);
 
-  /* ---------------------------------------------------------------------------
+   /* ---------------------------------------------------------------------------
      UI
   --------------------------------------------------------------------------- */
+
+  const settingsButton = (
+    <IconButton
+      size="small"
+      onClick={(event) =>
+        setConfigAnchor(event.currentTarget)
+      }
+      sx={{
+        width: 36,
+        height: 36,
+
+        border: "1px solid #d6dde5",
+        borderRadius: "4px",
+
+        bgcolor: "#ffffff",
+        color: "#0a6ed1",
+
+        "&:hover": {
+          bgcolor: "#f2f7fc",
+          borderColor: "#aebcca",
+        },
+      }}
+    >
+      <SettingsOutlinedIcon
+        sx={{
+          fontSize: 18,
+        }}
+      />
+    </IconButton>
+  );
+
+  /* =========================================================================
+     BUILDER MODE
+     /crudwebpage
+     ========================================================================= */
+
   if (!standaloneId) {
-    return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#FFFFFF" }}>
-        <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, py: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Data Application Builder
-          </Typography>
-          <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-            Build full data-driven applications without coding          
-            </Typography>
-          
-        </Box>
-
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box sx={{ maxWidth: 1170, mx: "auto", borderRadius: 2, p: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setPageName("");
-                  setFormName("");
-                  setTableName(null);
-                  setCreateModalOpen(true);
-                }}
-                sx={{ bgcolor: "#1f355d", textTransform: "none" }}
-              >
-                Create New Data Application
-              </Button>
-              <Box sx={{ flexGrow: 1 }} />
-              <TextField
-                size="small"
-                placeholder="Search"
-                value={pagesSearch}
-                onChange={(e) => setPagesSearch(e.target.value)}
-                InputProps={{ sx: { bgcolor: "#f8fafc" } }}
-                sx={{ width: 500 }}
-              />
-            </Stack>
-
-            {pagesView === "grid" ? (
-              <Box sx={{ mt: 3 }}>
-                <Grid container spacing={2}>
-                  {pagesFiltered.length === 0 ? (
-                    <Grid item xs={12}>
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 3,
-                          textAlign: "center",
-                          color: "text.secondary",
-                          borderRadius: 2,
-                          border: "1px dashed #cbd5e1",
-                          bgcolor: "#ffffff",
-                        }}
-                      >
-                        No CRUD pages yet
-                      </Paper>
-                    </Grid>
-                  ) : (
-                    pagesFiltered.map((p) => (
-                      <Grid item key={p.id} xs={12} sm={6} md={3}>
-                        <Paper
-                          elevation={0}
-                          role="button"
-                          tabIndex={0}
-                          sx={{
-                            bgcolor: "#ffffff",
-                            color: "#1f355d",
-                            border: "1px solid #2f5fff",
-                            boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
-                            borderRadius: 2,
-                            p: 2,
-                            minHeight: 160,
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                            gap: 1.5,
-                            transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
-                              borderColor: "#1a4fd8",
-                            },
-                            cursor: "pointer",
-                          }}
-                          onClick={() => window.open(p.page_url || `/crudwebpage/${p.id}`, "_blank")}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              window.open(p.page_url || `/crudwebpage/${p.id}`, "_blank");
-                            }
-                          }}
-                        >
-                          <Box>
-                            <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#1a4fd8" }}>
-                              {p.page_name || "Untitled Page"}
-                            </Typography>
-                            <Typography sx={{ fontSize: 12, color: "#51607d", mt: 1 }}>
-                              ID: {p.id ?? "-"}
-                            </Typography>
-                            <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                              Created by: {p.created_by ?? "-"}
-                            </Typography>
-                            <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                              Last Modified:{" "}
-                              {p.date_modified
-                                ? new Date(p.date_modified).toLocaleDateString()
-                                : p.date_created
-                                  ? new Date(p.date_created).toLocaleDateString()
-                                  : "-"}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              sx={{ textTransform: "none" }}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleDeletePage(p.id);
-                              }}
-                            >
-                              Delete
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              sx={{ textTransform: "none" }}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                alert("TODO: Manage access");
-                              }}
-                            >
-                              Manage Access
-                            </Button>
-                          </Box>
-                        </Paper>
-                      </Grid>
-                    ))
-                  )}
-                </Grid>
-              </Box>
-            ) : (
-              <Paper variant="outlined" sx={{ borderRadius: 2, mt: 3 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Page Name</TableCell>
-                      <TableCell>Form Name</TableCell>
-                      <TableCell>Table</TableCell>
-                      <TableCell>Date Created</TableCell>
-                      <TableCell>Open</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {pagesFiltered.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                          No CRUD pages yet
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      pagesFiltered.map((p) => (
-                        <TableRow key={p.id} hover>
-                          <TableCell>{p.page_name || "-"}</TableCell>
-                          <TableCell>{p.form_name || "-"}</TableCell>
-                          <TableCell>{p.table_name || "-"}</TableCell>
-                          <TableCell>
-                            {p.date_created ? new Date(p.date_created).toLocaleDateString() : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => window.open(p.page_url || `/crudwebpage/${p.id}`, "_blank")}
-                            >
-                              Open
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </Paper>
-            )}
-          </Box>
-        </Container>
-
-        {createModalOpen && (
-          <Overlay onClose={() => setCreateModalOpen(false)}>
-            <>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Create New Page
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Page Name"
-                    fullWidth
-                    size="small"
-                    value={pageName}
-                    onChange={(e) => setPageName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Form Name"
-                    fullWidth
-                    size="small"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Description"
-                    fullWidth
-                    size="small"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Autocomplete
-                    options={tables}
-                    value={tableName}
-                    onChange={(_e, v) => setTableName(v)}
-                    size="small"
-                    renderInput={(p) => <TextField {...p} label="Select Table" />}
-                    getOptionLabel={(o) => (typeof o === "string" ? o : o?.table_name || "")}
-                    isOptionEqualToValue={(a, b) =>
-                      (typeof a === "string" ? a : a?.table_name) ===
-                      (typeof b === "string" ? b : b?.table_name)
-                    }
-                  />
-                </Grid>
-              </Grid>
-              <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-                <Button variant="outlined" onClick={() => setCreateModalOpen(false)}>
-                  Close
-                </Button>
-                <Button variant="contained" onClick={handleCreatePage}>
-                  Create
-                </Button>
-              </Stack>
-            </>
-          </Overlay>
-        )}
-      </Box>
-    );
-  }
-
   return (
-     <Box sx={{ minHeight: "100vh", bgcolor: "#FFFFFF" }}>
-      <Box sx={{ px: 0, py: 0 }}>
-        <Box sx={{ width: "100%" }}>
-          {/* Records preview for the selected page */}
-          {activePage && (
-            <Box>
-              <Box sx={{ px: 2.5, py: 2 }}>
-                <Box
+    <>
+      <ModuleTileGrid
+        title="Data Application Builder"
+        subtitle="Build full data-driven applications without coding."
+        
+        tiles={(pages || []).map((p) => ({
+  id: p.id,
+
+  label:
+    p.page_name ||
+    "Untitled Application",
+
+  desc: [
+    p.form_name
+      ? `Form: ${p.form_name}`
+      : null,
+
+    p.table_name
+      ? `Table: ${p.table_name}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · "),
+
+  searchText: [
+    p.page_name,
+    p.form_name,
+    p.table_name,
+    p.description,
+  ]
+    .filter(Boolean)
+    .join(" "),
+
+  /*
+   * Deliberately no tile-level onClick.
+   *
+   * This tile contains its own Delete/Open buttons.
+   * If onClick is supplied, ModuleTileGrid renders
+   * the tile itself as <button>, causing nested buttons.
+   */
+}))}
+
+        searchPlaceholder="Search data applications"
+        primaryAction={{
+          label:
+            "Create New Data Application",
+
+          onClick: () => {
+            setPageName("");
+            setFormName("");
+            setDescription("");
+            setTableName(null);
+            setCreateModalOpen(true);
+          },
+        }}
+        showDefaultFooter={false}
+        renderTileContent={(tile) => {
+          const pageRow = pages.find(
+            (p) => p.id === tile.id
+          );
+
+          if (!pageRow) return null;
+
+          return (
+            <>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#223548",
+
+                  lineHeight: 1.35,
+
+                  display: "-webkit-box",
+                  WebkitBoxOrient:
+                    "vertical",
+                  WebkitLineClamp: 2,
+                  overflow: "hidden",
+                }}
+              >
+                {pageRow.page_name ||
+                  "Untitled Application"}
+              </Typography>
+
+              <Box
+                sx={{
+                  mt: 1.2,
+                  display: "grid",
+                  gap: 0.55,
+                }}
+              >
+                <Typography
                   sx={{
-                    mx: -2.5,
-                    mt: -2,
-                    mb: 2,
-                    px: 4,
-                    py: 4,
-                    color: "#ffffff",
-                    background: "linear-gradient(135deg, #1f355d 0%, #315f9a 100%)",
+                    fontSize: 10.8,
+                    color: "#738496",
                   }}
                 >
-                  <Typography
-                    variant="h4"
+                  ID
+                  <Box
+                    component="span"
                     sx={{
+                      ml: 1,
+                      color: "#33485d",
                       fontWeight: 600,
                     }}
                   >
-                    {activePage?.page_name || "CRUD Webpage"}
-                  </Typography>
+                    {pageRow.id ?? "-"}
+                  </Box>
+                </Typography>
 
-                  {activePage?.description && (
-                    <Typography
-                      variant="body1"
-                      sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}
-                    >
-                      {activePage.description}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box
+                <Typography
                   sx={{
-                    maxWidth: recordsView === "grid" ? 1200 : 1500,
-                    boxSizing: "border-box",
-                    mx: "auto",
-                    px: recordsView === "grid" ? 3 : 0.5,
+                    fontSize: 10.8,
+                    color: "#738496",
                   }}
                 >
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.25}
+                  Form
+                  <Box
+                    component="span"
                     sx={{
-                      minHeight: 58,
-                      bgcolor: "#FFFFFF",
-                      px: 0.5,
-                      py: 0.75,
+                      ml: 1,
+                      color: "#33485d",
+                      fontWeight: 600,
                     }}
                   >
-                    <Button
-  variant="contained"
-  startIcon={<AddCircleOutlineIcon />}
-  onClick={openCreate}
-  sx={{
-    height: 38,
-    px: 1.75,
-    bgcolor: "#0B6BCB",
-    borderRadius: "8px",
-    textTransform: "none",
-    fontWeight: 700,
-    boxShadow: "none",
+                    {pageRow.form_name ||
+                      "-"}
+                  </Box>
+                </Typography>
 
-    "&:hover": {
-      bgcolor: "#095BAE",
-      boxShadow: "none",
-    },
-  }}
->
-  Create New Record
-</Button>
-                    <IconButton
-  size="small"
-  onClick={(e) => setConfigAnchor(e.currentTarget)}
-  sx={{
-    width: 38,
-    height: 38,
-    border: "1px solid #C9D8E8",
-    borderRadius: "8px",
-    bgcolor: "#FFFFFF",
-    color: "#0B6BCB",
-
-    "&:hover": {
-      bgcolor: "#F0F7FF",
-      borderColor: "#91B9DD",
-    },
-  }}
->
-  <SettingsOutlinedIcon fontSize="small" />
-</IconButton>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <ToggleButtonGroup
-  size="small"
-  exclusive
-  value={recordsView}
-  onChange={(_e, v) => v && setRecordsView(v)}
-  sx={{
-    height: 38,
-
-    "& .MuiToggleButton-root": {
-      width: 40,
-      borderRadius: "8px",
-      borderColor: "#C9D8E8",
-      color: "#58708A",
-
-      "&.Mui-selected": {
-        bgcolor: "#EAF4FF",
-        color: "#0B6BCB",
-      },
-
-      "&.Mui-selected:hover": {
-        bgcolor: "#DFEEFC",
-      },
-    },
-  }}
->
-                      <ToggleButton value="grid">
-                        <ViewModuleIcon fontSize="small" />
-                      </ToggleButton>
-                      <ToggleButton value="table">
-                        <TableRowsIcon fontSize="small" />
-                      </ToggleButton>
-                    </ToggleButtonGroup>
-                  </Stack>
-                </Box>
-
-              <Divider sx={{ my: 1.25, borderColor: "#EEF2F6" }} />
-
-              {recordsView === "grid" ? (
-                <Container maxWidth="lg" sx={{ py: 0, position: "relative" }}>
-                {totalPages > 1 ? (
-                  <IconButton
-                    aria-label="Previous records"
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                    disabled={page === 1}
+                <Typography
+                  sx={{
+                    fontSize: 10.8,
+                    color: "#738496",
+                  }}
+                >
+                  Table
+                  <Box
+                    component="span"
                     sx={{
-                      position: "absolute",
-                      left: { md: -56, lg: -64 },
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#b8c2d4",
-                      backgroundColor: "transparent",
-                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
-                      "&.Mui-disabled": { color: "#d7dee9" },
+                      ml: 1,
+                      color: "#33485d",
+                      fontWeight: 600,
                     }}
                   >
-                    <ChevronLeftIcon />
-                  </IconButton>
-                ) : null}
-                <Grid container spacing={2} columns={{ xs: 1, sm: 2, md: 4 }}>
-                  {paged.length === 0 ? (
-                    <Grid item xs={12} >
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 3,
-                          textAlign: "center",
-                          color: "text.secondary",
-                          borderRadius: 2,
-                          border: "1px dashed #cbd5e1",
-                          bgcolor: "#ffffff", 
-                        }}
-                      >
-                        {loading ? "Loading." : "No data"}
-                      </Paper>
-                    </Grid>
-                  ) : (
-                    paged.map((r, i) => (
-                      <Grid item key={i} xs={1}>
-                        <Paper
-                          elevation={0}
-                          role="button"
-                          tabIndex={0}
-                          sx={{
-                            bgcolor: "#ffffff",
-                            color: "#1f355d",
-                            border: "1px solid #2f5fff",
-                            boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
-                            borderRadius: 2,
-                            p: 2,
-                            height: 180,
-                            minHeight: 180,
-                            maxHeight: 180,
-                            overflow: "hidden",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1.5,
-                            cursor: "pointer",
-                            transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                              boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
-                              borderColor: "#1a4fd8",
-                            },
-                            "&:active": {
-                              transform: "translateY(-2px) scale(0.99)",
-                              boxShadow: "0 6px 12px rgba(16, 24, 40, 0.18)",
-                            },
-                            "&:focus-visible": {
-                              outline: "2px solid #1a4fd8",
-                              outlineOffset: 2,
-                            },
-                          }}
-                          onClick={() => openView(r)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              openView(r);
-                            }
-                          }}
-                        >
-                          <Box sx={{ display: "grid", gap: 0.5 }} >
-                            {["id", "date_created", "created_at", "created_by"]
-                              .map((key) =>
-                                columns.find((c) => String(c).toLowerCase() === key)
-                              )
-                              .filter(Boolean)
-                              .map((c) => (
-                                <Typography key={c} sx={{ fontSize: 12, color: "#51607d" }}>
-                                  <strong>{c}:</strong> {String(r[c] ?? "")}
-                                </Typography>
-                              ))}
-                          </Box>
-                          <Box sx={{ mt: "auto", pb: 0.5, display: "flex", justifyContent: "flex-end" }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              endIcon={<ExpandMoreIcon />}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setRecordMenuAnchor(event.currentTarget);
-                                setRecordMenuRow(r);
-                              }}
-                              sx={{ textTransform: "none" }}
-                            >
-                              Actions
-                            </Button>
-                          </Box>
-                        </Paper>
-                      </Grid>
-                    ))
+                    {pageRow.table_name ||
+                      "-"}
+                  </Box>
+                </Typography>
+              </Box>
+
+              <Box sx={{ flexGrow: 1 }} />
+
+              <Stack
+                direction="row"
+                justifyContent="flex-end"
+                spacing={1}
+              >
+                <Button
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+
+                    handleDeletePage(
+                      pageRow.id
+                    );
+                  }}
+                  sx={{
+                    minHeight: 28,
+                    px: 1.1,
+
+                    border:
+                      "1px solid #f0b8b4",
+
+                    borderRadius: "4px",
+
+                    color: "#b42318",
+
+                    textTransform:
+                      "none",
+
+                    fontSize: 10.5,
+
+                    "&:hover": {
+                      bgcolor:
+                        "#fdf2f1",
+                    },
+                  }}
+                >
+                  Delete
+                </Button>
+
+                <Button
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+
+                    window.open(
+                      pageRow.page_url ||
+                        `/crudwebpage/${pageRow.id}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    );
+                  }}
+                  sx={{
+                    minHeight: 28,
+                    px: 1.2,
+
+                    borderRadius: "4px",
+
+                    bgcolor: "#eaf3fc",
+                    color: "#0a6ed1",
+
+                    textTransform:
+                      "none",
+
+                    fontSize: 10.5,
+                    fontWeight: 700,
+
+                    "&:hover": {
+                      bgcolor:
+                        "#dcecfb",
+                    },
+                  }}
+                >
+                  Open
+                </Button>
+              </Stack>
+            </>
+          );
+        }}
+      >
+        {/* no custom children */}
+            </ModuleTileGrid>
+
+      {/* ============================================================
+          CREATE DATA APPLICATION
+      ============================================================ */}
+
+      <Dialog
+        open={createModalOpen}
+        onClose={() =>
+          setCreateModalOpen(false)
+        }
+        fullWidth
+        maxWidth="sm"
+        BackdropProps={{
+          sx: {
+            backdropFilter:
+              "none !important",
+
+            WebkitBackdropFilter:
+              "none !important",
+
+            backgroundColor:
+              "rgba(17,31,46,.38) !important",
+          },
+        }}
+        PaperProps={{
+          sx: {
+            width:
+              "min(620px, 94vw)",
+
+            borderRadius:
+              "4px",
+
+            overflow: "visible",
+
+            border:
+              "1px solid #d6e1e9",
+
+            boxShadow:
+              "0 18px 50px rgba(28,45,65,.20)",
+          },
+        }}
+      >
+        {/* HEADER */}
+
+        <Box
+          sx={{
+            px: 2.25,
+            py: 1.6,
+
+            background:
+              "linear-gradient(105deg, #176f87 0%, #2188a0 100%)",
+
+            color:
+              "#ffffff",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 18,
+              fontWeight: 700,
+            }}
+          >
+            Create New Data Application
+          </Typography>
+
+          <Typography
+            sx={{
+              mt: 0.35,
+
+              fontSize: 10.5,
+
+              color:
+                "rgba(255,255,255,.82)",
+            }}
+          >
+            Define the application name, form and source table.
+          </Typography>
+        </Box>
+
+        {/* BODY */}
+
+        <DialogContent
+          sx={{
+            p: 2.25,
+
+            bgcolor:
+              "#fbfcfd",
+          }}
+        >
+          <Grid
+            container
+            spacing={1.5}
+          >
+            <Grid
+              item
+              xs={12}
+              md={6}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                label="Page Name"
+                value={pageName}
+                onChange={(e) =>
+                  setPageName(
+                    e.target.value
+                  )
+                }
+              />
+            </Grid>
+
+            <Grid
+              item
+              xs={12}
+              md={6}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                label="Form Name"
+                value={formName}
+                onChange={(e) =>
+                  setFormName(
+                    e.target.value
+                  )
+                }
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Autocomplete
+                  fullWidth
+                  size="small"
+                  disablePortal
+
+                  options={tables}
+                  value={tableName}
+
+                  onChange={(_event, value) =>
+                    setTableName(value)
+                  }
+
+                  ListboxProps={{
+                    sx: {
+                      maxHeight: 190,
+                      py: 0.5,
+
+                      "& .MuiAutocomplete-option": {
+                        minHeight: 30,
+                        fontSize: 12,
+                      },
+                    },
+                  }}
+
+                  componentsProps={{
+                    paper: {
+                      sx: {
+                        borderRadius: "4px",
+                        border: "1px solid #d6e1e9",
+                        boxShadow: "0 8px 20px rgba(15,23,42,.14)",
+                      },
+                    },
+                  }}
+
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Table"
+                      placeholder="Select data table"
+                    />
                   )}
-                </Grid>
-                {totalPages > 1 ? (
-                  <IconButton
-                    aria-label="Next records"
-                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                    disabled={page === totalPages}
-                    sx={{
-                      position: "absolute",
-                      right: { md: -56, lg: -64 },
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#b8c2d4",
-                      backgroundColor: "transparent",
-                      "&:hover": { backgroundColor: "transparent", color: "#94a3b8" },
-                      "&.Mui-disabled": { color: "#d7dee9" },
-                    }}
-                  >
-                    <ChevronRightIcon />
-                  </IconButton>
-                ) : null}
-                </Container>
-              ) : (
-                <Box sx={{ width: 1500, maxWidth: "100%", mx: "auto" }}>
-                  <Box sx={{ width: "100%", minWidth: 0 }}>
-            <DataGrid
-              apiRef={apiRef}
-              autoHeight
-              density="compact"
-              rows={rowsForGrid}
-                      columns={gridColumns}
-                      loading={loading}
-                      disableRowSelectionOnClick
-                      pageSizeOptions={[5, 10, 25, 50]}
-                      paginationModel={{ page: tablePage, pageSize: tablePageSize }}
-                      onPaginationModelChange={(model) => {
-                        if (tablePage !== model.page) setTablePage(model.page);
-                        if (tablePageSize !== model.pageSize) setTablePageSize(model.pageSize);
-                      }}
-                      initialState={{
-                        columns: {
-                          columnVisibilityModel: defaultVisibleColumns,
-                        },
-                      }}
-                      slots={{ toolbar: RecordsToolbar }}
-                      slotProps={{
-                        pagination: {
-                          SelectProps: {
-                            MenuProps: {
-                              BackdropProps: {
-                                sx: {
-                                  backdropFilter: "none !important",
-                                  WebkitBackdropFilter: "none !important",
-                                  backgroundColor: "transparent !important",
-                                },
-                              },
-                            },
-                          },
-                        },
-                      }}
-                      onRowDoubleClick={(params) => openView(params.row)}
-                      sx={{
-                        border: "1px solid #D8E3EE",
-                        borderRadius: "10px",
-                        bgcolor: "#FFFFFF",
-                        color: "#19324D",
-                        fontSize: 12.5,
-                        overflow: "hidden",
+                />
+            </Grid>
 
-                        "& .MuiDataGrid-main": {
-                          borderRadius: 0,
-                        },
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                minRows={3}
+                label="Description"
+                value={description}
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value
+                  )
+                }
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
 
-                        "& .MuiDataGrid-columnHeaders": {
-                          bgcolor: "#0C467B",
-                          color: "#FFFFFF",
-                          borderBottom: "none",
-                          minHeight: "44px !important",
-                          maxHeight: "44px !important",
-                        },
+        {/* FOOTER */}
 
-                        "& .MuiDataGrid-columnHeader": {
-                          bgcolor: "#0C467B",
-                          outline: "none !important",
-                          borderRight: "none",
-                          px: 1.5,
-                        },
+        <DialogActions
+          sx={{
+            px: 2.25,
+            py: 1.4,
 
-                        "& .MuiDataGrid-columnHeaderTitle": {
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          letterSpacing: "0.15px",
-                          textTransform: "uppercase",
-                        },
+            borderTop:
+              "1px solid #e3eaef",
 
-                        "& .MuiDataGrid-columnHeader .MuiSvgIcon-root, & .MuiDataGrid-menuIconButton, & .MuiDataGrid-sortIcon": {
-                          color: "#DCEBFA",
-                        },
+            bgcolor:
+              "#ffffff",
+          }}
+        >
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() =>
+              setCreateModalOpen(
+                false
+              )
+            }
+            sx={{
+              minHeight: 32,
+              borderRadius:
+                "3px",
+              textTransform:
+                "none",
+            }}
+          >
+            Cancel
+          </Button>
 
-              "& .MuiDataGrid-row": {
-                borderBottom: "1px solid #E3EAF2",
-                transition: "background-color 120ms ease",
+          <Button
+            size="small"
+            variant="contained"
+            onClick={
+              handleCreatePage
+            }
+            sx={{
+              minHeight: 32,
+              borderRadius:
+                "3px",
+              textTransform:
+                "none",
+
+              bgcolor:
+                "#0879df",
+
+              boxShadow:
+                "none",
+
+              "&:hover": {
+                bgcolor:
+                  "#066dc8",
+
+                boxShadow:
+                  "none",
+              },
+            }}
+          >
+            Create Application
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+
+  /* =========================================================================
+     STANDALONE GENERATED APPLICATION
+     /crudwebpage/:pageId
+     ========================================================================= */
+
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#f5f6f7",
+      }}
+    >
+      {activePage ? (
+  <ModuleTileGrid
+    title={
+      activePage?.page_name ||
+      "CRUD Webpage"
+    }
+    subtitle={
+      activePage?.description || ""
+    }
+
+    /*
+      Grid gets ModuleTileGrid search.
+      Table gets its own DataGrid toolbar search.
+    */
+    searchEnabled={
+      recordsView === "grid"
+    }
+
+    searchPlaceholder="Search records"
+
+    /*
+      Keep Create New Record inherited
+      from ModuleTileGrid.
+    */
+    primaryAction={{
+      label: "Create New Record",
+      onClick: openCreate,
+    }}
+
+    /*
+      Put BOTH Settings and the view selector
+      in titleBarActions.
+
+      This guarantees the Grid/Table selector
+      is visible even if an older ModuleTileGrid
+      is accidentally still being served.
+    */
+    titleBarActions={
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+      >
+        {/* SETTINGS */}
+
+        <IconButton
+          size="small"
+          onClick={(event) =>
+            setConfigAnchor(
+              event.currentTarget
+            )
+          }
+          sx={{
+            width: 36,
+            height: 36,
+
+            border:
+              "1px solid rgba(255,255,255,.25)",
+
+            borderRadius: "4px",
+
+            bgcolor:
+              "rgba(255,255,255,.12)",
+
+            color: "#ffffff",
+
+            "&:hover": {
+              bgcolor:
+                "rgba(255,255,255,.20)",
+            },
+          }}
+        >
+          <SettingsOutlinedIcon
+            sx={{
+              fontSize: 18,
+            }}
+          />
+        </IconButton>
+
+        {/* GRID / TABLE */}
+
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={recordsView}
+          onChange={(_event, value) => {
+            if (value) {
+              setRecordsView(value);
+            }
+          }}
+          sx={{
+            height: 36,
+
+            bgcolor:
+              "rgba(255,255,255,.10)",
+
+            borderRadius: "4px",
+
+            "& .MuiToggleButton-root": {
+              width: 40,
+
+              p: 0,
+
+              color:
+                "rgba(255,255,255,.85)",
+
+              borderColor:
+                "rgba(255,255,255,.22)",
+
+              "&.Mui-selected": {
+                bgcolor: "#ffffff",
+                color: "#344f67",
               },
 
-                        "& .MuiDataGrid-row:last-of-type": {
-                          borderBottom: "none",
-                        },
+              "&.Mui-selected:hover": {
+                bgcolor: "#ffffff",
+              },
 
-                        "& .MuiDataGrid-row:hover": {
-                          bgcolor: "#F7FBFF !important",
-                        },
+              "&:hover": {
+                bgcolor:
+                  "rgba(255,255,255,.16)",
+              },
+            },
+          }}
+        >
+          <ToggleButton
+            value="grid"
+            aria-label="Grid view"
+          >
+            <ViewModuleIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+          </ToggleButton>
 
-                        "& .MuiDataGrid-row.Mui-selected": {
-                          bgcolor: "#EEF6FF !important",
-                        },
+          <ToggleButton
+            value="table"
+            aria-label="Table view"
+          >
+            <TableRowsIcon
+              sx={{
+                fontSize: 17,
+              }}
+            />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
+    }
 
-              "& .MuiDataGrid-cell": {
-                display: "flex",
-                alignItems: "center",
-                height: "100%",
-                minHeight: 0,
-                borderBottom: "none",
-                          borderRight: "none",
-                          px: 1.5,
-                          outline: "none !important",
-                        },
+    /*
+      GRID MODE:
+      ModuleTileGrid receives actual record tiles.
 
-                        "& .MuiDataGrid-toolbarContainer": {
-                          borderBottom: "1px solid #DCE6F0",
-                        },
+      TABLE MODE:
+      children are supplied below, so the normal
+      tile grid is not rendered.
+    */
+    tiles={
+      recordsView === "grid"
+        ? recordTiles
+        : []
+    }
 
-                        "& .MuiDataGrid-footerContainer": {
-                          minHeight: 48,
-                          bgcolor: "#FFFFFF",
-                          borderTop: "1px solid #DCE6F0",
-                          color: "#52677D",
-                        },
+    renderTileContent={
+      recordsView === "grid"
+        ? renderRecordTileContent
+        : undefined
+    }
 
-                        "& .MuiTablePagination-root": {
-                          fontSize: 12,
-                        },
+    showDefaultFooter={false}
+  >
+    {/* ============================================================
+        TABLE VIEW
+       ============================================================ */}
 
-                        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-                          fontSize: 12,
-                          color: "#52677D",
-                        },
+    {recordsView === "table" ? (
+      <Box
+        sx={{
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        <DataGrid
+          apiRef={apiRef}
 
-                        "& ::-webkit-scrollbar": {
-                          width: 8,
-                          height: 8,
-                        },
+          autoHeight
 
-                        "& ::-webkit-scrollbar-thumb": {
-                          bgcolor: "#C7D4E2",
-                          borderRadius: "8px",
-                        },
+          density="compact"
 
-                        "& ::-webkit-scrollbar-track": {
-                          bgcolor: "#F8FAFC",
-                        },
+          rows={rowsForGrid}
 
-                        "& .MuiDataGrid-overlayWrapper": {
-                          bgcolor: "#FFFFFF",
-                        },
+          columns={gridColumns}
+
+          loading={loading}
+
+          disableRowSelectionOnClick
+
+          pageSizeOptions={[
+            5,
+            10,
+            25,
+            50,
+          ]}
+
+          paginationModel={{
+            page: tablePage,
+            pageSize:
+              tablePageSize,
+          }}
+
+          onPaginationModelChange={(
+            model
+          ) => {
+            if (
+              tablePage !==
+              model.page
+            ) {
+              setTablePage(
+                model.page
+              );
+            }
+
+            if (
+              tablePageSize !==
+              model.pageSize
+            ) {
+              setTablePageSize(
+                model.pageSize
+              );
+            }
+          }}
+
+          initialState={{
+            columns: {
+              columnVisibilityModel:
+                defaultVisibleColumns,
+            },
+          }}
+
+          slots={{
+            toolbar:
+              RecordsToolbar,
+          }}
+
+          slotProps={{
+            pagination: {
+              SelectProps: {
+                MenuProps: {
+                  BackdropProps: {
+                    sx: {
+                      backdropFilter:
+                        "none !important",
+
+                      WebkitBackdropFilter:
+                        "none !important",
+
+                      backgroundColor:
+                        "transparent !important",
+                    },
+                  },
+                },
+              },
+            },
+          }}
+
+          onRowDoubleClick={(
+            params
+          ) =>
+            openView(params.row)
+          }
+
+          sx={{
+            border:
+              "1px solid #dce2e8",
+
+            borderRadius:
+              "6px",
+
+            bgcolor:
+              "#ffffff",
+
+            color:
+              "#223548",
+
+            fontSize: 12,
+
+            overflow:
+              "hidden",
+
+            /* ==============================================
+               HEADER
+               ============================================== */
+
+            "& .MuiDataGrid-columnHeaders":
+              {
+                bgcolor:
+                  "#344f67",
+
+                color:
+                  "#ffffff",
+
+                borderBottom:
+                  "none",
+
+                minHeight:
+                  "42px !important",
+
+                maxHeight:
+                  "42px !important",
+              },
+
+            "& .MuiDataGrid-columnHeader":
+              {
+                bgcolor:
+                  "#344f67",
+
+                outline:
+                  "none !important",
+
+                px: 1.4,
+              },
+
+            "& .MuiDataGrid-columnHeaderTitle":
+              {
+                fontSize:
+                  10.8,
+
+                fontWeight:
+                  700,
+
+                letterSpacing:
+                  "0.03em",
+
+                textTransform:
+                  "uppercase",
+              },
+
+            "& .MuiDataGrid-columnHeader .MuiSvgIcon-root, & .MuiDataGrid-menuIconButton, & .MuiDataGrid-sortIcon":
+              {
+                color:
+                  "#dce8f3",
+              },
+
+            /* ==============================================
+               ROWS
+               ============================================== */
+
+            "& .MuiDataGrid-row":
+              {
+                borderBottom:
+                  "1px solid #edf0f3",
+
+                transition:
+                  "background-color .12s ease",
+              },
+
+            "& .MuiDataGrid-row:hover":
+              {
+                bgcolor:
+                  "#f8fafc !important",
+              },
+
+            "& .MuiDataGrid-row.Mui-selected":
+              {
+                bgcolor:
+                  "#f0f6fc !important",
+              },
+
+            /* ==============================================
+               CELLS
+               ============================================== */
+
+            "& .MuiDataGrid-cell":
+              {
+                display:
+                  "flex",
+
+                alignItems:
+                  "center",
+
+                borderBottom:
+                  "none",
+
+                px: 1.4,
+
+                outline:
+                  "none !important",
+              },
+
+            /* ==============================================
+               TOOLBAR
+               ============================================== */
+
+            "& .MuiDataGrid-toolbarContainer":
+              {
+                borderBottom:
+                  "1px solid #edf0f3",
+              },
+
+            /* ==============================================
+               FOOTER
+               ============================================== */
+
+            "& .MuiDataGrid-footerContainer":
+              {
+                minHeight: 46,
+
+                bgcolor:
+                  "#ffffff",
+
+                borderTop:
+                  "1px solid #edf0f3",
+
+                color:
+                  "#65788a",
+              },
+
+            "& .MuiTablePagination-root":
+              {
+                fontSize:
+                  11.5,
+              },
+
+            "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+              {
+                fontSize:
+                  11.5,
+
+                color:
+                  "#65788a",
+              },
+
+            /* ==============================================
+               SCROLLBAR
+               ============================================== */
+
+            "& ::-webkit-scrollbar":
+              {
+                width: 8,
+                height: 8,
+              },
+
+            "& ::-webkit-scrollbar-thumb":
+              {
+                bgcolor:
+                  "#c7d4e2",
+
+                borderRadius:
+                  "4px",
+              },
+
+            "& ::-webkit-scrollbar-track":
+              {
+                bgcolor:
+                  "#f8fafc",
+              },
+          }}
+        />
+      </Box>
+    ) : null}
+  </ModuleTileGrid>
+) : (
+  <Box
+    sx={{
+      width: "90%",
+      maxWidth: "1500px",
+
+      mx: "auto",
+      py: 5,
+
+      textAlign: "center",
+
+      color: "#738496",
+    }}
+  >
+    {loading
+      ? "Loading application..."
+      : "Application could not be loaded."}
+  </Box>
+)}
+
+      {/* ===============================================================
+          CHART DIALOG
+          =============================================================== */}
+
+      <Dialog
+        open={chartOpen}
+        onClose={() =>
+          setChartOpen(false)
+        }
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width:
+              "min(1170px, 96vw)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+
+            alignItems:
+              "center",
+
+            justifyContent:
+              "space-between",
+          }}
+        >
+          Charts
+
+          <IconButton
+            onClick={() =>
+              setChartOpen(false)
+            }
+            size="small"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <Tabs
+          value={chartTab}
+          onChange={(_e, v) =>
+            setChartTab(v)
+          }
+          sx={{ px: 2 }}
+        >
+          <Tab
+            value="chart"
+            label="CHART"
+          />
+
+          <Tab
+            value="fields"
+            label="FIELDS"
+          />
+
+          <Tab
+            value="customize"
+            label="CUSTOMIZE"
+          />
+        </Tabs>
+
+        <DialogContent dividers>
+          {chartTab ===
+            "chart" && (
+            <Stack spacing={2}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+              >
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={
+                    chartSampling
+                  }
+                  onChange={(
+                    _e,
+                    v
+                  ) =>
+                    v &&
+                    setChartSampling(
+                      v
+                    )
+                  }
+                >
+                  <ToggleButton value="all">
+                    All Rows
+                  </ToggleButton>
+
+                  <ToggleButton value="sample">
+                    Sample
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                <TextField
+                  select
+                  size="small"
+                  label="Sample Size"
+                  value={
+                    chartSampleLimit
+                  }
+                  onChange={(e) =>
+                    setChartSampleLimit(
+                      Number(
+                        e.target
+                          .value
+                      )
+                    )
+                  }
+                  disabled={
+                    chartSampling !==
+                    "sample"
+                  }
+                  sx={{
+                    minWidth:
+                      140,
+                  }}
+                >
+                  {[
+                    100,
+                    200,
+                    500,
+                    1000,
+                  ].map((v) => (
+                    <MenuItem
+                      key={v}
+                      value={v}
+                    >
+                      {v}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+
+              <Grid
+                container
+                spacing={2}
+              >
+                {[
+                  {
+                    key:
+                      "column",
+
+                    label:
+                      "Column",
+                  },
+
+                  {
+                    key:
+                      "bar",
+
+                    label:
+                      "Bar",
+                  },
+
+                  {
+                    key:
+                      "line",
+
+                    label:
+                      "Line",
+                  },
+
+                  {
+                    key:
+                      "area",
+
+                    label:
+                      "Area",
+                  },
+
+                  {
+                    key:
+                      "pie",
+
+                    label:
+                      "Pie",
+                  },
+                ].map((t) => (
+                  <Grid
+                    item
+                    xs={6}
+                    sm={4}
+                    md={2.4}
+                    key={
+                      t.key
+                    }
+                  >
+                    <Button
+                      fullWidth
+                      variant={
+                        chartType ===
+                        t.key
+                          ? "contained"
+                          : "outlined"
+                      }
+                      onClick={() =>
+                        setChartType(
+                          t.key
+                        )
+                      }
+                      sx={{
+                        textTransform:
+                          "none",
+
+                        height:
+                          44,
                       }}
-                    />
-                  </Box>
-                </Box>
+                    >
+                      {t.label}
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+            </Stack>
+          )}
+
+          {chartTab ===
+            "fields" && (
+            <Stack spacing={2}>
+              <TextField
+                size="small"
+                placeholder="Search fields"
+                value={
+                  chartFieldSearch
+                }
+                onChange={(e) =>
+                  setChartFieldSearch(
+                    e.target.value
+                  )
+                }
+              />
+
+              <Stack spacing={1}>
+                {chartFields.map(
+                  (c) => (
+                    <Box
+                      key={c}
+                      sx={{
+                        display:
+                          "flex",
+
+                        alignItems:
+                          "center",
+
+                        justifyContent:
+                          "space-between",
+                      }}
+                    >
+                      <Typography>
+                        {c}
+                      </Typography>
+
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                      >
+                        <Button
+                          size="small"
+                          variant={
+                            chartX ===
+                            c
+                              ? "contained"
+                              : "outlined"
+                          }
+                          onClick={() =>
+                            setChartX(
+                              c
+                            )
+                          }
+                        >
+                          X
+                        </Button>
+
+                        <Button
+                          size="small"
+                          variant={
+                            chartY ===
+                            c
+                              ? "contained"
+                              : "outlined"
+                          }
+                          onClick={() =>
+                            setChartY(
+                              c
+                            )
+                          }
+                          disabled={
+                            !numericColumns.includes(
+                              c
+                            )
+                          }
+                        >
+                          Y
+                        </Button>
+                      </Stack>
+                    </Box>
+                  )
+                )}
+              </Stack>
+            </Stack>
+          )}
+
+          {chartTab ===
+            "customize" && (
+            <Stack spacing={2}>
+              {(chartType ===
+                "column" ||
+                chartType ===
+                  "bar") && (
+                <>
+                  <TextField
+                    size="small"
+                    label="Border radius"
+                    type="number"
+                    value={
+                      chartBorderRadius
+                    }
+                    onChange={(e) =>
+                      setChartBorderRadius(
+                        Number(
+                          e.target
+                            .value
+                        )
+                      )
+                    }
+                  />
+
+                  <TextField
+                    size="small"
+                    label="Category gap ratio"
+                    type="number"
+                    inputProps={{
+                      step: 0.05,
+                      min: 0,
+                    }}
+                    value={
+                      chartCategoryGap
+                    }
+                    onChange={(e) =>
+                      setChartCategoryGap(
+                        Number(
+                          e.target
+                            .value
+                        )
+                      )
+                    }
+                  />
+
+                  <TextField
+                    size="small"
+                    label="Series gap ratio"
+                    type="number"
+                    inputProps={{
+                      step: 0.05,
+                      min: 0,
+                    }}
+                    value={
+                      chartSeriesGap
+                    }
+                    onChange={(e) =>
+                      setChartSeriesGap(
+                        Number(
+                          e.target
+                            .value
+                        )
+                      )
+                    }
+                  />
+                </>
               )}
 
-              <Dialog
-                open={chartOpen}
-                onClose={() => setChartOpen(false)}
-                maxWidth={false}
-                PaperProps={{ sx: { width: "min(1170px, 96vw)" } }}
-              >
-                <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  Charts
-                  <IconButton onClick={() => setChartOpen(false)} size="small">
-                    <CloseIcon />
-                  </IconButton>
-                </DialogTitle>
-                <Tabs value={chartTab} onChange={(_e, v) => setChartTab(v)} sx={{ px: 2 }}>
-                  <Tab value="chart" label="CHART" />
-                  <Tab value="fields" label="FIELDS" />
-                  <Tab value="customize" label="CUSTOMIZE" />
-                </Tabs>
-                <DialogContent dividers>
-                  {chartTab === "chart" && (
-                    <Stack spacing={2}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <ToggleButtonGroup
-                          size="small"
-                          exclusive
-                          value={chartSampling}
-                          onChange={(_e, v) => v && setChartSampling(v)}
-                        >
-                          <ToggleButton value="all">All Rows</ToggleButton>
-                          <ToggleButton value="sample">Sample</ToggleButton>
-                        </ToggleButtonGroup>
-                        <TextField
-                          select
-                          size="small"
-                          label="Sample Size"
-                          value={chartSampleLimit}
-                          onChange={(e) => setChartSampleLimit(Number(e.target.value))}
-                          disabled={chartSampling !== "sample"}
-                          sx={{ minWidth: 140 }}
-                        >
-                          {[100, 200, 500, 1000].map((v) => (
-                            <MenuItem key={v} value={v}>
-                              {v}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Stack>
-                      <Grid container spacing={2}>
-                        {[
-                          { key: "column", label: "Column" },
-                          { key: "bar", label: "Bar" },
-                          { key: "line", label: "Line" },
-                          { key: "area", label: "Area" },
-                          { key: "pie", label: "Pie" },
-                        ].map((t) => (
-                          <Grid item xs={6} sm={4} md={2.4} key={t.key}>
-                            <Button
-                              fullWidth
-                              variant={chartType === t.key ? "contained" : "outlined"}
-                              onClick={() => setChartType(t.key)}
-                              sx={{ textTransform: "none", height: 44 }}
-                            >
-                              {t.label}
-                            </Button>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Stack>
+              {(chartType ===
+                "line" ||
+                chartType ===
+                  "area") && (
+                <>
+                  <TextField
+                    size="small"
+                    label="Line width"
+                    type="number"
+                    inputProps={{
+                      min: 1,
+                    }}
+                    value={
+                      chartLineWidth
+                    }
+                    onChange={(e) =>
+                      setChartLineWidth(
+                        Number(
+                          e.target
+                            .value
+                        )
+                      )
+                    }
+                  />
+
+                  {chartType ===
+                    "area" && (
+                    <TextField
+                      size="small"
+                      label="Area opacity"
+                      type="number"
+                      inputProps={{
+                        step: 0.05,
+                        min: 0,
+                        max: 1,
+                      }}
+                      value={
+                        chartAreaOpacity
+                      }
+                      onChange={(e) =>
+                        setChartAreaOpacity(
+                          Number(
+                            e.target
+                              .value
+                          )
+                        )
+                      }
+                    />
                   )}
+                </>
+              )}
 
-                  {chartTab === "fields" && (
-                    <Stack spacing={2}>
-                      <TextField
-                        size="small"
-                        placeholder="Search fields"
-                        value={chartFieldSearch}
-                        onChange={(e) => setChartFieldSearch(e.target.value)}
-                      />
-                      <Stack spacing={1}>
-                        {chartFields.map((c) => (
-                          <Box key={c} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <Typography>{c}</Typography>
-                            <Stack direction="row" spacing={1}>
-                              <Button
-                                size="small"
-                                variant={chartX === c ? "contained" : "outlined"}
-                                onClick={() => setChartX(c)}
-                              >
-                                X
-                              </Button>
-                              <Button
-                                size="small"
-                                variant={chartY === c ? "contained" : "outlined"}
-                                onClick={() => setChartY(c)}
-                                disabled={!numericColumns.includes(c)}
-                              >
-                                Y
-                              </Button>
-                            </Stack>
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Stack>
-                  )}
-
-                  {chartTab === "customize" && (
-                    <Stack spacing={2}>
-                      {(chartType === "column" || chartType === "bar") && (
-                        <>
-                          <TextField
-                            size="small"
-                            label="Border radius"
-                            type="number"
-                            value={chartBorderRadius}
-                            onChange={(e) => setChartBorderRadius(Number(e.target.value))}
-                          />
-                          <TextField
-                            size="small"
-                            label="Category gap ratio"
-                            type="number"
-                            inputProps={{ step: 0.05, min: 0 }}
-                            value={chartCategoryGap}
-                            onChange={(e) => setChartCategoryGap(Number(e.target.value))}
-                          />
-                          <TextField
-                            size="small"
-                            label="Series gap ratio"
-                            type="number"
-                            inputProps={{ step: 0.05, min: 0 }}
-                            value={chartSeriesGap}
-                            onChange={(e) => setChartSeriesGap(Number(e.target.value))}
-                          />
-                        </>
-                      )}
-                      {(chartType === "line" || chartType === "area") && (
-                        <>
-                          <TextField
-                            size="small"
-                            label="Line width"
-                            type="number"
-                            inputProps={{ min: 1 }}
-                            value={chartLineWidth}
-                            onChange={(e) => setChartLineWidth(Number(e.target.value))}
-                          />
-                          {chartType === "area" && (
-                            <TextField
-                              size="small"
-                              label="Area opacity"
-                              type="number"
-                              inputProps={{ step: 0.05, min: 0, max: 1 }}
-                              value={chartAreaOpacity}
-                              onChange={(e) => setChartAreaOpacity(Number(e.target.value))}
-                            />
-                          )}
-                        </>
-                      )}
-                      {chartType === "pie" && (
-                        <TextField
-                          size="small"
-                          label="Inner radius"
-                          type="number"
-                          inputProps={{ min: 0 }}
-                          value={chartPieInnerRadius}
-                          onChange={(e) => setChartPieInnerRadius(Number(e.target.value))}
-                        />
-                      )}
-                    </Stack>
-                  )}
-
-                  <Divider sx={{ my: 2 }} />
-
-                  {chartY && numericColumns.length > 0 ? (
-                    <Box>
-                      {chartType === "pie" ? (
-                        <PieChart
-                          series={[{ data: pieData, innerRadius: chartPieInnerRadius }]}
-                          height={320}
-                        />
-                      ) : chartType === "line" || chartType === "area" ? (
-                        <LineChart
-                          xAxis={[{ scaleType: "band", data: chartData.map((d) => d.x) }]}
-                          series={[
-                            {
-                              data: chartData.map((d) => d.y),
-                              label: chartY,
-                              area: chartType === "area",
-                              areaOpacity: chartAreaOpacity,
-                              strokeWidth: chartLineWidth,
-                            },
-                          ]}
-                          height={320}
-                        />
-                      ) : chartType === "bar" ? (
-                        <BarChart
-                          dataset={chartData}
-                          xAxis={[{ scaleType: "linear" }]}
-                          yAxis={[{ scaleType: "band", dataKey: "x" }]}
-                          series={[
-                            {
-                              dataKey: "y",
-                              label: chartY,
-                              borderRadius: chartBorderRadius,
-                            },
-                          ]}
-                          height={320}
-                          layout="horizontal"
-                          categoryGapRatio={chartCategoryGap}
-                          barGapRatio={chartSeriesGap}
-                        />
-                      ) : (
-                        <BarChart
-                          dataset={chartData}
-                          xAxis={[{ scaleType: "band", dataKey: "x" }]}
-                          yAxis={[{ scaleType: "linear" }]}
-                          series={[
-                            {
-                              dataKey: "y",
-                              label: chartY,
-                              borderRadius: chartBorderRadius,
-                            },
-                          ]}
-                          height={320}
-                          layout="vertical"
-                          categoryGapRatio={chartCategoryGap}
-                          barGapRatio={chartSeriesGap}
-                        />
-                      )}
-                    </Box>
-                  ) : (
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Select a numeric column to plot.
-                    </Typography>
-                  )}
-
-                  {chartSampling === "sample" && rowsForGrid.length > chartSampleLimit && (
-                    <Typography variant="caption" sx={{ display: "block", mt: 1, color: "warning.main" }}>
-                      Showing a sample of {chartSampleLimit} rows from {rowsForGrid.length}.
-                    </Typography>
-                  )}
-                  <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-                    Showing {chartData.length} of {rowsForGrid.length} rows
-                  </Typography>
-                </DialogContent>
-              </Dialog>
-
-              <Menu
-                anchorEl={configAnchor}
-                open={Boolean(configAnchor)}
-                onClose={() => setConfigAnchor(null)}
-                BackdropProps={{
-                  sx: {
-                    backdropFilter: "none !important",
-                    WebkitBackdropFilter: "none !important",
-                    backgroundColor: "transparent !important",
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setConfigAnchor(null);
-                    openTemplateEditor("validations");
+              {chartType ===
+                "pie" && (
+                <TextField
+                  size="small"
+                  label="Inner radius"
+                  type="number"
+                  inputProps={{
+                    min: 0,
                   }}
-                >
-                  Validations
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    setConfigAnchor(null);
-                    openTemplateEditor("access");
-                  }}
-                >
-                  Access
-                </MenuItem>
-              </Menu>
-
-              <Menu
-                anchorEl={recordMenuAnchor}
-                open={Boolean(recordMenuAnchor)}
-                onClose={closeRecordMenu}
-                BackdropProps={{
-                  sx: {
-                    backdropFilter: "none !important",
-                    WebkitBackdropFilter: "none !important",
-                    backgroundColor: "transparent !important",
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    if (recordMenuRow) openView(recordMenuRow);
-                    closeRecordMenu();
-                  }}
-                >
-                  <VisibilityOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                  View
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    if (recordMenuRow) openEdit(recordMenuRow);
-                    closeRecordMenu();
-                  }}
-                >
-                  <ModeEditOutlineOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                  Edit
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    if (recordMenuRow) handleDelete(recordMenuRow);
-                    closeRecordMenu();
-                  }}
-                >
-                  <DeleteOutlineOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                  Delete
-                </MenuItem>
-              </Menu>
-
-            </Box>
-          </Box>
+                  value={
+                    chartPieInnerRadius
+                  }
+                  onChange={(e) =>
+                    setChartPieInnerRadius(
+                      Number(
+                        e.target
+                          .value
+                      )
+                    )
+                  }
+                />
+              )}
+            </Stack>
           )}
-        </Box>
-      </Box>
+
+          <Divider
+            sx={{ my: 2 }}
+          />
+
+          {chartY &&
+          numericColumns.length >
+            0 ? (
+            <Box>
+              {chartType ===
+              "pie" ? (
+                <PieChart
+                  series={[
+                    {
+                      data:
+                        pieData,
+
+                      innerRadius:
+                        chartPieInnerRadius,
+                    },
+                  ]}
+                  height={320}
+                />
+              ) : chartType ===
+                  "line" ||
+                chartType ===
+                  "area" ? (
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType:
+                        "band",
+
+                      data:
+                        chartData.map(
+                          (d) =>
+                            d.x
+                        ),
+                    },
+                  ]}
+                  series={[
+                    {
+                      data:
+                        chartData.map(
+                          (d) =>
+                            d.y
+                        ),
+
+                      label:
+                        chartY,
+
+                      area:
+                        chartType ===
+                        "area",
+
+                      areaOpacity:
+                        chartAreaOpacity,
+
+                      strokeWidth:
+                        chartLineWidth,
+                    },
+                  ]}
+                  height={320}
+                />
+              ) : chartType ===
+                "bar" ? (
+                <BarChart
+                  dataset={
+                    chartData
+                  }
+                  xAxis={[
+                    {
+                      scaleType:
+                        "linear",
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      scaleType:
+                        "band",
+
+                      dataKey:
+                        "x",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey:
+                        "y",
+
+                      label:
+                        chartY,
+
+                      borderRadius:
+                        chartBorderRadius,
+                    },
+                  ]}
+                  height={320}
+                  layout="horizontal"
+                  categoryGapRatio={
+                    chartCategoryGap
+                  }
+                  barGapRatio={
+                    chartSeriesGap
+                  }
+                />
+              ) : (
+                <BarChart
+                  dataset={
+                    chartData
+                  }
+                  xAxis={[
+                    {
+                      scaleType:
+                        "band",
+
+                      dataKey:
+                        "x",
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      scaleType:
+                        "linear",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey:
+                        "y",
+
+                      label:
+                        chartY,
+
+                      borderRadius:
+                        chartBorderRadius,
+                    },
+                  ]}
+                  height={320}
+                  layout="vertical"
+                  categoryGapRatio={
+                    chartCategoryGap
+                  }
+                  barGapRatio={
+                    chartSeriesGap
+                  }
+                />
+              )}
+            </Box>
+          ) : (
+            <Typography
+              variant="body2"
+              sx={{
+                color:
+                  "text.secondary",
+              }}
+            >
+              Select a numeric
+              column to plot.
+            </Typography>
+          )}
+
+          {chartSampling ===
+            "sample" &&
+            rowsForGrid.length >
+              chartSampleLimit && (
+              <Typography
+                variant="caption"
+                sx={{
+                  display:
+                    "block",
+
+                  mt: 1,
+
+                  color:
+                    "warning.main",
+                }}
+              >
+                Showing a sample
+                of{" "}
+                {
+                  chartSampleLimit
+                }{" "}
+                rows from{" "}
+                {
+                  rowsForGrid.length
+                }
+                .
+              </Typography>
+            )}
+
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+
+              mt: 1,
+
+              color:
+                "text.secondary",
+            }}
+          >
+            Showing{" "}
+            {chartData.length} of{" "}
+            {rowsForGrid.length}{" "}
+            rows
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===============================================================
+          CONFIG MENU
+          =============================================================== */}
+
+      <Menu
+        anchorEl={configAnchor}
+        open={Boolean(
+          configAnchor
+        )}
+        onClose={() =>
+          setConfigAnchor(null)
+        }
+        BackdropProps={{
+          sx: {
+            backdropFilter:
+              "none !important",
+
+            WebkitBackdropFilter:
+              "none !important",
+
+            backgroundColor:
+              "transparent !important",
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            setConfigAnchor(null);
+
+            openTemplateEditor(
+              "validations"
+            );
+          }}
+        >
+          Validations
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            setConfigAnchor(null);
+
+            openTemplateEditor(
+              "access"
+            );
+          }}
+        >
+          Access
+        </MenuItem>
+      </Menu>
+
+      {/* ===============================================================
+          RECORD ACTION MENU
+          =============================================================== */}
+
+      <Menu
+        anchorEl={
+          recordMenuAnchor
+        }
+        open={Boolean(
+          recordMenuAnchor
+        )}
+        onClose={
+          closeRecordMenu
+        }
+        BackdropProps={{
+          sx: {
+            backdropFilter:
+              "none !important",
+
+            WebkitBackdropFilter:
+              "none !important",
+
+            backgroundColor:
+              "transparent !important",
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (
+              recordMenuRow
+            ) {
+              openView(
+                recordMenuRow
+              );
+            }
+
+            closeRecordMenu();
+          }}
+        >
+          <VisibilityOutlinedIcon
+            fontSize="small"
+            sx={{ mr: 1 }}
+          />
+
+          View
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (
+              recordMenuRow
+            ) {
+              openEdit(
+                recordMenuRow
+              );
+            }
+
+            closeRecordMenu();
+          }}
+        >
+          <ModeEditOutlineOutlinedIcon
+            fontSize="small"
+            sx={{ mr: 1 }}
+          />
+
+          Edit
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (
+              recordMenuRow
+            ) {
+              handleDelete(
+                recordMenuRow
+              );
+            }
+
+            closeRecordMenu();
+          }}
+        >
+          <DeleteOutlineOutlinedIcon
+            fontSize="small"
+            sx={{ mr: 1 }}
+          />
+
+          Delete
+        </MenuItem>
+      </Menu>
+
+
+
+
+
+
 
       {/* Create/Edit/View modal */}
       {activePage && recModalOpen && (

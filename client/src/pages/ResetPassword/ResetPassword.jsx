@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../services/api";
 import logo from "../../components/navbar/ttlogo.png";
-import heroImage from "../Login/loginpage.png";
+import heroImage from "../login/loginpage.png";
 import "./ResetPassword.scss";
 
 export default function ResetPassword() {

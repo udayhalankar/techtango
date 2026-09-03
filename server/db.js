@@ -6,7 +6,7 @@ const cfg = {
   port: Number(process.env.DB_PORT || 5432),
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,        // e.g., "Test1234?"
-  database: process.env.DB_NAME || 'ttoct23',
+  database: process.env.DB_NAME || 'ttoct23_restore_test',
   ssl: String(process.env.DB_SSL || 'false').toLowerCase() === 'true',
 };
 

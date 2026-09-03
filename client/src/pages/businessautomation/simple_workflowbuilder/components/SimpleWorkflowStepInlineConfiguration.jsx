@@ -93,7 +93,7 @@ const overlayStyle = {
 };
 const modalStyle = {
   background: "#fff",
-  width: "min(1200px, 96vw)",
+  width: "min(765px, 70vw)",
   maxHeight: "92vh",
   borderRadius: 12,
   padding: 16,
@@ -1886,207 +1886,845 @@ function renderSection(section, formValues, setFormValues) {
   const body = (
     <>
             {/* Top bar: title + capsule tabs + Enabled toggle */}
-      <Box
+      {/* ============================================================
+    INLINE EDITING STEP HEADER
+============================================================ */}
+
+{inline && (
+  <Box
+    sx={{
+      px: 0,
+      py: 0,
+
+      minHeight: 68,
+
+      display: "grid",
+
+      gridTemplateColumns:
+        "minmax(180px, 1fr) auto",
+
+      gap: 1.5,
+
+      alignItems: "center",
+
+      bgcolor: "#f8f8f8",
+
+      borderBottom:
+        "1px solid #dce6ed",
+    }}
+  >
+    {/* LEFT — STEP IDENTITY */}
+
+    <Box
+      sx={{
+        minWidth: 0,
+         pl: 1.5,
+    py: 0.9,
+      }}
+    >
+      <Typography
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 2,
-          gap: 2,
+          fontSize: 9,
+          lineHeight: 1,
+
+          fontWeight: 700,
+
+          letterSpacing: ".09em",
+          textTransform: "uppercase",
+
+          color: "#607991",
         }}
       >
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              color: "primary.main",
-            }}
-          >
-            {`Configure ${
-              local.step_name ? `  ${local.step_name}` : ""
-            }`}
-          </Typography>
+        Configure/Edit Step
+      </Typography>
 
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", mt: 0.5 }}
-          >
-            Define who performs this step, behaviour, actions and notifications and the form field settings
-          </Typography>
-        </Box>
+      <Typography
+        sx={{
+          mt: 0.45,
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {/* <FormControlLabel
-            control={<Switch color="primary" checked />}
-            label="Enabled"
-          /> */}
-          {typeof onRemove === "function"
-            ? (() => {
-                const nm = String(local.step_name || "").toUpperCase();
-                const disableRemove = nm === "INITIATE" || nm === "TERMINATE";
-                return (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    disabled={disableRemove}
-                    onClick={() => onRemove(local)}
-                    sx={{ textTransform: "none" }}
-                  >
-                    Remove Step
-                  </Button>
-                );
-              })()
-            : null}
+          fontSize: 19,
+          lineHeight: 1.05,
 
-          <Tabs
-  value={tab}
-  onChange={(_, v) => setTab(v)}
+          fontWeight: 700,
+
+          color: "#143a72",
+
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {local.step_name}
+      </Typography>
+        <Typography
+    sx={{
+      mt: 0.3,
+      fontSize: 8.7,
+      lineHeight: 1.25,
+      fontWeight: 400,
+      color: "#6f8294",
+    }}
+  >
+    Define who performs this step, behaviour, actions and notifications
+    and the form field settings.
+  </Typography>
+    </Box>
+
+    {/* RIGHT — STEP BADGE + ACTIONS */}
+
+    <Box
   sx={{
-    minHeight: 0,
-    // outer capsule
-    bgcolor: "#f3f4f6",
-    borderRadius: 999,
-    p: 0.5,
+    display: "flex",
+    flexDirection: "column",
 
-    "& .MuiTab-root": {
-      minHeight: 28,
-      textTransform: "none",
-      fontSize: 13,
-      px: 2.5,
-      borderRadius: 999,
-      // no individual borders, softer look
-      border: "none",
-      color: "text.secondary",
-      minWidth: "auto",
-    },
+    alignItems: "flex-end",
 
-    "& .MuiTab-root.Mui-selected": {
-      bgcolor: "#ffffff",
-      color: "primary.main",
-      boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.06)",
-    },
+    justifyContent: "center",
 
-    "& .MuiTabs-indicator": {
-      display: "none",
-    },
+    gap: 0.55,
+
+    minWidth: 0,
+
+    pr: 1.5,
+    py: 0.65,
   }}
 >
-  <Tab label="Step details" value={TAB_STEP} />
-  <Tab label="Form Fields" value={TAB_FORM} />
-  <Tab label="Render Form to View" value={TAB_PREVIEW} />
-</Tabs>
+      {/* STEP NUMBER */}
 
+      <Chip
+  label={`Step ${local.step_no}`}
+  size="small"
+  sx={{
+    height: 22,
+
+    borderRadius: "11px",
+
+    bgcolor: "#e8f0ff",
+
+    color: "#2456a3",
+
+    fontSize: 9,
+    fontWeight: 700,
+
+    "& .MuiChip-label": {
+      px: 1,
+    },
+  }}
+/>
+
+      {/* ACTIONS */}
+
+      <Stack
+        direction="row"
+
+        spacing={0.45}
+
+        useFlexGap
+
+        alignItems="center"
+
+        sx={{
+          flexWrap: "nowrap",
+        }}
+      >
+        {/* REMOVE */}
+
+        {typeof onRemove === "function" &&
+          (() => {
+            const nm = String(
+              local.step_name || ""
+            ).toUpperCase();
+
+            const disableRemove =
+              nm === "INITIATE" ||
+              nm === "TERMINATE";
+
+            return (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                disabled={disableRemove}
+                onClick={() =>
+                  onRemove(local)
+                }
+                sx={{
+                      minWidth: 66,
+
+                      height: 30,
+                      minHeight: 30,
+
+                      px: 1.1,
+
+                      borderRadius: "3px",
+
+                      textTransform: "none",
+
+                      fontSize: 9.5,
+                      fontWeight: 600,
+
+                      lineHeight: 1,
+                    }}
+              >
+                Remove
+              </Button>
+            );
+          })()}
+
+        {/* COMPACT TABS */}
+
+        <Tabs
+          value={tab}
+          onChange={(_, v) =>
+            setTab(v)
+          }
+          sx={{
+              minHeight: 30,
+
+              bgcolor: "#e9eef3",
+
+              borderRadius: "3px",
+
+              p: "2px",
+
+              "& .MuiTabs-flexContainer": {
+                gap: "2px",
+              },
+
+              "& .MuiTab-root": {
+                minHeight: 26,
+
+                minWidth: 0,
+
+                px: 1.35,
+                py: 0,
+
+                borderRadius: "2px",
+
+                textTransform: "none",
+
+                fontSize: 9.5,
+                fontWeight: 600,
+
+                color: "#587086",
+              },
+
+              "& .MuiTab-root.Mui-selected": {
+                bgcolor: "#ffffff",
+
+                color: "#0879df",
+
+                boxShadow:
+                  "0 0 0 1px rgba(15,23,42,.05)",
+              },
+
+              "& .MuiTabs-indicator": {
+                display: "none",
+              },
+            }}
+        >
+          <Tab
+            label="Step details"
+            value={TAB_STEP}
+          />
+
+          <Tab
+            label="Form Fields"
+            value={TAB_FORM}
+          />
+
+          <Tab
+      label="View Form"
+      value={TAB_PREVIEW}
+    />
+        </Tabs>
+      </Stack>
+    </Box>
+  </Box>
+)}
+
+
+{/* ============================================================
+    NON-INLINE / MODAL HEADER
+============================================================ */}
+
+{!inline && (
+  <Box
+    sx={{
+      display: "flex",
+
+      alignItems: "center",
+
+      justifyContent:
+        "space-between",
+
+      mb: 2,
+
+      gap: 2,
+    }}
+  >
+    <Box>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: 700,
+
+          color:
+            "primary.main",
+        }}
+      >
+        {`Configure ${
+          local.step_name
+            ? ` ${local.step_name}`
+            : ""
+        }`}
+      </Typography>
+
+      <Typography
+        variant="body2"
+        sx={{
+          color:
+            "text.secondary",
+
+          mt: 0.5,
+        }}
+      >
+        Define who performs this step,
+        behaviour, actions and notifications
+        and the form field settings
+      </Typography>
+    </Box>
+
+    <Tabs
+      value={tab}
+
+      onChange={(_, v) =>
+        setTab(v)
+      }
+
+      sx={{
+        minHeight: 0,
+
+        bgcolor: "#f3f4f6",
+
+        borderRadius: 999,
+
+        p: 0.5,
+
+        "& .MuiTab-root": {
+          minHeight: 28,
+
+          textTransform:
+            "none",
+
+          fontSize: 13,
+
+          px: 2.5,
+
+          borderRadius: 999,
+
+          border: "none",
+
+          color:
+            "text.secondary",
+
+          minWidth: "auto",
+        },
+
+        "& .MuiTab-root.Mui-selected":
+          {
+            bgcolor: "#ffffff",
+
+            color:
+              "primary.main",
+
+            boxShadow:
+              "0 0 0 1px rgba(15,23,42,.06)",
+          },
+
+        "& .MuiTabs-indicator":
+          {
+            display: "none",
+          },
+      }}
+    >
+      <Tab
+        label="Step details"
+        value={TAB_STEP}
+      />
+
+      <Tab
+        label="Form Fields"
+        value={TAB_FORM}
+      />
+
+      <Tab
+  label="View Form"
+  value={TAB_PREVIEW}
+/>
+    </Tabs>
+  </Box>
+)}
+
+
+{/* ============================================================
+    CONFIGURATION INTRO
+============================================================ */}
+
+{inline && (
+  <Box
+    sx={{
+      px: 1.5,
+      pt: 0.9,
+      pb: 0.75,
+
+      display: "flex",
+
+      alignItems: "flex-start",
+
+      justifyContent:
+        "space-between",
+
+      gap: 1,
+    }}
+  >
+    
+  </Box>
+)}
+
+     {/* ============================================================
+    STEP DETAILS
+============================================================ */}
+
+{tab === TAB_STEP && (
+  <Box
+    sx={{
+      px: 1.5,
+      py: 1.4,
+
+      display: "flex",
+      flexDirection: "column",
+
+      gap: 1.4,
+
+      bgcolor: "#ffffff",
+
+      /*
+       * Bring all Step Details controls
+       * into the compact visual language
+       * of the reference HTML.
+       */
+      "& .MuiInputBase-root": {
+        fontSize: "10px",
+      },
+
+      "& .MuiInputBase-input":
+        {
+          fontSize: "10px",
+        },
+
+      "& .MuiSelect-select": {
+        fontSize: "10px",
+      },
+
+      "& .MuiAutocomplete-tag":
+        {
+          height: 20,
+          fontSize: "8px",
+        },
+
+      "& .MuiChip-label": {
+        px: 0.7,
+      },
+    }}
+  >
+    {/* ========================================================
+        BASIC INFO
+    ======================================================== */}
+
+    <StepBasics
+      local={local}
+      change={change}
+      isInitiate={isInitiate}
+      isTerminate={isTerminate}
+      performerOptions={
+        performerOptions
+      }
+      blueLabelSx={
+        blueLabelSx
+      }
+      inputWhiteSx={
+        inputWhiteSx
+      }
+    />
+
+    {/* ========================================================
+        BEHAVIOUR
+    ======================================================== */}
+
+    <StepBehaviour
+      local={local}
+      change={change}
+      mode={mode}
+      setMode={setMode}
+      isInitiate={isInitiate}
+      stepsLessThanCurrent={
+        header?.stepsLessThanCurrent ||
+        []
+      }
+      blueLabelSx={
+        blueLabelSx
+      }
+      inputWhiteSx={
+        inputWhiteSx
+      }
+      ATTACH_MODE_OPTIONS={
+        ATTACH_MODE_OPTIONS
+      }
+    />
+
+    {/* ========================================================
+        NOTIFICATIONS
+    ======================================================== */}
+
+    <Box
+      sx={{
+        border:
+          "1px solid #cfddea",
+
+        borderRadius: "9px",
+
+        overflow: "hidden",
+
+        bgcolor: "#ffffff",
+      }}
+    >
+      {/* HEADER */}
+
+      <Box
+        sx={{
+          height: 28,
+
+          px: 1.35,
+
+          display: "flex",
+
+          alignItems:
+            "center",
+
+          gap: 0.75,
+
+          background:
+            "linear-gradient(#ffffff,#eceeef)",
+
+          borderBottom:
+            "1px solid #cfddea",
+        }}
+      >
+        <Box
+          sx={{
+            width: 13,
+
+            textAlign:
+              "center",
+
+            color: "#0d4f82",
+
+            fontSize: 10,
+          }}
+        >
+          ✉
         </Box>
+
+        <Typography
+          sx={{
+            fontSize: 12,
+
+            fontWeight: 800,
+
+            color: "#0d4f82",
+          }}
+        >
+          Notifications
+        </Typography>
       </Box>
 
-      {/* STEP TAB – MUI version */}
-      {tab === TAB_STEP && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Grid container spacing={2}>
-            {/* BASIC INFO */}
-            <Grid item xs={12} md={6}>
-              <StepBasics
-                local={local}
-                change={change}
-                isInitiate={isInitiate}
-                isTerminate={isTerminate}
-                performerOptions={performerOptions}
-                blueLabelSx={blueLabelSx}
-                inputWhiteSx={inputWhiteSx}
-              />
-            </Grid>
+      {/* BODY */}
 
-            {/* BEHAVIOUR */}
-            <Grid item xs={12} md={6}>
-              <StepBehaviour
-                local={local}
-                change={change}
-                mode={mode}
-                setMode={setMode}
-                isInitiate={isInitiate}
-                stepsLessThanCurrent={header?.stepsLessThanCurrent || []}
-                blueLabelSx={blueLabelSx}
-                inputWhiteSx={inputWhiteSx}
-                ATTACH_MODE_OPTIONS={ATTACH_MODE_OPTIONS}
-              />
-            </Grid>
-          </Grid>
+      <Box
+        sx={{
+          p:
+            "12px 11px 11px",
+        }}
+      >
+        {/* REGULAR */}
 
-          {/* ACTIONS & NOTIFICATIONS */}
-          <Paper
-            variant="outlined"
-            sx={{ p: 1.5, pt: 1.25, bgcolor: "grey.50", borderRadius: 2 }}
-          >
-            <Typography
-              variant="overline"
-              sx={{ color: "brown", fontWeight: 600, letterSpacing: 0.8 }}
-            >
-              Actions & notifications
-            </Typography>
+        <NotificationsRegular
+          local={local}
+          change={change}
+          mailNotificationOptions={
+            mailNotificationOptions
+          }
+          blueLabelSx={
+            blueLabelSx
+          }
+          inputWhiteSx={
+            inputWhiteSx
+          }
+        />
 
-            {/* Regular notifications */}
-            <NotificationsRegular
-              local={local}
-              change={change}
-              mailNotificationOptions={mailNotificationOptions}
-              blueLabelSx={blueLabelSx}
-              inputWhiteSx={inputWhiteSx}
-            />
+        {/* ESCALATIONS */}
 
-            <NotificationsEscalations
-              local={local}
-              change={change}
-              userOpts={userOpts}
-              blueLabelSx={blueLabelSx}
-              inputWhiteSx={inputWhiteSx}
-            />
+        <NotificationsEscalations
+          local={local}
+          change={change}
+          userOpts={userOpts}
+          blueLabelSx={
+            blueLabelSx
+          }
+          inputWhiteSx={
+            inputWhiteSx
+          }
+        />
 
-            <MailContentEditor
-              local={local}
-              change={change}
-              isInitiate={isInitiate}
-              mailDraftRef={mailDraftRef}
-              showTableBorders={showTableBorders}
-              setShowTableBorders={setShowTableBorders}
-              wrapContent={wrapContent}
-              applyMailToFuture={applyMailToFuture}
-              setApplyMailToFuture={setApplyMailToFuture}
-              blueLabelSx={blueLabelSx}
-              inputWhiteSx={inputWhiteSx}
-            />
+        {/* ====================================================
+            MAIL CONTENT
+        ==================================================== */}
 
-            <Box
-              sx={{
-                mt: 2,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 1,
-              }}
-            >
-              {!inline && (
-                <Button
-                  onClick={onClose}
-                  variant="outlined"
-                  size="small"
-                  sx={{ textTransform: "none" }}
-                >
-                  Close
-                </Button>
-              )}
-              <Button
-                onClick={handleSave}
-                variant="contained"
-                size="small"
-                sx={{ textTransform: "none" }}
-              >
-                Save
-              </Button>
-            </Box>
-          </Paper>
+        <Typography
+          sx={{
+            mt: 1.5,
+            mb: 0.7,
+
+            fontSize: "8px",
+
+            fontWeight: 800,
+
+            letterSpacing:
+              ".3px",
+
+            textTransform:
+              "uppercase",
+
+            color: "#5d7184",
+          }}
+        >
+          Mail Content
+        </Typography>
+
+        <Box
+          sx={{
+            /*
+             * Do not alter MailContentEditor logic.
+             * Only visually contain it like the
+             * editor from the reference HTML.
+             */
+
+            "& > *": {
+              maxWidth:
+                "100%",
+            },
+
+            "& [contenteditable='true']":
+              {
+                minHeight:
+                  "115px",
+
+                bgcolor:
+                  "#ffffff",
+
+                color:
+                  "#30485c",
+
+                fontSize:
+                  "10px",
+
+                lineHeight:
+                  1.6,
+              },
+
+            "& .MuiPaper-root":
+              {
+                boxShadow:
+                  "none",
+              },
+          }}
+        >
+          <MailContentEditor
+            local={local}
+            change={change}
+            isInitiate={
+              isInitiate
+            }
+            mailDraftRef={
+              mailDraftRef
+            }
+            showTableBorders={
+              showTableBorders
+            }
+            setShowTableBorders={
+              setShowTableBorders
+            }
+            wrapContent={
+              wrapContent
+            }
+            applyMailToFuture={
+              applyMailToFuture
+            }
+            setApplyMailToFuture={
+              setApplyMailToFuture
+            }
+            blueLabelSx={
+              blueLabelSx
+            }
+            inputWhiteSx={
+              inputWhiteSx
+            }
+          />
         </Box>
+      </Box>
+    </Box>
+
+    {/* ========================================================
+        HELPER STRIP
+    ======================================================== */}
+
+    <Box
+      sx={{
+        px: 1.25,
+        py: 0.85,
+
+        border:
+          "1px solid #f3c56e",
+
+        borderLeft:
+          "3px solid #e99b12",
+
+        borderRadius: "7px",
+
+        bgcolor:
+          "#fff8e9",
+
+        color: "#7c5a25",
+
+        fontSize: "8px",
+
+        lineHeight: 1.45,
+      }}
+    >
+      <Box
+        component="span"
+        sx={{
+          fontWeight: 800,
+
+          color: "#8d5d06",
+        }}
+      >
+        Workflow notification behavior
+      </Box>
+
+      <br />
+
+      Regular notifications and
+      escalation rules configured
+      here will be used by this
+      workflow step.
+    </Box>
+
+    {/* ========================================================
+        SAVE
+    ======================================================== */}
+
+    <Box
+      sx={{
+        pt: 0.25,
+
+        display: "flex",
+
+        justifyContent:
+          "flex-end",
+
+        gap: 1,
+      }}
+    >
+      {!inline && (
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          size="small"
+          sx={{
+            minHeight: 31,
+
+            px: 1.6,
+
+            border:
+              "1px solid #c7d7e4",
+
+            borderRadius:
+              "6px",
+
+            bgcolor:
+              "#ffffff",
+
+            color:
+              "#425d72",
+
+            fontSize:
+              "9px",
+
+            fontWeight: 800,
+
+            textTransform:
+              "none",
+          }}
+        >
+          Cancel
+        </Button>
       )}
+
+      <Button
+        onClick={handleSave}
+        variant="contained"
+        size="small"
+        sx={{
+          minHeight: 31,
+
+          px: 1.7,
+
+          borderRadius:
+            "6px",
+
+          border:
+            "1px solid #0f7f98",
+
+          background:
+            "linear-gradient(100deg,#0f6eaa,#108f90)",
+
+          boxShadow: "none",
+
+          color: "#ffffff",
+
+          fontSize: "9px",
+
+          fontWeight: 800,
+
+          textTransform:
+            "none",
+
+          "&:hover": {
+            background:
+              "linear-gradient(100deg,#0d6399,#0e817f)",
+
+            boxShadow:
+              "none",
+          },
+        }}
+      >
+        Save Configuration
+      </Button>
+    </Box>
+  </Box>
+)}
 
 
       
@@ -2121,8 +2759,6 @@ function renderSection(section, formValues, setFormValues) {
           header={header}
           local={local}
           previewFields={getOrderedPreviewFields()}
-          setActiveFormLayout={setActiveFormLayout}
-          renderSection={renderSection}
           formValues={formValues}
           setFormValues={setFormValues}
         />
@@ -2160,21 +2796,27 @@ function renderSection(section, formValues, setFormValues) {
   /* ─────────────────────────── FINAL RETURN ─────────────────────────── */
 
   // Inline mode: embedded in page (centre column)
-  if (inline) {
+ // Inline mode: embedded in page (centre column)
+if (inline) {
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Paper
-        elevation={0}
-        variant="outlined"
-        sx={{
-          p: 2.5,
-          borderRadius: 2,
-          bgcolor: "background.paper",
-          height: "100%",
-        }}
-      >
-        {body}
-      </Paper>
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+
+        display: "flex",
+        flexDirection: "column",
+
+        p: 0,
+        m: 0,
+
+        border: 0,
+        borderRadius: 0,
+
+        bgcolor: "#ffffff",
+      }}
+    >
+      {body}
     </Box>
   );
 }

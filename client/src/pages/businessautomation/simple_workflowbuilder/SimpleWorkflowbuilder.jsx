@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ModuleTileGrid from "../../../components/ModuleTileGrid";
 import {
   Box,
   Button,
@@ -125,6 +126,33 @@ export default function SimpleWorkflowbuilder() {
     });
   }, [items, searchQuery]);
 
+  const workflowTiles = useMemo(() => {
+  return (items || []).map((row) => ({
+    id: row.id,
+
+    label:
+      row.workflow_map_name ||
+      "Untitled Workflow",
+
+    searchText: [
+      row.workflow_map_name,
+      row.workflow_table_name,
+      row.id,
+      row.created_by,
+      row.wf_status,
+    ]
+      .filter(Boolean)
+      .join(" "),
+
+    workflow: row,
+
+    onClick: () =>
+      navigate(
+        `/simplewfb/configure/${row.id}`
+      ),
+  }));
+}, [items, navigate]);
+
   const formatDate = (value) => {
     if (!value) return "—";
     const date = new Date(value);
@@ -216,168 +244,239 @@ export default function SimpleWorkflowbuilder() {
   if (loading) return <div>Loading…</div>;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
-      <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, mt: "-65px", pt: "97px", pb: 4 }}>
+    <Box
+  sx={{
+    minHeight: "100vh",
+    bgcolor: "#f5f7fb",
+  }}
+>
+  <ModuleTileGrid
+    title="Workflow Studio"
+    subtitle="Design and deploy intelligent business workflows with reusable steps, routing and enterprise process automation."
+    tiles={workflowTiles}
+    searchPlaceholder="Search workflows"
+    primaryAction={{
+      label: "Create Workflow",
+      onClick: () =>
+        setCreateOpen(true),
+    }}
+    showDefaultFooter={false}
+    renderTileContent={(tile) => {
+      const row = tile.workflow;
+
+      if (!row) {
+        return null;
+      }
+
+      const TileRow = ({
+        label,
+        value,
+      }) => (
         <Box
           sx={{
-            display: "flex",
-            gap: 3,
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns:
+              "82px minmax(0,1fr)",
+            columnGap: 0.4,
+            alignItems: "center",
+            height: 18,
+            minWidth: 0,
           }}
         >
-          <Box sx={{ minWidth: 280, flex: "1 1 320px" }}>
-            <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              Workflow Studio
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-              Workflow Studio is a powerful yet simple workflow builder that delivers 
-              intelligent automation and accelerates digital transformation. 
-              It streamlines business form workflows, driving efficiency, growth, 
-              and long-term sustainability.
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-              Design and deploy workflows with a level of ease never experienced before.
-            </Typography>
-          </Box>
-
-        </Box>
-      </Box>
-
-      <Box sx={{ px: 4, py: 4 }}>
-        <Box
-          sx={{
-            maxWidth: 1170,
-            mx: "auto",
-            // bgcolor: "#eef2fb",
-            borderRadius: 2,
-            p: 3,
-          }}
-        >
-          <Box
+          <Typography
+            noWrap
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              flexWrap: "wrap"
+              fontSize: 10,
+              color: "#738496",
+              fontWeight: 500,
             }}
           >
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setCreateOpen(true)}
-              sx={{ bgcolor: "#1f355d", textTransform: "none" }}
-            >
-              Create Workflow
-            </Button>
-            <Box sx={{ flexGrow: 1 }} />
-            <TextField
-              size="small"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ width: 500, maxWidth: "100%" }}
-            />
-          </Box>
+            {label}
+          </Typography>
 
-          <Box sx={{ mt: 3 }}>
-            <Grid container spacing={2}>
-              {filteredItems.slice(0, 12).map((row) => (
-                <Grid item key={row.id} xs={6} md={3}>
-                  <Paper
-                    elevation={0}
-                    role="button"
-                    tabIndex={0}
-                    sx={{
-                      bgcolor: "#ffffff",
-                      color: "#1f355d",
-                      border: "1px solid #2f5fff",
-                      boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
-                      transition: "box-shadow 160ms ease, transform 160ms ease",
-                      "&:hover": {
-                        boxShadow: "0 6px 16px rgba(16, 24, 40, 0.22)",
-                        transform: "translateY(-2px)",
-                      },
-                      fontFamily: "Roboto, sans-serif",
-                      p: 2,
-                      borderRadius: 2,
-                      minHeight: 160,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      textAlign: "left",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => navigate(`/simplewfb/configure/${row.id}`)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        navigate(`/simplewfb/configure/${row.id}`);
-                      }
-                    }}
-                  >
-                    <Box sx={{ width: "100%" }}>
-                      <Link
-                        to={`/simplewfb/configure/${row.id}`}
-                        style={{ color: "inherit", textDecoration: "none" }}
-                      >
-                        <Typography
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: 18,
-                            color: "#1a4fd8",
-                          }}
-                        >
-                          {row.workflow_map_name}
-                        </Typography>
-                      </Link>
-                      <Typography sx={{ mt: 2, fontSize: 11 }}>
-                        Workflow ID: {row.id ?? "-"}
-                      </Typography>
-                      <Typography sx={{ mt: 0.2, fontSize: 11 }}>
-                        Created by: {row.created_by ?? "-"}
-                      </Typography>
-                      <Typography sx={{ mt: 0.2, fontSize: 11 }}>
-                        Last Modified: {formatDate(row.date_modified)}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 2,
-                      }}
-                    >
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                         sx={{ textTransform: "none" }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleDelete(row.id);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                      <Button size="small" variant="outlined" sx={{ textTransform: "none" }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          alert("TODO: Manage access");
-                        }}>
-                        Manage Access
-                      </Button>
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
+          <Typography
+            noWrap
+            title={String(
+              value ?? "-"
+            )}
+            sx={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow:
+                "ellipsis",
+              whiteSpace: "nowrap",
+
+              fontSize: 10.5,
+              color: "#33485d",
+              fontWeight: 600,
+            }}
+          >
+            {value ?? "-"}
+          </Typography>
         </Box>
-      </Box>
+      );
+
+      const status =
+        row.wf_status ||
+        row.status ||
+        "";
+
+      return (
+        <>
+          {/* TITLE */}
+
+          <Typography
+            noWrap
+            title={
+              row.workflow_map_name ||
+              ""
+            }
+            sx={{
+              width: "100%",
+
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: "20px",
+
+              color: "#172b4d",
+
+              overflow: "hidden",
+              textOverflow:
+                "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {row.workflow_map_name ||
+              "Untitled Workflow"}
+          </Typography>
+
+          {/* STATUS */}
+
+          {status ? (
+            <Typography
+              noWrap
+              sx={{
+                mt: 0.2,
+
+                fontSize: 9.5,
+                fontWeight: 700,
+
+                color: "#c62828",
+
+                textTransform:
+                  "uppercase",
+              }}
+            >
+              {status}
+            </Typography>
+          ) : null}
+
+          {/* PUSH DETAILS DOWN */}
+
+          <Box
+            sx={{
+              flexGrow: 1,
+            }}
+          />
+
+          {/* DETAILS + ACTIONS */}
+
+          <Box
+            sx={{
+              display: "grid",
+
+              gridTemplateColumns:
+                "minmax(0,1fr) auto",
+
+              columnGap: 1,
+
+              alignItems: "end",
+
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                rowGap: "1px",
+                minWidth: 0,
+              }}
+            >
+              <TileRow
+                label="Workflow ID"
+                value={row.id}
+              />
+
+              <TileRow
+                label="Table"
+                value={
+                  row.workflow_table_name ||
+                  "-"
+                }
+              />
+
+              <TileRow
+                label="Created By"
+                value={
+                  row.created_by ??
+                  "-"
+                }
+              />
+
+              <TileRow
+                label="Modified"
+                value={formatDate(
+                  row.date_modified
+                )}
+              />
+            </Box>
+
+            <Button
+              size="small"
+              onClick={(event) => {
+                event.stopPropagation();
+
+                handleDelete(
+                  row.id
+                );
+              }}
+              sx={{
+                height: 27,
+                minHeight: 27,
+
+                px: 0.9,
+
+                border:
+                  "1px solid #f0c0bc",
+
+                borderRadius:
+                  "6px",
+
+                color:
+                  "#b42318",
+
+                bgcolor:
+                  "#ffffff",
+
+                fontSize: 10,
+
+                textTransform:
+                  "none",
+
+                "&:hover": {
+                  bgcolor:
+                    "#fdf2f1",
+                },
+              }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </>
+      );
+    }}
+  />
       <Dialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}

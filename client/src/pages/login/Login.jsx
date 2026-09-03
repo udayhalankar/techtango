@@ -6,7 +6,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import api from "../../services/api";
 import logo from "../../components/navbar/ttlogo.png";
 import heroImage from "./loginpage.png";
-import "./Login.scss";
+import "./login.scss";
 import { jwtDecode } from "jwt-decode";  // make sure it's installed
 
 export default function Login() {

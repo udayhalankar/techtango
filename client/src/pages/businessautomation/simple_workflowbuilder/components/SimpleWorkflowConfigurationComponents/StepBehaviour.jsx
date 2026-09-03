@@ -1,5 +1,75 @@
 import React from "react";
-import { Grid, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Tooltip, TextField } from "@mui/material";
+import {
+  Box,
+  Grid,
+  Typography,
+  FormControl,
+  Select,
+  MenuItem,
+  Tooltip,
+  TextField,
+} from "@mui/material";
+
+const LABEL_SX = {
+  display: "block",
+  mb: "5px",
+  ml: "1px",
+
+  fontSize: "8px",
+  lineHeight: 1,
+
+  fontWeight: 800,
+  letterSpacing: ".35px",
+  textTransform: "uppercase",
+
+  color: "#5d7184",
+};
+
+const CONTROL_SX = {
+  "& .MuiOutlinedInput-root": {
+    minHeight: 31,
+    bgcolor: "#ffffff",
+    borderRadius: "6px",
+
+    "& fieldset": {
+      borderColor: "#bfd1e0",
+    },
+
+    "&:hover fieldset": {
+      borderColor: "#9ebbd1",
+    },
+
+    "&.Mui-focused fieldset": {
+      borderColor: "#62a8d8",
+      borderWidth: "1px",
+    },
+
+    "&.Mui-disabled": {
+      bgcolor: "#fafafa",
+
+      "& fieldset": {
+        borderColor: "#e1e5e8",
+      },
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    px: 1,
+    py: "6px",
+    fontSize: "10px",
+    color: "#29435a",
+  },
+
+  "& .MuiInputBase-input.Mui-disabled": {
+    WebkitTextFillColor: "#8d969e",
+    color: "#8d969e",
+  },
+
+  "& .MuiSelect-select.Mui-disabled": {
+    WebkitTextFillColor: "#8d969e",
+    color: "#8d969e",
+  },
+};
 
 export default function StepBehaviour({
   local,
@@ -8,192 +78,385 @@ export default function StepBehaviour({
   setMode,
   isInitiate,
   stepsLessThanCurrent,
-  blueLabelSx,
-  inputWhiteSx,
   ATTACH_MODE_OPTIONS,
 }) {
   return (
-    <Paper
-      variant="outlined"
+    <Box
       sx={{
-        p: 1.5,
-        pt: 1.25,
-        bgcolor: "grey.50",
-        borderRadius: 2,
-        height: "100%",
+        border:
+          "1px solid #cfddea",
+
+        borderRadius: "9px",
+
+        overflow: "hidden",
+
+        bgcolor: "#ffffff",
       }}
     >
-      <Typography
-        variant="overline"
-        sx={{ color: "brown", fontWeight: 600, letterSpacing: 0.8 }}
+      {/* HEADER */}
+
+      <Box
+        sx={{
+          height: 28,
+          px: 1.35,
+
+          display: "flex",
+          alignItems: "center",
+          gap: 0.75,
+
+          background:
+            "linear-gradient(#ffffff,#eceeef)",
+
+          borderBottom:
+            "1px solid #cfddea",
+        }}
       >
-        Behaviour
-      </Typography>
+        <Box
+          sx={{
+            width: 13,
 
-      <Grid container spacing={2} sx={{ mt: 0.1 }}>
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth sx={inputWhiteSx} size="small">
-            <InputLabel
-              sx={{
-                color: "primary.main",
-                "&.Mui-focused": { color: "primary.main" },
-              }}
-            >
-              Attachments rule
-            </InputLabel>
-            <Select
-              label="Attachments rule"
-              value={local.attachments_allowed || "none"}
-              onChange={(e) => change("attachments_allowed", e.target.value)}
-            >
-              {ATTACH_MODE_OPTIONS.map((o) => (
-                <MenuItem key={o.value} value={o.value}>
-                  {o.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
+            textAlign:
+              "center",
 
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth sx={inputWhiteSx} size="small">
-            <InputLabel
-              sx={{
-                color: "primary.main",
-                "&.Mui-focused": { color: "primary.main" },
-              }}
+            fontSize: 10,
+
+            color: "#0d4f82",
+          }}
+        >
+          ⚙
+        </Box>
+
+        <Typography
+          sx={{
+            fontSize: 12,
+
+            fontWeight: 800,
+
+            color: "#0d4f82",
+          }}
+        >
+          Behaviour
+        </Typography>
+      </Box>
+
+      {/* BODY */}
+
+      <Box sx={{ p: "12px 11px 11px" }}>
+        <Grid
+          container
+          columnSpacing={1.25}
+          rowSpacing={1.25}
+        >
+          <Grid
+            item
+            xs={12}
+            md={9}
+          >
+            <Typography sx={LABEL_SX}>
+              Attachment Rule
+            </Typography>
+
+            <FormControl
+              fullWidth
+              size="small"
+              sx={CONTROL_SX}
             >
-              Step action
-            </InputLabel>
-            {isInitiate ? (
-              <Select label="Step action" value="create" disabled>
-                <MenuItem value="create">Create</MenuItem>
-              </Select>
-            ) : (
               <Select
-                label="Step action"
-                value={mode}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setMode(v);
-                  change("step_action", v);
-                }}
-              >
-                <MenuItem value="approve">Approve</MenuItem>
-                <MenuItem value="send">Send</MenuItem>
-              </Select>
-            )}
-          </FormControl>
-        </Grid>
-
-        {!isInitiate && (
-          <>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={inputWhiteSx} size="small">
-                <InputLabel
-                  sx={{
-                    color: "primary.main",
-                    "&.Mui-focused": { color: "primary.main" },
-                  }}
-                >
-                  Allow review
-                </InputLabel>
-                <Select
-                  label="Allow review"
-                  value={mode === "send" ? "0" : local.review_allowed ? "1" : "0"}
-                  onChange={(e) => change("review_allowed", e.target.value === "1")}
-                  disabled={mode === "send"}
-                >
-                  <MenuItem value="1">Yes</MenuItem>
-                  <MenuItem value="0">No</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Tooltip
-                arrow
-                placement="top"
-                title={
-                  mode === "send"
-                    ? "Disabled because Step Action is Send. Switch to Approve to set a reject path."
-                    : "Required when Step Action is Approve."
+                value={
+                  local.attachments_allowed ||
+                  "none"
+                }
+                onChange={(e) =>
+                  change(
+                    "attachments_allowed",
+                    e.target.value
+                  )
                 }
               >
-                <FormControl fullWidth sx={inputWhiteSx} size="small" required={mode === "approve"} disabled={mode === "send"}>
-                  <InputLabel
-                    sx={{
-                      color: "primary.main",
-                      "&.Mui-focused": { color: "primary.main" },
-                    }}
-                  >
-                    Next step on reject
-                  </InputLabel>
-
-                  <Select
-                    label="Next step on reject"
-                    disabled={mode === "send"}
-                    value={local.next_step_after_reject ?? ""}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      change(
-                        "next_step_after_reject",
-                        v === "" ? null : Number(v)
-                      );
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>- Required -</em>
+                {ATTACH_MODE_OPTIONS.map(
+                  (option) => (
+                    <MenuItem
+                      key={
+                        option.value
+                      }
+                      value={
+                        option.value
+                      }
+                    >
+                      {option.label}
                     </MenuItem>
-                    {(stepsLessThanCurrent || []).map((opt) => (
-                      <MenuItem key={opt.step_no} value={opt.step_no}>
-                        {opt.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Tooltip>
-            </Grid>
+                  )
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Approve button text"
-                fullWidth
-                size="small"
-                value={mode === "send" ? "Send" : local.approve_button_name ?? ""}
-                disabled={mode === "send"}
-                onChange={(e) => change("approve_button_name", e.target.value)}
-                InputLabelProps={{
-                  sx: {
-                    color: "primary.main",
-                    "&.Mui-focused": { color: "primary.main" },
-                  },
-                }}
-                sx={inputWhiteSx}
-              />
-            </Grid>
+          <Grid
+            item
+            xs={12}
+            md={3}
+          >
+            <Typography sx={LABEL_SX}>
+              Step Action
+            </Typography>
 
-            {mode === "approve" && (
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Reject button text"
+            <FormControl
+              fullWidth
+              size="small"
+              sx={CONTROL_SX}
+            >
+              {isInitiate ? (
+                <Select
+                  value="create"
+                  disabled
+                >
+                  <MenuItem value="create">
+                    Create
+                  </MenuItem>
+                </Select>
+              ) : (
+                <Select
+                  value={mode}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value;
+
+                    setMode(value);
+
+                    change(
+                      "step_action",
+                      value
+                    );
+                  }}
+                >
+                  <MenuItem value="approve">
+                    Approve
+                  </MenuItem>
+
+                  <MenuItem value="send">
+                    Send
+                  </MenuItem>
+                </Select>
+              )}
+            </FormControl>
+          </Grid>
+
+          {!isInitiate && (
+            <>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <Typography
+                  sx={LABEL_SX}
+                >
+                  Allow Review
+                </Typography>
+
+                <FormControl
                   fullWidth
                   size="small"
-                  value={local.reject_button_name ?? ""}
-                  onChange={(e) => change("reject_button_name", e.target.value)}
-                  InputLabelProps={{
-                    sx: {
-                      color: "primary.main",
-                      "&.Mui-focused": { color: "primary.main" },
-                    },
-                  }}
-                  sx={inputWhiteSx}
+                  sx={CONTROL_SX}
+                >
+                  <Select
+                    value={
+                      mode ===
+                      "send"
+                        ? "0"
+                        : local.review_allowed
+                          ? "1"
+                          : "0"
+                    }
+                    onChange={(e) =>
+                      change(
+                        "review_allowed",
+                        e.target
+                          .value ===
+                          "1"
+                      )
+                    }
+                    disabled={
+                      mode ===
+                      "send"
+                    }
+                  >
+                    <MenuItem value="1">
+                      Yes
+                    </MenuItem>
+
+                    <MenuItem value="0">
+                      No
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <Typography
+                  sx={LABEL_SX}
+                >
+                  Next Step On
+                  Reject
+                </Typography>
+
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title={
+                    mode ===
+                    "send"
+                      ? "Disabled because Step Action is Send."
+                      : "Required when Step Action is Approve."
+                  }
+                >
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    required={
+                      mode ===
+                      "approve"
+                    }
+                    disabled={
+                      mode ===
+                      "send"
+                    }
+                    sx={CONTROL_SX}
+                  >
+                    <Select
+                      value={
+                        local.next_step_after_reject ??
+                        ""
+                      }
+                      onChange={(
+                        e
+                      ) =>
+                        change(
+                          "next_step_after_reject",
+                          e.target
+                            .value ===
+                            ""
+                            ? null
+                            : Number(
+                                e
+                                  .target
+                                  .value
+                              )
+                        )
+                      }
+                    >
+                      <MenuItem value="">
+                        <em>
+                          Select previous
+                          step
+                        </em>
+                      </MenuItem>
+
+                      {(
+                        stepsLessThanCurrent ||
+                        []
+                      ).map(
+                        (
+                          option
+                        ) => (
+                          <MenuItem
+                            key={
+                              option.step_no
+                            }
+                            value={
+                              option.step_no
+                            }
+                          >
+                            {
+                              option.label
+                            }
+                          </MenuItem>
+                        )
+                      )}
+                    </Select>
+                  </FormControl>
+                </Tooltip>
+              </Grid>
+
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <Typography
+                  sx={LABEL_SX}
+                >
+                  Approve Button Text
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={
+                    mode ===
+                    "send"
+                      ? "Send"
+                      : local.approve_button_name ??
+                        ""
+                  }
+                  disabled={
+                    mode ===
+                    "send"
+                  }
+                  onChange={(e) =>
+                    change(
+                      "approve_button_name",
+                      e.target.value
+                    )
+                  }
+                  sx={CONTROL_SX}
                 />
               </Grid>
-            )}
-          </>
-        )}
-      </Grid>
-    </Paper>
+
+              {mode ===
+                "approve" && (
+                <Grid
+                  item
+                  xs={12}
+                  md={6}
+                >
+                  <Typography
+                    sx={
+                      LABEL_SX
+                    }
+                  >
+                    Reject Button
+                    Text
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={
+                      local.reject_button_name ??
+                      ""
+                    }
+                    onChange={(e) =>
+                      change(
+                        "reject_button_name",
+                        e.target
+                          .value
+                      )
+                    }
+                    sx={
+                      CONTROL_SX
+                    }
+                  />
+                </Grid>
+              )}
+            </>
+          )}
+        </Grid>
+      </Box>
+    </Box>
   );
 }

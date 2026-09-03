@@ -39,3 +39,9 @@ changed_files.txt
 # system
 .DS_Store
 Thumbs.db
+
+# local npm cache
+.npm-cache/
+
+# local npm cache
+.npm-cache/

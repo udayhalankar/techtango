@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import ModuleTileGrid from "../../components/ModuleTileGrid";
 import api from "../../services/api";
@@ -10,7 +11,9 @@ function formatDate(value) {
 }
 
 export default function DirectAssignments() {
-  const [activeTab, setActiveTab] = useState("inbox");
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab") === "outbox" ? "outbox" : "inbox";
+  const [activeTab, setActiveTab] = useState(requestedTab);
   const [approvals, setApprovals] = useState([]);
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -22,6 +25,10 @@ export default function DirectAssignments() {
 
   const modalRef = useRef();
   const previewRef = useRef();
+
+  useEffect(() => {
+    setActiveTab(requestedTab);
+  }, [requestedTab]);
 
   const fetchApprovals = async () => {
     const route = activeTab === "inbox" ? "/approvals/inbox" : "/approvals/outbox";
@@ -198,58 +205,118 @@ export default function DirectAssignments() {
     [activeTab, approvals]
   );
 
-  const createAssignmentButtonStyle = {
-    border: "0",
-    borderRadius: "8px",
-    padding: "12px 22px",
-    background: "linear-gradient(135deg, #1f80f0 0%, #36b8ec 100%)",
-    color: "#ffffff",
-    fontSize: "17px",
-    fontWeight: 700,
-    letterSpacing: "0.01em",
-    boxShadow: "0 12px 24px rgba(31, 128, 240, 0.22)",
-    cursor: "pointer",
-  };
+//   const createAssignmentButtonStyle = {
+//   height: "36px",
+//   border: "0",
+//   borderRadius: "7px",
+//   padding: "0 16px",
+
+//   background: "#0a6ed1",
+//   color: "#ffffff",
+
+//   fontSize: "12px",
+//   fontWeight: 700,
+
+//   letterSpacing: "0",
+
+//   boxShadow: "0 3px 8px rgba(10,110,209,.18)",
+
+//   cursor: "pointer",
+
+//   fontFamily: "inherit",
+// };
 
   return (
     <>
-      <ModuleTileGrid
-        title="Direct Assignments"
-        subtitle="Review inbox and outbox assignments in the shared module grid layout."
-        titleBarColor="#1f355d"
-        searchEnabled
-        searchPlaceholder="Search direct assignments"
-        controls={
-          <div className="section-header">
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              style={createAssignmentButtonStyle}
-            >
-              Create Assignment
-            </button>
-          </div>
-        }
-        tiles={tiles}
-        tileVariant="approval"
-        tilesPerRow={{ xs: 1, sm: 2, md: 4, lg: 4 }}
-        maxRows={2}
-        containerMaxWidth="lg"
-        titleBarTabs={[
-          {
-            key: "inbox",
-            label: "INBOX",
-            active: activeTab === "inbox",
-            onClick: () => setActiveTab("inbox"),
-          },
-          {
-            key: "outbox",
-            label: "OUTBOX",
-            active: activeTab === "outbox",
-            onClick: () => setActiveTab("outbox"),
-          },
-        ]}
-      />
+      {/* <ModuleTileGrid
+  title="Direct Assignments"
+  subtitle="Manage assignments sent directly between users, monitor status and review pending work."
+  titleBarColor="#344f67"
+
+  searchEnabled
+  searchPlaceholder="Search assignments"
+
+  controls={
+    <div className="section-header">
+      <button
+        type="button"
+        onClick={() => setShowModal(true)}
+        style={createAssignmentButtonStyle}
+      >
+        Create Assignment
+      </button>
+    </div>
+  }
+
+  tiles={tiles}
+
+  tileVariant="approval"
+
+  tileHeight={176}
+
+  tilesPerRow={{
+    xs: 1,
+    sm: 2,
+    md: 3,
+    lg: 4,
+  }}
+
+  maxRows={2}
+
+  containerMaxWidth="xl"
+
+  titleBarTabs={[
+    {
+      key: "inbox",
+      label: "INBOX",
+      active: activeTab === "inbox",
+      onClick: () =>
+        setActiveTab("inbox"),
+    },
+    {
+      key: "outbox",
+      label: "OUTBOX",
+      active: activeTab === "outbox",
+      onClick: () =>
+        setActiveTab("outbox"),
+    },
+  ]}
+/> */}
+
+<ModuleTileGrid
+  title="Direct Assignments"
+
+  subtitle="Manage assignments sent directly between users, monitor status and review pending work."
+
+  searchPlaceholder="Search assignments"
+
+  primaryAction={{
+    label: "Create Assignment",
+    onClick: () => setShowModal(true),
+  }}
+
+  tiles={tiles}
+
+  tileVariant="approval"
+
+  titleBarTabs={[
+    {
+      key: "inbox",
+      label: "INBOX",
+      active: activeTab === "inbox",
+      onClick: () =>
+        setActiveTab("inbox"),
+    },
+    {
+      key: "outbox",
+      label: "OUTBOX",
+      active: activeTab === "outbox",
+      onClick: () =>
+        setActiveTab("outbox"),
+    },
+  ]}
+/>
+
 
       {showModal && (
         <div className="modal-overlay">

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../../../services/api";
 import FormViewsTab from "../sbforms/FormViewsTab";
-
+import ModuleTileGrid from "../../../components/ModuleTileGrid";
 // MUI
 import {
   Box,
@@ -22,7 +22,9 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography
+  Typography,
+  MenuItem,
+   IconButton,
 } from "@mui/material";
 import AddCircleOutlineOutlinedIcon from "@mui/icons-material/AddCircleOutline";
 import {
@@ -53,6 +55,54 @@ const HEADER_PY = 0.6;
 const camelToSnake = (str) =>
   String(str || "").replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
+const WORKFLOW_SYSTEM_FIELDS = [
+  {
+    fieldname: "id",
+    datatype: "BIGINT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "date_created",
+    datatype: "TIMESTAMPTZ",
+    inputtype: "system",
+  },
+  {
+    fieldname: "date_modified",
+    datatype: "TIMESTAMPTZ",
+    inputtype: "system",
+  },
+  {
+    fieldname: "created_by",
+    datatype: "BIGINT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "modified_by",
+    datatype: "BIGINT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "table_type",
+    datatype: "TEXT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "tenant_id",
+    datatype: "BIGINT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "workflow_id",
+    datatype: "BIGINT",
+    inputtype: "system",
+  },
+  {
+    fieldname: "comments",
+    datatype: "TEXT",
+    inputtype: "system",
+  },
+];
+
 export const Datatablebuilder = () => {
   const embedded = new URLSearchParams(window.location.search).get("embedded") === "1";
   const embeddedPageId = new URLSearchParams(window.location.search).get("pageId");
@@ -60,6 +110,8 @@ export const Datatablebuilder = () => {
   const [activeTab, setActiveTab] = useState("Templates");
   const [showFormModal, setShowFormModal] = useState(false);
   const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [tableType, setTableType] = useState("simple");
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({ name: "", type: "text", inputtype: "text", options: "" });
   const [templateList, setTemplateList] = useState([]);
@@ -202,6 +254,7 @@ const paged  = filtered.slice(start, start + PER_PAGE);
   const openEditModal = async (tpl, section = "validations") => {
     setSelectedTemplate(tpl);
     setTemplateName(tpl?.template_name || "");
+    setTemplateDescription(tpl?.template_description || "");
     setNewFieldName("");
     setNewInputType("text");
     setNewRadioOptions("");
@@ -270,11 +323,20 @@ const paged  = filtered.slice(start, start + PER_PAGE);
     }
     const normalizedValidations = normalizeValidations(formFields, validationsByMode);
     try {
-      await api.put(`/templates/${selectedTemplate.id}`, {
-        fields: formFields,
-        validations: normalizedValidations,
-        access: accessObj
-      });
+      await api.put(
+        `/templates/${selectedTemplate.id}`,
+        {
+          templateDescription:
+            templateDescription.trim(),
+
+          fields: formFields,
+
+          validations:
+            normalizedValidations,
+
+          access: accessObj,
+        }
+      );
       alert("Template updated successfully.");
       setEditModal(false);
     } catch (err) {
@@ -313,6 +375,22 @@ const paged  = filtered.slice(start, start + PER_PAGE);
       alert("Field name already exists.");
       return;
     }
+
+    if (
+        tableType === "workflow" &&
+        WORKFLOW_SYSTEM_FIELDS.some(
+          (field) =>
+            field.fieldname ===
+            camelToSnake(newFieldName)
+        )
+      ) {
+        alert(
+          `"${newFieldName}" is a reserved workflow system field and is created automatically.`
+        );
+        return;
+      }
+
+
     let dataType = "TEXT";
     let options = null;
     let format = null;
@@ -440,6 +518,7 @@ const paged  = filtered.slice(start, start + PER_PAGE);
 
     setShowFormModal(false);
     setTemplateName("");
+    setTemplateDescription("");
     setFormFields([]);
     setNewFieldName("");
     setNewInputType("text");
@@ -447,11 +526,28 @@ const paged  = filtered.slice(start, start + PER_PAGE);
     setNewDateFormat("full");
 
     try {
-      const payload = { templateName, fields: formFields, createdBy: 1, validations: normalizedValidations, access: accessObj };
+      const payload = {
+            templateName,
+
+            templateDescription:
+              templateDescription.trim(),
+
+            tableType,
+
+            fields: formFields,
+
+            createdBy: 1,
+
+            validations:
+              normalizedValidations,
+
+            access: accessObj,
+          };
       const res = await api.post("/templates/create", payload);
       alert("Template created: " + res.data.table);
       setShowFormModal(false);
       setTemplateName("");
+      setTemplateDescription("");
       setFields([]);
     } catch (err) {
       if (err.response?.data?.error?.includes("duplicate")) {
@@ -502,6 +598,45 @@ const paged  = filtered.slice(start, start + PER_PAGE);
     cursor: "pointer",
     lineHeight: 1
   };
+
+
+  /* =============================================================================
+   MODULE TILE DATA
+============================================================================= */
+
+const templateTiles = (templateList || []).map((tpl, index) => {
+  const templateId =
+    tpl?.id ??
+    tpl?.template_id ??
+    index;
+
+  const modifiedDate =
+    tpl?.date_modified ||
+    tpl?.modified_at ||
+    tpl?.updated_at ||
+    tpl?.created_at;
+
+  return {
+    id: templateId,
+
+    label:
+      tpl?.template_name ||
+      "Untitled Template",
+
+    searchText: [
+      tpl?.template_name,
+      tpl?.table_name,
+      tpl?.created_by,
+    ]
+      .filter(Boolean)
+      .join(" "),
+
+    template: tpl,
+
+    onClick: () =>
+      openEditModal(tpl),
+  };
+});
 
   // ── UI (cosmetic only) ────────────────────────────────────────
   if (embedded) {
@@ -765,6 +900,8 @@ const paged  = filtered.slice(start, start + PER_PAGE);
                     if (confirmClose) {
                       setEditModal(false);
                       setTemplateName("");
+                      setTemplateDescription("");
+                      setTableType("simple");
                       setFormFields([]);
                       setNewFieldName("");
                       setNewInputType("text");
@@ -786,555 +923,2338 @@ const paged  = filtered.slice(start, start + PER_PAGE);
       </>
     );
   }
-  if (true) {
-    return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fb" }}>
-        <Box sx={{ display: embedded ? "none" : "block" }}>
-          <Box sx={{ bgcolor: "#1f355d", color: "#fff", px: 4, py: 4 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              Entity Data Model Builder
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-              Create and manage data model templates for your business forms.  Build reusable schemas for consistent data structures.
-            </Typography>
-            {/* <Typography variant="body1" sx={{ mt: 1, maxWidth: 900, color: "#e6edf7" }}>
-              Build reusable schemas and keep your data structures consistent.
-            </Typography> */}
-          </Box>
-        </Box>
+  
 
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box sx={{ maxWidth: 1200, mx: "auto", borderRadius: 2, p: 3 }}>
+if (true) {
+  return (
+    <>
+      {/* =================================================================
+          DATA MODEL BUILDER
+          Shared AUGMIS ModuleTileGrid layout
+         ================================================================= */}
+
+      <ModuleTileGrid
+        title="Entity Data Model Builder"
+        subtitle="Create and manage reusable data model templates for consistent enterprise data structures."
+        tiles={templateTiles}
+        searchPlaceholder="Search data models"
+        primaryAction={{
+          label: "Create New Template",
+
+          onClick: () => {
+                    setTemplateName("");
+                    setTemplateDescription("");
+
+                    // Default to existing behaviour
+                    setTableType("simple");
+
+                    setFormFields([]);
+
+                    setNewFieldName("");
+
+                    setNewInputType("text");
+
+                    setNewRadioOptions("");
+
+                    setNewDateFormat("full");
+
+                    setValidationMode("create");
+
+                    setValidationsByMode({
+                      create: {},
+                      edit: {},
+                    });
+
+                    setAccessJson("{}");
+
+                    setEditSection(
+                      "validations"
+                    );
+
+                    setShowFormModal(true);
+                  },
+        }}
+        showDefaultFooter={false}
+        renderTileContent={(tile) => {
+          const tpl =
+            tile.template;
+
+          if (!tpl) {
+            return null;
+          }
+
+          const templateId =
+            tpl?.id ??
+            tpl?.template_id ??
+            "-";
+
+          const modifiedValue =
+            tpl?.date_modified ||
+            tpl?.modified_at ||
+            tpl?.updated_at ||
+            tpl?.created_at;
+
+          const formatDate = (
+            value
+          ) => {
+            if (!value) {
+              return "-";
+            }
+
+            const date =
+              new Date(value);
+
+            if (
+              Number.isNaN(
+                date.getTime()
+              )
+            ) {
+              return String(
+                value
+              );
+            }
+
+            return date.toLocaleDateString(
+              "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }
+            );
+          };
+
+          const TileRow = ({
+            label,
+            value,
+          }) => (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap"
+                display: "grid",
+
+                gridTemplateColumns:
+                  "80px minmax(0,1fr)",
+
+                columnGap: 0.5,
+
+                alignItems:
+                  "center",
+
+                height: 18,
+
+                minWidth: 0,
               }}
             >
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setTemplateName("");
-                  setFormFields([]);
-                  setNewFieldName("");
-                  setNewInputType("text");
-                  setNewRadioOptions("");
-                  setNewDateFormat("full");
-                  setValidationMode("create");
-                  setValidationsByMode({ create: {}, edit: {} });
-                  setAccessJson("{}");
-                  setEditSection("validations");
-                  setShowFormModal(true);
+              <Typography
+                noWrap
+                sx={{
+                  fontSize: 10,
+
+                  color:
+                    "#738496",
+
+                  fontWeight:
+                    500,
                 }}
-                sx={{ bgcolor: "#1f355d", textTransform: "none" }}
               >
-                Create New Template
-              </Button>
-              <Box sx={{ flexGrow: 1 }} />
-              <TextField
-                size="small"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                InputProps={{ sx: { bgcolor: "#f8fafc" } }}
-                sx={{ flex: "1 1 320px", maxWidth: 520 }}
+                {label}
+              </Typography>
+
+              <Typography
+                noWrap
+                title={String(
+                  value ?? "-"
+                )}
+                sx={{
+                  minWidth: 0,
+
+                  overflow:
+                    "hidden",
+
+                  textOverflow:
+                    "ellipsis",
+
+                  whiteSpace:
+                    "nowrap",
+
+                  fontSize:
+                    10.5,
+
+                  color:
+                    "#33485d",
+
+                  fontWeight:
+                    600,
+                }}
+              >
+                {value ?? "-"}
+              </Typography>
+            </Box>
+          );
+
+          return (
+            <>
+              {/* TITLE */}
+
+              <Typography
+                noWrap
+                title={
+                  tpl?.template_name ||
+                  ""
+                }
+                sx={{
+                  width: "100%",
+
+                  minHeight: 22,
+
+                  overflow:
+                    "hidden",
+
+                  textOverflow:
+                    "ellipsis",
+
+                  whiteSpace:
+                    "nowrap",
+
+                  fontSize: 14,
+
+                  fontWeight:
+                    700,
+
+                  lineHeight:
+                    "20px",
+
+                  color:
+                    "#172b4d",
+                }}
+              >
+                {tpl?.template_name ||
+                  "Untitled Template"}
+              </Typography>
+
+              <Typography
+  title={
+    tpl?.template_description ||
+    ""
+  }
+  sx={{
+    mt: 0.25,
+
+    minHeight: 39,
+    maxHeight: 39,
+
+    pr: 0.5,
+
+    fontSize: 9.7,
+
+    fontWeight: 400,
+
+    lineHeight: "13px",
+
+    color: "#8a98a8",
+
+    display: "-webkit-box",
+
+    WebkitBoxOrient: "vertical",
+
+    WebkitLineClamp: 3,
+
+    overflow: "hidden",
+
+    textOverflow: "ellipsis",
+  }}
+>
+  {tpl?.template_description ||
+    ""}
+</Typography>
+
+              {/* PUSH DETAILS TO BOTTOM */}
+
+              <Box
+                sx={{
+                  flexGrow: 1,
+                }}
               />
-              
+
+              {/* DETAILS + ACTION */}
+
+              <Box
+                sx={{
+                  display: "grid",
+
+                  gridTemplateColumns:
+                    "minmax(0,1fr) auto",
+
+                  columnGap: 1,
+
+                  alignItems:
+                    "end",
+
+                  width: "100%",
+
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    display:
+                      "grid",
+
+                    rowGap:
+                      "1px",
+
+                    minWidth: 0,
+                  }}
+                >
+                  <TileRow
+                    label="ID"
+                    value={
+                      templateId
+                    }
+                  />
+
+                  <TileRow
+                    label="Created By"
+                    value={
+                      tpl?.created_by ??
+                      "-"
+                    }
+                  />
+
+                  <TileRow
+                    label="Modified"
+                    value={formatDate(
+                      modifiedValue
+                    )}
+                  />
+                </Box>
+
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  alignItems="flex-end"
+                >
+                  <Button
+                    size="small"
+                    onClick={(
+                      event
+                    ) => {
+                      event.stopPropagation();
+
+                      handleDeleteTemplate(
+                        tpl,
+                        event
+                      );
+                    }}
+                    sx={{
+                      height: 26,
+
+                      minHeight:
+                        26,
+
+                      px: 1,
+
+                      border:
+                        "1px solid #f0c0bc",
+
+                      borderRadius:
+                        "6px",
+
+                      color:
+                        "#b42318",
+
+                      bgcolor:
+                        "#ffffff",
+
+                      fontSize:
+                        10.5,
+
+                      textTransform:
+                        "none",
+
+                      "&:hover":
+                        {
+                          bgcolor:
+                            "#fdf2f1",
+                        },
+                    }}
+                  >
+                    Delete
+                  </Button>
+
+                  {/* <Button
+                    size="small"
+                    onClick={(
+                      event
+                    ) => {
+                      event.stopPropagation();
+
+                      openEditModal(
+                        tpl
+                      );
+                    }}
+                    sx={{
+                      height: 26,
+
+                      minHeight:
+                        26,
+
+                      px: 1,
+
+                      borderRadius:
+                        "6px",
+
+                      bgcolor:
+                        "#eaf3fc",
+
+                      color:
+                        "#0a6ed1",
+
+                      fontSize:
+                        10.5,
+
+                      fontWeight:
+                        700,
+
+                      textTransform:
+                        "none",
+
+                      "&:hover":
+                        {
+                          bgcolor:
+                            "#dcecfb",
+                        },
+                    }}
+                  >
+                    Open
+                  </Button> */}
+                </Stack>
+              </Box>
+            </>
+          );
+        }}
+      />
+
+      {/* =================================================================
+          TEMPLATE DESIGNER
+          Redesigned visually only.
+         ================================================================= */}
+
+      {showFormModal && (
+        <Box
+          sx={{
+            position: "fixed",
+
+            inset: 0,
+
+            zIndex: 1400,
+
+            display: "flex",
+
+            alignItems: "center",
+
+            justifyContent:
+              "center",
+
+            bgcolor:
+              "rgba(18, 34, 52, 0.38)",
+
+            backdropFilter:
+              "blur(2px)",
+          }}
+          onClick={() =>
+            setShowFormModal(false)
+          }
+        >
+          <Paper
+            elevation={0}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+            sx={{
+              width:
+                "min(960px, 95vw)",
+
+              maxHeight:
+                "88vh",
+
+              display: "flex",
+
+              flexDirection:
+                "column",
+
+              overflow: "hidden",
+
+              borderRadius:
+                "12px",
+
+              border:
+                "1px solid #dce3ea",
+
+              bgcolor:
+                "#ffffff",
+
+              boxShadow:
+                "0 24px 60px rgba(17,37,61,.22)",
+            }}
+          >
+            {/* =========================================================
+                MODAL HEADER
+               ========================================================= */}
+
+            <Box
+              sx={{
+                px: 3,
+
+                py: 2,
+
+                display: "flex",
+
+                alignItems:
+                  "center",
+
+                justifyContent:
+                  "space-between",
+
+                background:
+                  "linear-gradient(105deg, #344f67 0%, #314a62 58%, #496178 100%)",
+
+                color:
+                  "#ffffff",
+              }}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: 11,
+
+                    color:
+                      "rgba(255,255,255,.72)",
+
+                    mb: 0.3,
+                  }}
+                >
+                  Entity Data Model
+                </Typography>
+
+                <Typography
+                  sx={{
+                    fontSize: 20,
+
+                    fontWeight:
+                      700,
+
+                    lineHeight:
+                      1.2,
+                  }}
+                >
+                  Template Designer
+                </Typography>
+
+                <Typography
+                  sx={{
+                    mt: 0.35,
+
+                    fontSize: 11.5,
+
+                    color:
+                      "rgba(255,255,255,.76)",
+                  }}
+                >
+                  Define the model
+                  name and fields for
+                  your reusable data
+                  structure.
+                </Typography>
+              </Box>
+
+              <Button
+                onClick={() =>
+                  setShowFormModal(
+                    false
+                  )
+                }
+                sx={{
+                  minWidth: 34,
+
+                  width: 34,
+
+                  height: 34,
+
+                  borderRadius:
+                    "50%",
+
+                  color:
+                    "#ffffff",
+
+                  fontSize: 20,
+
+                  bgcolor:
+                    "rgba(255,255,255,.10)",
+
+                  "&:hover": {
+                    bgcolor:
+                      "rgba(255,255,255,.18)",
+                  },
+                }}
+              >
+                ×
+              </Button>
             </Box>
 
-            <Box sx={{ mt: 3 }}>
-              <Grid container spacing={2}>
-                {filtered.map((tpl, i) => (
-                  <Grid item key={tpl.id ?? tpl.template_id ?? i} xs={12} sm={6} md={3}>
-                    <Paper
-                      elevation={0}
-                      onClick={() => openEditModal(tpl)}
+            {/* =========================================================
+                SCROLLABLE BODY
+               ========================================================= */}
+
+            <Box
+              sx={{
+                p: 3,
+
+                overflowY:
+                  "auto",
+
+                bgcolor:
+                  "#ffffff",
+              }}
+            >
+              {/* TEMPLATE INFORMATION */}
+
+              <Box
+                sx={{
+                  mb: 2.5,
+
+                  p: 2,
+
+                  border:
+                    "1px solid #e1e6eb",
+
+                  borderRadius:
+                    "10px",
+
+                  bgcolor:
+                    "#fafbfd",
+                }}
+              >
+                <Typography
+                  sx={{
+                    mb: 1.3,
+
+                    fontSize: 12.5,
+
+                    fontWeight:
+                      700,
+
+                    color:
+                      "#223548",
+                  }}
+                >
+                  Template Information
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Template Name"
+                  placeholder="Enter template name"
+
+                  value={
+                    templateName
+                  }
+
+                  onChange={(event) =>
+                    setTemplateName(
+                      event.target
+                        .value
+                    )
+                  }
+
+                  helperText="Lowercase letters and numbers only, maximum 20 characters."
+
+                  sx={{
+                    "& .MuiOutlinedInput-root":
+                      {
+                        bgcolor:
+                          "#ffffff",
+
+                        borderRadius:
+                          "6px",
+                      },
+
+                    "& .MuiFormHelperText-root":
+                      {
+                        fontSize:
+                          10.5,
+
+                        ml: 0,
+
+                        color:
+                          "#738496",
+                      },
+                  }}
+                />
+
+                <TextField
+                      select
+                      fullWidth
+                      size="small"
+
+                      label="Table Type"
+
+                      value={tableType}
+
+                      onChange={(event) =>
+                        setTableType(
+                          event.target.value
+                        )
+                      }
+
                       sx={{
-                        bgcolor: "#ffffff",
-                        color: "#1f355d",
-                        border: "1px solid #2f5fff",
-                        boxShadow: "0 4px 10px rgba(16, 24, 40, 0.16)",
-                        borderRadius: 2,
-                        p: 2,
-                        minHeight: 160,
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        gap: 1.5,
-                        position: "relative",
-                        cursor: "pointer",
-                        transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 10px 18px rgba(16, 24, 40, 0.22)",
-                          borderColor: "#1a4fd8",
+                        mt: 1.5,
+
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: "#ffffff",
+                          borderRadius: "6px",
+                        },
+
+                        "& .MuiInputLabel-root": {
+                          fontSize: 12.5,
+                        },
+
+                        "& .MuiSelect-select": {
+                          fontSize: 12.5,
                         },
                       }}
                     >
-                      <Box>
-                        <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#1a4fd8" }}>
-                          {tpl.template_name || "Untitled Template"}
-                        </Typography>
-                        <Typography sx={{ fontSize: 12, color: "#51607d", mt: 1 }}>
-                          Template ID: {tpl.id ?? tpl.template_id ?? "-"}
-                        </Typography>
-                        <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                          Created by: {tpl.created_by ?? "-"}
-                        </Typography>
-                        <Typography sx={{ fontSize: 12, color: "#51607d" }}>
-                          Last Modified:{" "}
-                          {tpl.created_at ? new Date(tpl.created_at).toLocaleDateString() : "-"}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          sx={{ textTransform: "none" }}
-                          onClick={(event) => handleDeleteTemplate(tpl, event)}
-                        >
-                          Delete
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          sx={{ textTransform: "none" }}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            alert("TODO: Manage access");
-                          }}
-                        >
-                          Manage Access
-                        </Button>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+                      <MenuItem value="simple">
+                        Simple Form Table
+                      </MenuItem>
 
-            {editModal && selectedTemplate && (
+                      <MenuItem value="workflow">
+                        Workflow Form Table
+                      </MenuItem>
+                    </TextField>
+
+                <TextField
+  fullWidth
+  multiline
+  minRows={2}
+  maxRows={3}
+  size="small"
+
+  label="Template Description"
+
+  placeholder="Briefly describe the purpose of this data model"
+
+  value={templateDescription}
+
+  onChange={(event) =>
+    setTemplateDescription(
+      event.target.value
+    )
+  }
+
+  sx={{
+    mt: 1.5,
+
+    "& .MuiOutlinedInput-root": {
+      bgcolor: "#ffffff",
+      borderRadius: "6px",
+
+      fontSize: 12.5,
+    },
+
+    "& .MuiInputLabel-root": {
+      fontSize: 12.5,
+    },
+  }}
+/>
+              </Box>
+
+              {/* ADD FIELD */}
+
               <Box
-                sx={embedded ? { p: 0 } : overlaySx}
-                onClick={embedded ? undefined : () => setEditModal(false)}
+                sx={{
+                  mb: 2.5,
+
+                  p: 2,
+
+                  border:
+                    "1px solid #e1e6eb",
+
+                  borderRadius:
+                    "10px",
+
+                  bgcolor:
+                    "#ffffff",
+                }}
               >
-                <Box sx={modalSx} onClick={(e) => e.stopPropagation()}>
-                  <Typography variant="h6" sx={{ mb: 1.5 }}>
-                    Edit Template: {selectedTemplate.template_name}
-                  </Typography>
+                <Typography
+                  sx={{
+                    mb: 1.3,
 
-                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-                    <input
-                      type="text"
-                      placeholder="Template Name"
-                      value={templateName}
-                      readOnly
-                      style={{ flex: "1 1 280px", padding: 8 }}
+                    fontSize: 12.5,
+
+                    fontWeight:
+                      700,
+
+                    color:
+                      "#223548",
+                  }}
+                >
+                  Add Field
+                </Typography>
+
+                <Grid
+                  container
+                  spacing={1.5}
+                  alignItems="center"
+                >
+                  {/* FIELD NAME */}
+
+                  <Grid
+                    item
+                    xs={12}
+                    md={4}
+                  >
+                    <TextField
+                      fullWidth
+
+                      size="small"
+
+                      label="Field Name"
+
+                      placeholder="e.g. employee_name"
+
+                      value={
+                        newFieldName
+                      }
+
+                      onChange={(
+                        event
+                      ) =>
+                        setNewFieldName(
+                          event
+                            .target
+                            .value
+                        )
+                      }
                     />
-                    {embedded && (
-                      <select
-                        value={validationMode}
-                        onChange={(e) => setValidationMode(e.target.value)}
-                        style={{ flex: "0 0 120px", padding: 8 }}
-                        disabled={editSection !== "validations"}
-                      >
-                        <option value="create">Create</option>
-                        <option value="edit">Edit</option>
-                      </select>
-                    )}
-                  </Box>
-                  <Typography variant="caption" sx={{ display: "block", mb: 2 }}>
-                    Only lowercase letters and numbers, max 20 characters. No spaces or special characters.
-                  </Typography>
+                  </Grid>
 
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                    <input
-                      type="text"
-                      placeholder="Field Name"
-                      value={newFieldName}
-                      onChange={(e) => setNewFieldName(e.target.value)}
-                      style={{ flex: "1 1 180px", padding: 8 }}
-                    />
+                  {/* INPUT TYPE */}
 
-                    <select
-                      value={newInputType}
-                      onChange={(e) => {
-                        setNewInputType(e.target.value);
-                        setNewRadioOptions("");
-                        setNewDateFormat("full");
+                  <Grid
+                    item
+                    xs={12}
+                    md={3}
+                  >
+                    <TextField
+                      select
+
+                      fullWidth
+
+                      size="small"
+
+                      label="Input Type"
+
+                      value={
+                        newInputType
+                      }
+
+                      onChange={(
+                        event
+                      ) => {
+                        setNewInputType(
+                          event
+                            .target
+                            .value
+                        );
+
+                        setNewRadioOptions(
+                          ""
+                        );
+
+                        setNewDateFormat(
+                          "full"
+                        );
                       }}
-                      style={{ flex: "0 0 180px", padding: 8 }}
                     >
-                      <option value="text">Text</option>
-                      <option value="textarea">Textarea</option>
-                      <option value="checkbox">Checkbox</option>
-                      <option value="radio">Radio Button</option>
-                      <option value="image">Attachment</option>
-                      <option value="date">Date</option>
-                      <option value="integer">Integer</option>
-                      <option value="dropdownlist">Dropdownlist</option>
-                    </select>
+                      <MenuItem value="text">
+                        Text
+                      </MenuItem>
 
-                    {newInputType === "checkbox" && (
-                      <input
-                        type="text"
-                        placeholder="Checkbox options (e.g. Option A, Option B)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
+                      <MenuItem value="textarea">
+                        Textarea
+                      </MenuItem>
 
-                    {newInputType === "radio" && (
-                      <input
-                        type="text"
-                        placeholder="Radio options (e.g. Yes,No,Maybe)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
+                      <MenuItem value="checkbox">
+                        Checkbox
+                      </MenuItem>
 
-                    {newInputType === "dropdownlist" && (
-                      <input
-                        type="text"
-                        placeholder="Dropdown options (e.g. Option A, Option B)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
+                      <MenuItem value="radio">
+                        Radio Button
+                      </MenuItem>
 
-                    {newInputType === "date" && (
-                      <select
-                        value={newDateFormat}
-                        onChange={(e) => setNewDateFormat(e.target.value)}
-                        style={{ flex: "0 0 220px", padding: 8 }}
-                      >
-                        <option value="full">Full Date (dd/mm/yyyy)</option>
-                        <option value="month">Month</option>
-                        <option value="year">Year</option>
-                        <option value="day">Day Only</option>
-                      </select>
-                    )}
+                      <MenuItem value="image">
+                        Attachment
+                      </MenuItem>
 
-                    <Button variant="contained" size="small" onClick={handleAddField}>
-                      Add Field
-                    </Button>
-                  </Box>
+                      <MenuItem value="date">
+                        Date
+                      </MenuItem>
 
-                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-                    <thead>
-                      <tr>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Field Name</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Data Type</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Input Type</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Options / Format</th>
-                        {embedded && (
-                          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Validations</th>
-                        )}
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {formFields.map((field, index) => (
-                        <tr key={index}>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.fieldname}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.datatype}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.inputtype}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                            {Array.isArray(field.options)
-                              ? field.options.join(", ")
-                              : field.options || field.format || "-"}
-                          </td>
-                          {embedded && (
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", fontSize: 12 }}>
-                                {(() => {
-                                  const v = getValidationFor(field.fieldname);
-                                  return (
-                                    <>
-                                      <label>
-                                        <input
-                                          type="checkbox"
-                                          checked={!!v.data_entry}
-                                          onChange={(e) => updateValidationFor(field.fieldname, { data_entry: e.target.checked })}
-                                        />{" "}
-                                        Data entry
-                                      </label>
-                                      <label>
-                                        <input
-                                          type="checkbox"
-                                          checked={!!v.read_only}
-                                          onChange={(e) => updateValidationFor(field.fieldname, { read_only: e.target.checked })}
-                                        />{" "}
-                                        Read only
-                                      </label>
-                                      <label>
-                                        <input
-                                          type="checkbox"
-                                          checked={!!v.visible}
-                                          onChange={(e) => updateValidationFor(field.fieldname, { visible: e.target.checked })}
-                                        />{" "}
-                                        Visible
-                                      </label>
-                                      <label>
-                                        <input
-                                          type="checkbox"
-                                          checked={!!v.mandatory}
-                                          onChange={(e) => updateValidationFor(field.fieldname, { mandatory: e.target.checked })}
-                                        />{" "}
-                                        Mandatory
-                                      </label>
-                                    </>
-                                  );
-                                })()}
-                              </Box>
-                            </td>
-                          )}
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                            <button
-                              onClick={() => handleRemoveField(index)}
-                              style={{
-                                padding: "4px 8px",
-                                backgroundColor: "#dc3545",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 4,
-                                cursor: "pointer"
-                              }}
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      <MenuItem value="integer">
+                        Integer
+                      </MenuItem>
 
-                  {editSection === "access" && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        Access (JSON)
-                      </Typography>
+                      <MenuItem value="dropdownlist">
+                        Dropdown List
+                      </MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* OPTIONS */}
+
+                  {[
+                    "checkbox",
+                    "radio",
+                    "dropdownlist",
+                  ].includes(
+                    newInputType
+                  ) && (
+                    <Grid
+                      item
+                      xs={12}
+                      md={3}
+                    >
                       <TextField
                         fullWidth
-                        multiline
-                        minRows={4}
-                        value={accessJson}
-                        onChange={(e) => setAccessJson(e.target.value)}
-                        placeholder='{"roles":["admin"],"users":[1,2]}'
+
+                        size="small"
+
+                        label="Options"
+
+                        placeholder="Yes, No, Maybe"
+
+                        value={
+                          newRadioOptions
+                        }
+
+                        onChange={(
+                          event
+                        ) =>
+                          setNewRadioOptions(
+                            event
+                              .target
+                              .value
+                          )
+                        }
                       />
-                    </Box>
+                    </Grid>
                   )}
 
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Button variant="contained" onClick={handleUpdateTemplate}>
-                      Save Changes
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        const confirmClose = window.confirm("All data will be lost. Do you want to continue?");
-                        if (confirmClose) {
-                          setEditModal(false);
-                          setTemplateName("");
-                          setFormFields([]);
-                          setNewFieldName("");
-                          setNewInputType("text");
-                          setNewRadioOptions("");
-                          setNewDateFormat("full");
+                  {/* DATE FORMAT */}
+
+                  {newInputType ===
+                    "date" && (
+                    <Grid
+                      item
+                      xs={12}
+                      md={3}
+                    >
+                      <TextField
+                        select
+
+                        fullWidth
+
+                        size="small"
+
+                        label="Date Format"
+
+                        value={
+                          newDateFormat
                         }
-                      }}
-                    >
-                      Close
-                    </Button>
-                  </Stack>
 
-                  <button style={closeBtnSx} onClick={() => setEditModal(false)}>
-                    x
-                  </button>
-                </Box>
-              </Box>
-            )}
-
-            {showFormModal && (
-              <Box
-                sx={embedded ? { p: 0 } : overlaySx}
-                onClick={embedded ? undefined : () => setShowFormModal(false)}
-              >
-                <Box sx={modalSx} onClick={(e) => e.stopPropagation()}>
-                  <Typography variant="h6" sx={{ mb: 1.5 }}>
-                    Template Designer
-                  </Typography>
-
-                  <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-                    <input
-                      type="text"
-                      placeholder="Template Name"
-                      value={templateName}
-                      onChange={(e) => setTemplateName(e.target.value)}
-                      style={{ flex: "1 1 280px", padding: 8 }}
-                    />
-                  </Box>
-                  <Typography variant="caption" sx={{ display: "block", mb: 2 }}>
-                    Only lowercase letters and numbers, max 20 characters. No spaces or special characters.
-                  </Typography>
-
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                    <input
-                      type="text"
-                      placeholder="Field Name"
-                      value={newFieldName}
-                      onChange={(e) => setNewFieldName(e.target.value)}
-                      style={{ flex: "1 1 180px", padding: 8 }}
-                    />
-
-                    <select
-                      value={newInputType}
-                      onChange={(e) => {
-                        setNewInputType(e.target.value);
-                        setNewRadioOptions("");
-                        setNewDateFormat("full");
-                      }}
-                      style={{ flex: "0 0 180px", padding: 8 }}
-                    >
-                      <option value="text">Text</option>
-                      <option value="textarea">Textarea</option>
-                      <option value="checkbox">Checkbox</option>
-                      <option value="radio">Radio Button</option>
-                      <option value="image">Attachment</option>
-                      <option value="date">Date</option>
-                      <option value="integer">Integer</option>
-                      <option value="dropdownlist">Dropdownlist</option>
-                    </select>
-
-                    {newInputType === "checkbox" && (
-                      <input
-                        type="text"
-                        placeholder="Checkbox options (e.g. Option A, Option B)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
-
-                    {newInputType === "radio" && (
-                      <input
-                        type="text"
-                        placeholder="Radio options (e.g. Yes,No,Maybe)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
-
-                    {newInputType === "dropdownlist" && (
-                      <input
-                        type="text"
-                        placeholder="Dropdown options (e.g. Option A, Option B)"
-                        value={newRadioOptions}
-                        onChange={(e) => setNewRadioOptions(e.target.value)}
-                        style={{ flex: "1 1 220px", padding: 8 }}
-                      />
-                    )}
-
-                    {newInputType === "date" && (
-                      <select
-                        value={newDateFormat}
-                        onChange={(e) => setNewDateFormat(e.target.value)}
-                        style={{ flex: "0 0 220px", padding: 8 }}
+                        onChange={(
+                          event
+                        ) =>
+                          setNewDateFormat(
+                            event
+                              .target
+                              .value
+                          )
+                        }
                       >
-                        <option value="full">Full Date (dd/mm/yyyy)</option>
-                        <option value="month">Month</option>
-                        <option value="year">Year</option>
-                        <option value="day">Day Only</option>
-                      </select>
-                    )}
+                        <MenuItem value="full">
+                          Full Date
+                        </MenuItem>
 
-                    <Button variant="contained" size="small" onClick={handleAddField}>
+                        <MenuItem value="month">
+                          Month
+                        </MenuItem>
+
+                        <MenuItem value="year">
+                          Year
+                        </MenuItem>
+
+                        <MenuItem value="day">
+                          Day Only
+                        </MenuItem>
+                      </TextField>
+                    </Grid>
+                  )}
+
+                  {/* ADD */}
+
+                  <Grid
+                    item
+                    xs={12}
+                    md="auto"
+                  >
+                    <Button
+                      variant="contained"
+
+                      onClick={
+                        handleAddField
+                      }
+
+                      sx={{
+                        height: 40,
+
+                        px: 2,
+
+                        borderRadius:
+                          "6px",
+
+                        bgcolor:
+                          "#0a6ed1",
+
+                        textTransform:
+                          "none",
+
+                        fontSize:
+                          12,
+
+                        fontWeight:
+                          700,
+
+                        "&:hover":
+                          {
+                            bgcolor:
+                              "#095caf",
+                          },
+                      }}
+                    >
                       Add Field
                     </Button>
-                  </Box>
+                  </Grid>
+                </Grid>
+              </Box>
 
-                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-                    <thead>
-                      <tr>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Field Name</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Data Type</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Input Type</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Options / Format</th>
-                        <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {formFields.map((field, index) => (
-                        <tr key={index}>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.fieldname}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.datatype}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.inputtype}</td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                            {Array.isArray(field.options)
-                              ? field.options.join(", ")
-                              : field.options || field.format || "-"}
-                          </td>
-                          <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                            <button
-                              onClick={() => handleRemoveField(index)}
-                              style={{
-                                padding: "4px 8px",
-                                backgroundColor: "#dc3545",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 4,
-                                cursor: "pointer"
+              {/* FIELD LIST */}
+
+              <Box
+                sx={{
+                  border:
+                    "1px solid #e1e6eb",
+
+                  borderRadius:
+                    "10px",
+
+                  overflow:
+                    "hidden",
+
+                  bgcolor:
+                    "#ffffff",
+                }}
+              >
+                <Box
+                  sx={{
+                    px: 2,
+
+                    py: 1.3,
+
+                    borderBottom:
+                      "1px solid #e1e6eb",
+
+                    bgcolor:
+                      "#f7f9fb",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize:
+                        12.5,
+
+                      fontWeight:
+                        700,
+
+                      color:
+                        "#223548",
+                    }}
+                  >
+                    Fields
+                  </Typography>
+                </Box>
+
+                <TableContainer>
+                  <Table
+                    size="small"
+                    sx={{
+                      "& .MuiTableCell-root":
+                        {
+                          px: 1.5,
+
+                          py: 1,
+
+                          borderColor:
+                            "#edf0f3",
+
+                          fontSize:
+                            11.5,
+                        },
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          "Field Name",
+                          "Data Type",
+                          "Input Type",
+                          "Options / Format",
+                          "Action",
+                        ].map(
+                          (
+                            heading
+                          ) => (
+                            <TableCell
+                              key={
+                                heading
+                              }
+                              sx={{
+                                bgcolor:
+                                  "#344f67",
+
+                                color:
+                                  "#ffffff",
+
+                                fontSize:
+                                  "10.5px !important",
+
+                                fontWeight:
+                                  "700 !important",
+
+                                textTransform:
+                                  "uppercase",
+
+                                letterSpacing:
+                                  ".03em",
                               }}
                             >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              {
+                                heading
+                              }
+                            </TableCell>
+                          )
+                        )}
+                      </TableRow>
+                    </TableHead>
 
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Button variant="contained" onClick={handleSaveTemplate}>
-                      Save Template
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        const confirmClose = window.confirm("All data will be lost. Do you want to continue?");
-                        if (confirmClose) {
-                          setShowFormModal(false);
-                          setTemplateName("");
-                          setFormFields([]);
-                          setNewFieldName("");
-                          setNewInputType("text");
-                          setNewRadioOptions("");
-                          setNewDateFormat("full");
-                        }
+                    <TableBody>
+
+  {/* =====================================================
+      WORKFLOW SYSTEM FIELDS
+     ===================================================== */}
+
+  {tableType === "workflow" &&
+    WORKFLOW_SYSTEM_FIELDS.map(
+      (field) => (
+        <TableRow
+          key={`system_${field.fieldname}`}
+          sx={{
+            bgcolor: "#f7fafc",
+          }}
+        >
+          <TableCell
+            sx={{
+              fontWeight: 700,
+              color: "#516579",
+            }}
+          >
+            {field.fieldname}
+          </TableCell>
+
+          <TableCell
+            sx={{
+              color: "#718396",
+            }}
+          >
+            {field.datatype}
+          </TableCell>
+
+          <TableCell>
+            <Box
+              component="span"
+              sx={{
+                px: 0.8,
+                py: 0.2,
+
+                borderRadius: "3px",
+
+                bgcolor: "#e9eef3",
+
+                color: "#607487",
+
+                fontSize: 9.5,
+
+                fontWeight: 700,
+
+                textTransform:
+                  "uppercase",
+              }}
+            >
+              System
+            </Box>
+          </TableCell>
+
+          <TableCell
+            sx={{
+              color: "#8796a5",
+            }}
+          >
+            {field.fieldname ===
+            "table_type"
+              ? "Default: Workflow"
+              : "-"}
+          </TableCell>
+
+          <TableCell>
+            <Typography
+              sx={{
+                fontSize: 10,
+
+                color: "#8a99a7",
+
+                fontStyle: "italic",
+              }}
+            >
+              Locked
+            </Typography>
+          </TableCell>
+        </TableRow>
+      )
+    )}
+
+  {/* =====================================================
+      USER DEFINED FIELDS
+     ===================================================== */}
+
+  {formFields.length === 0 ? (
+
+    <TableRow>
+      <TableCell
+        colSpan={5}
+        align="center"
+        sx={{
+          py: "28px !important",
+
+          color: "#738496",
+        }}
+      >
+        No user-defined fields added yet.
+      </TableCell>
+    </TableRow>
+
+  ) : (
+
+    formFields.map(
+      (field, index) => (
+        <TableRow
+          key={index}
+          hover
+        >
+          <TableCell
+            sx={{
+              fontWeight: 700,
+
+              color: "#223548",
+            }}
+          >
+            {field.fieldname}
+          </TableCell>
+
+          <TableCell>
+            {field.datatype}
+          </TableCell>
+
+          <TableCell>
+            {field.inputtype}
+          </TableCell>
+
+          <TableCell>
+            {Array.isArray(
+              field.options
+            )
+              ? field.options.join(
+                  ", "
+                )
+              : field.options ||
+                field.format ||
+                "-"}
+          </TableCell>
+
+          <TableCell>
+            <Button
+              size="small"
+
+              onClick={() =>
+                handleRemoveField(
+                  index
+                )
+              }
+
+              sx={{
+                minHeight: 26,
+
+                px: 1,
+
+                color:
+                  "#b42318",
+
+                border:
+                  "1px solid #f0c0bc",
+
+                borderRadius:
+                  "6px",
+
+                textTransform:
+                  "none",
+
+                fontSize:
+                  10.5,
+
+                "&:hover": {
+                  bgcolor:
+                    "#fdf2f1",
+                },
+              }}
+            >
+              Remove
+            </Button>
+          </TableCell>
+        </TableRow>
+      )
+    )
+
+  )}
+
+</TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </Box>
+
+            {/* =========================================================
+                FOOTER
+               ========================================================= */}
+
+            <Box
+              sx={{
+                px: 3,
+
+                py: 1.7,
+
+                display: "flex",
+
+                alignItems:
+                  "center",
+
+                justifyContent:
+                  "flex-end",
+
+                gap: 1,
+
+                bgcolor:
+                  "#fafbfd",
+
+                borderTop:
+                  "1px solid #e1e6eb",
+              }}
+            >
+              <Button
+                variant="outlined"
+
+                onClick={() => {
+                  const confirmClose =
+                    window.confirm(
+                      "All data will be lost. Do you want to continue?"
+                    );
+
+                  if (
+                    !confirmClose
+                  ) {
+                    return;
+                  }
+
+                  setShowFormModal(
+                    false
+                  );
+
+                  setTemplateName(
+                    ""
+                  );
+
+                  setFormFields([]);
+
+                  setNewFieldName(
+                    ""
+                  );
+
+                  setNewInputType(
+                    "text"
+                  );
+
+                  setNewRadioOptions(
+                    ""
+                  );
+
+                  setNewDateFormat(
+                    "full"
+                  );
+                }}
+
+                sx={{
+                  height: 36,
+
+                  px: 2,
+
+                  borderRadius:
+                    "6px",
+
+                  borderColor:
+                    "#cbd5df",
+
+                  color:
+                    "#53677b",
+
+                  textTransform:
+                    "none",
+
+                  fontSize: 12,
+
+                  "&:hover": {
+                    borderColor:
+                      "#9fb0c1",
+
+                    bgcolor:
+                      "#f5f7fa",
+                  },
+                }}
+              >
+                Close
+              </Button>
+
+              <Button
+                variant="contained"
+
+                onClick={
+                  handleSaveTemplate
+                }
+
+                sx={{
+                  height: 36,
+
+                  px: 2.2,
+
+                  borderRadius:
+                    "6px",
+
+                  bgcolor:
+                    "#0a6ed1",
+
+                  textTransform:
+                    "none",
+
+                  fontSize: 12,
+
+                  fontWeight:
+                    700,
+
+                  boxShadow:
+                    "0 3px 8px rgba(10,110,209,.18)",
+
+                  "&:hover": {
+                    bgcolor:
+                      "#095caf",
+                  },
+                }}
+              >
+                Save Template
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+
+      {/* =================================================================
+          EDIT TEMPLATE
+          KEEP EXISTING FUNCTIONALITY / UI FOR NOW
+         ================================================================= */}
+      {/* =================================================================
+          EDIT TEMPLATE - MODERN AUGMIS DESIGN
+         ================================================================= */}
+
+      {editModal && selectedTemplate && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1400,
+
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+
+            bgcolor: "rgba(18, 34, 52, 0.42)",
+            backdropFilter: "blur(2px)",
+          }}
+          onClick={() => setEditModal(false)}
+        >
+          <Paper
+            elevation={0}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+            sx={{
+              width: "min(980px, 95vw)",
+              maxHeight: "90vh",
+
+              display: "flex",
+              flexDirection: "column",
+
+              overflow: "hidden",
+
+              bgcolor: "#f8fbfe",
+
+              borderRadius: "16px",
+              border: "1px solid #cfdbe7",
+
+              boxShadow:
+                "0 24px 70px rgba(18, 41, 67, 0.24)",
+            }}
+          >
+            {/* =========================================================
+                HEADER
+               ========================================================= */}
+
+            <Box
+              sx={{
+                px: 2.5,
+                py: 2,
+
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+
+                background:
+                  "linear-gradient(105deg, #187f96 0%, #16849c 45%, #247c98 100%)",
+
+                color: "#ffffff",
+              }}
+            >
+              <Stack
+                direction="row"
+                spacing={1.4}
+                alignItems="flex-start"
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+
+                    borderRadius: "12px",
+
+                    display: "grid",
+                    placeItems: "center",
+
+                    bgcolor:
+                      "rgba(255,255,255,.14)",
+
+                    border:
+                      "1px solid rgba(255,255,255,.15)",
+
+                    fontSize: 20,
+
+                    flex: "0 0 auto",
+                  }}
+                >
+                  🧩
+                </Box>
+
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Edit Template
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      mt: 0.45,
+
+                      fontSize: 11.5,
+
+                      color:
+                        "rgba(255,255,255,.88)",
+
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Update the data model structure,
+                    field definitions and configuration.
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <IconButton
+                size="small"
+                onClick={() =>
+                  setEditModal(false)
+                }
+                sx={{
+                  color: "#ffffff",
+
+                  bgcolor:
+                    "rgba(255,255,255,.08)",
+
+                  "&:hover": {
+                    bgcolor:
+                      "rgba(255,255,255,.16)",
+                  },
+                }}
+              >
+                ×
+              </IconButton>
+            </Box>
+
+            {/* =========================================================
+                SCROLLABLE BODY
+               ========================================================= */}
+
+            <Box
+              sx={{
+                p: 2.5,
+
+                overflowY: "auto",
+
+                maxHeight:
+                  "calc(90vh - 145px)",
+              }}
+            >
+              {/* =======================================================
+                  TEMPLATE INFORMATION
+                 ======================================================= */}
+
+              <Box
+                sx={{
+                  mb: 2.5,
+                }}
+              >
+                <Typography
+                  sx={{
+                    mb: 0.7,
+
+                    fontSize: 11,
+
+                    fontWeight: 700,
+
+                    letterSpacing: ".06em",
+
+                    color: "#466488",
+
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Template Name
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={templateName}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root":
+                      {
+                        height: 42,
+
+                        bgcolor: "#ffffff",
+
+                        borderRadius: "7px",
+                      },
+                  }}
+                />
+
+                <Typography
+                  sx={{
+                    mt: 0.6,
+
+                    fontSize: 10.5,
+
+                    color: "#7388a3",
+                  }}
+                >
+                  Lowercase letters and numbers only,
+                  maximum 20 characters.
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  maxRows={3}
+
+                  size="small"
+
+                  label="Template Description"
+
+                  placeholder="Briefly describe the purpose of this data model"
+
+                  value={templateDescription}
+
+                  onChange={(event) =>
+                    setTemplateDescription(
+                      event.target.value
+                    )
+                  }
+
+                  sx={{
+                    mt: 1.5,
+
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "#ffffff",
+                      borderRadius: "7px",
+
+                      fontSize: 12.5,
+                    },
+
+                    "& .MuiInputLabel-root": {
+                      fontSize: 12.5,
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* =======================================================
+                  ADD FIELD
+                 ======================================================= */}
+
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 2.5,
+
+                  borderRadius: "12px",
+
+                  border:
+                    "1px solid #d9e4ee",
+
+                  bgcolor: "#ffffff",
+                }}
+              >
+                <Typography
+                  sx={{
+                    mb: 1.4,
+
+                    fontSize: 12.5,
+
+                    fontWeight: 700,
+
+                    color: "#294766",
+                  }}
+                >
+                  Add a Field
+                </Typography>
+
+                <Grid
+                  container
+                  spacing={1.5}
+                  alignItems="center"
+                >
+                  {/* FIELD NAME */}
+
+                  <Grid
+                    item
+                    xs={12}
+                    md={5}
+                  >
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Field Name"
+                      placeholder="Enter field name"
+                      value={newFieldName}
+                      onChange={(e) =>
+                        setNewFieldName(
+                          e.target.value
+                        )
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root":
+                          {
+                            height: 42,
+
+                            borderRadius:
+                              "7px",
+                          },
+                      }}
+                    />
+                  </Grid>
+
+                  {/* INPUT TYPE */}
+
+                  <Grid
+                    item
+                    xs={12}
+                    md={3}
+                  >
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Input Type"
+                      value={newInputType}
+                      onChange={(e) => {
+                        setNewInputType(
+                          e.target.value
+                        );
+
+                        setNewRadioOptions(
+                          ""
+                        );
+
+                        setNewDateFormat(
+                          "full"
+                        );
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root":
+                          {
+                            height: 42,
+
+                            borderRadius:
+                              "7px",
+                          },
                       }}
                     >
-                      Close
-                    </Button>
-                  </Stack>
+                      <MenuItem value="text">
+                        Text
+                      </MenuItem>
 
-                  <button style={closeBtnSx} onClick={() => setShowFormModal(false)}>
-                    x
-                  </button>
+                      <MenuItem value="textarea">
+                        Textarea
+                      </MenuItem>
+
+                      <MenuItem value="checkbox">
+                        Checkbox
+                      </MenuItem>
+
+                      <MenuItem value="radio">
+                        Radio Button
+                      </MenuItem>
+
+                      <MenuItem value="image">
+                        Attachment
+                      </MenuItem>
+
+                      <MenuItem value="date">
+                        Date
+                      </MenuItem>
+
+                      <MenuItem value="integer">
+                        Integer
+                      </MenuItem>
+
+                      <MenuItem value="dropdownlist">
+                        Dropdown List
+                      </MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* OPTIONS */}
+
+                  {[
+                    "checkbox",
+                    "radio",
+                    "dropdownlist",
+                  ].includes(newInputType) && (
+                    <Grid
+                      item
+                      xs={12}
+                      md={3}
+                    >
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Options"
+                        placeholder="Option A, Option B"
+                        value={
+                          newRadioOptions
+                        }
+                        onChange={(e) =>
+                          setNewRadioOptions(
+                            e.target.value
+                          )
+                        }
+                        sx={{
+                          "& .MuiOutlinedInput-root":
+                            {
+                              height: 42,
+
+                              borderRadius:
+                                "7px",
+                            },
+                        }}
+                      />
+                    </Grid>
+                  )}
+
+                  {/* DATE FORMAT */}
+
+                  {newInputType === "date" && (
+                    <Grid
+                      item
+                      xs={12}
+                      md={3}
+                    >
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Date Format"
+                        value={
+                          newDateFormat
+                        }
+                        onChange={(e) =>
+                          setNewDateFormat(
+                            e.target.value
+                          )
+                        }
+                        sx={{
+                          "& .MuiOutlinedInput-root":
+                            {
+                              height: 42,
+
+                              borderRadius:
+                                "7px",
+                            },
+                        }}
+                      >
+                        <MenuItem value="full">
+                          Full Date
+                        </MenuItem>
+
+                        <MenuItem value="month">
+                          Month
+                        </MenuItem>
+
+                        <MenuItem value="year">
+                          Year
+                        </MenuItem>
+
+                        <MenuItem value="day">
+                          Day Only
+                        </MenuItem>
+                      </TextField>
+                    </Grid>
+                  )}
+
+                  {/* ADD BUTTON */}
+
+                  <Grid
+                    item
+                    xs={12}
+                    md="auto"
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={
+                        handleAddField
+                      }
+                      sx={{
+                        height: 42,
+
+                        px: 2.1,
+
+                        borderRadius:
+                          "7px",
+
+                        bgcolor:
+                          "#0a74d7",
+
+                        fontSize: 11.5,
+
+                        fontWeight: 700,
+
+                        textTransform:
+                          "none",
+
+                        boxShadow:
+                          "0 3px 8px rgba(10,116,215,.20)",
+
+                        "&:hover": {
+                          bgcolor:
+                            "#0862b8",
+                        },
+                      }}
+                    >
+                      Add Field
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              {/* =======================================================
+                  EXISTING FIELDS
+                 ======================================================= */}
+
+              <Paper
+                elevation={0}
+                sx={{
+                  border:
+                    "1px solid #d9e4ee",
+
+                  borderRadius: "12px",
+
+                  overflow: "hidden",
+
+                  bgcolor: "#ffffff",
+                }}
+              >
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.25,
+
+                    bgcolor: "#f3f7fb",
+
+                    borderBottom:
+                      "1px solid #dce5ed",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+
+                      fontWeight: 700,
+
+                      color: "#294766",
+                    }}
+                  >
+                    Template Fields
+                  </Typography>
                 </Box>
-              </Box>
-            )}
-          </Box>
-        </Container>
-      </Box>
-    );
-  }
+
+                <TableContainer>
+                  <Table
+                    size="small"
+                    sx={{
+                      "& .MuiTableCell-root":
+                        {
+                          px: 1.5,
+
+                          py: 1,
+
+                          fontSize: 11.5,
+
+                          borderColor:
+                            "#edf1f5",
+                        },
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          "Field Name",
+                          "Data Type",
+                          "Input Type",
+                          "Options / Format",
+                          "Action",
+                        ].map((heading) => (
+                          <TableCell
+                            key={heading}
+                            sx={{
+                              bgcolor:
+                                "#edf4f8",
+
+                              color:
+                                "#3f5874",
+
+                              fontSize:
+                                "10.5px !important",
+
+                              fontWeight:
+                                "700 !important",
+
+                              textTransform:
+                                "uppercase",
+
+                              letterSpacing:
+                                ".03em",
+                            }}
+                          >
+                            {heading}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {formFields.length ===
+                      0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            align="center"
+                            sx={{
+                              py:
+                                "28px !important",
+
+                              color:
+                                "#738496",
+                            }}
+                          >
+                            No fields added yet.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        formFields.map(
+                          (field, index) => (
+                            <TableRow
+                              key={index}
+                              hover
+                            >
+                              <TableCell
+                                sx={{
+                                  fontWeight:
+                                    700,
+
+                                  color:
+                                    "#233a54",
+                                }}
+                              >
+                                {
+                                  field.fieldname
+                                }
+                              </TableCell>
+
+                              <TableCell>
+                                {
+                                  field.datatype
+                                }
+                              </TableCell>
+
+                              <TableCell>
+                                {
+                                  field.inputtype
+                                }
+                              </TableCell>
+
+                              <TableCell>
+                                {Array.isArray(
+                                  field.options
+                                )
+                                  ? field.options.join(
+                                      ", "
+                                    )
+                                  : field.options ||
+                                    field.format ||
+                                    "-"}
+                              </TableCell>
+
+                              <TableCell>
+                                <Button
+                                  size="small"
+                                  onClick={() =>
+                                    handleRemoveField(
+                                      index
+                                    )
+                                  }
+                                  sx={{
+                                    minHeight:
+                                      26,
+
+                                    px: 1,
+
+                                    borderRadius:
+                                      "6px",
+
+                                    color:
+                                      "#c03c33",
+
+                                    bgcolor:
+                                      "#fff1f0",
+
+                                    border:
+                                      "1px solid #f0c8c5",
+
+                                    fontSize:
+                                      10,
+
+                                    textTransform:
+                                      "none",
+
+                                    "&:hover":
+                                      {
+                                        bgcolor:
+                                          "#fde9e7",
+                                      },
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Box>
+
+            {/* =========================================================
+                FOOTER
+               ========================================================= */}
+
+            <Box
+              sx={{
+                px: 2.5,
+                py: 1.6,
+
+                display: "flex",
+
+                alignItems: "center",
+
+                justifyContent:
+                  "flex-end",
+
+                gap: 1,
+
+                bgcolor: "#f6f9fc",
+
+                borderTop:
+                  "1px solid #dce5ed",
+              }}
+            >
+              <Button
+                onClick={() => {
+                  const confirmClose =
+                    window.confirm(
+                      "All data will be lost. Do you want to continue?"
+                    );
+
+                  if (
+                    !confirmClose
+                  ) {
+                    return;
+                  }
+
+                  setEditModal(false);
+
+                  setTemplateName("");
+                  setTemplateDescription("");
+                  setTableType("simple");
+                  setFormFields([]);
+
+                  setNewFieldName("");
+
+                  setNewInputType(
+                    "text"
+                  );
+
+                  setNewRadioOptions(
+                    ""
+                  );
+
+                  setNewDateFormat(
+                    "full"
+                  );
+                }}
+                sx={{
+                  height: 38,
+
+                  px: 2,
+
+                  borderRadius: "7px",
+
+                  bgcolor: "#e4e7ea",
+
+                  color: "#36516f",
+
+                  fontSize: 11.5,
+
+                  fontWeight: 700,
+
+                  textTransform: "none",
+
+                  "&:hover": {
+                    bgcolor: "#d8dde2",
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={
+                  handleUpdateTemplate
+                }
+                sx={{
+                  height: 38,
+
+                  px: 2.2,
+
+                  borderRadius: "7px",
+
+                  bgcolor: "#0a74d7",
+
+                  fontSize: 11.5,
+
+                  fontWeight: 700,
+
+                  textTransform: "none",
+
+                  boxShadow:
+                    "0 3px 8px rgba(10,116,215,.18)",
+
+                  "&:hover": {
+                    bgcolor: "#0862b8",
+                  },
+                }}
+              >
+                Save Changes
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+      
+    </>
+  );
+}
+
+
+
   return (
     <Box sx={{ display: "flex" }}>
       {/* LEFT MENU (fixed) */}
@@ -1482,6 +3402,7 @@ const paged  = filtered.slice(start, start + PER_PAGE);
                 >
                 <TableRow sx={{ height: 40 }}>
                   <TableCell sx={{ fontWeight: 700 }}>Template Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Date Created</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Created By</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Edit</TableCell>
@@ -1498,6 +3419,7 @@ const paged  = filtered.slice(start, start + PER_PAGE);
                   paged.map((tpl, i) => (
                     <TableRow key={i} hover>
                       <TableCell>{tpl.template_name}</TableCell>
+                      <TableCell>{tpl.template_description}</TableCell>
                       <TableCell>{tpl.created_at ? new Date(tpl.created_at).toLocaleDateString() : "—"}</TableCell>
                       <TableCell>{tpl.created_by}</TableCell>
                       <TableCell>
@@ -1540,158 +3462,512 @@ const paged  = filtered.slice(start, start + PER_PAGE);
         {/* Create New Form Template modal */}
         {showFormModal && (
           <Box sx={overlaySx} onClick={() => setShowFormModal(false)}>
-            <Box sx={modalSx} onClick={(e) => e.stopPropagation()}>
-              <Typography variant="h6" sx={{ mb: 1.5 }}>
-                Template Designer
-              </Typography>
 
-              {/* Native inputs kept to avoid functional changes */}
-              <input
-                type="text"
-                placeholder="Template Name"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                style={{ width: "100%", padding: 8, marginBottom: 8 }}
-              />
-              <Typography variant="caption" sx={{ display: "block", mb: 2 }}>
-                Only lowercase letters and numbers, max 20 characters. No spaces or special characters.
-              </Typography>
+           <Box
+  onClick={(e) => e.stopPropagation()}
+  sx={{
+    width: "min(980px, 95vw)",
+    maxHeight: "90vh",
+    overflow: "hidden",
+    bgcolor: "#f8fbfe",
+    borderRadius: "16px",
+    boxShadow: "0 24px 70px rgba(18, 41, 67, 0.24)",
+    border: "1px solid #cfdbe7",
+    position: "relative",
+  }}
+>
+  {/* =========================================================
+      HEADER
+     ========================================================= */}
 
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                <input
-                  type="text"
-                  placeholder="Field Name"
-                  value={newFieldName}
-                  onChange={(e) => setNewFieldName(e.target.value)}
-                  style={{ flex: "1 1 180px", padding: 8 }}
-                />
+  <Box
+    sx={{
+      px: 2.5,
+      py: 2,
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      background:
+        "linear-gradient(105deg, #187f96 0%, #16849c 45%, #247c98 100%)",
+      color: "#fff",
+    }}
+  >
+    <Stack
+      direction="row"
+      spacing={1.4}
+      alignItems="flex-start"
+    >
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: "12px",
+          display: "grid",
+          placeItems: "center",
+          bgcolor: "rgba(255,255,255,.14)",
+          border: "1px solid rgba(255,255,255,.15)",
+          fontSize: 20,
+          flex: "0 0 auto",
+        }}
+      >
+        🧩
+      </Box>
 
-                <select
-                  value={newInputType}
-                  onChange={(e) => {
-                    setNewInputType(e.target.value);
-                    setNewRadioOptions("");
-                    setNewDateFormat("full");
+      <Box>
+        <Typography
+          sx={{
+            fontSize: 20,
+            fontWeight: 700,
+            lineHeight: 1.2,
+          }}
+        >
+          Edit Template
+        </Typography>
+
+        <Typography
+          sx={{
+            mt: 0.45,
+            fontSize: 11.5,
+            color: "rgba(255,255,255,.88)",
+            lineHeight: 1.45,
+          }}
+        >
+          Update the data model structure, field definitions and configuration.
+        </Typography>
+      </Box>
+    </Stack>
+
+    <IconButton
+      size="small"
+      onClick={() => setEditModal(false)}
+      sx={{
+        color: "#fff",
+        bgcolor: "rgba(255,255,255,.08)",
+        "&:hover": {
+          bgcolor: "rgba(255,255,255,.16)",
+        },
+      }}
+    >
+      ×
+    </IconButton>
+  </Box>
+
+  {/* =========================================================
+      BODY
+     ========================================================= */}
+
+  <Box
+    sx={{
+      p: 2.5,
+      overflowY: "auto",
+      maxHeight: "calc(90vh - 145px)",
+    }}
+  >
+    {/* TEMPLATE NAME */}
+
+    <Box sx={{ mb: 2.5 }}>
+      <Typography
+        sx={{
+          mb: 0.7,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: ".06em",
+          color: "#466488",
+          textTransform: "uppercase",
+        }}
+      >
+        Template Name
+      </Typography>
+
+      <TextField
+        fullWidth
+        size="small"
+        value={templateName}
+        InputProps={{
+          readOnly: true,
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            height: 42,
+            bgcolor: "#fff",
+            borderRadius: "7px",
+          },
+        }}
+      />
+
+      <Typography
+        sx={{
+          mt: 0.6,
+          fontSize: 10.5,
+          color: "#7388a3",
+        }}
+      >
+        Lowercase letters and numbers only, maximum 20 characters.
+      </Typography>
+    </Box>
+
+    {/* =========================================================
+        ADD FIELD PANEL
+       ========================================================= */}
+
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        mb: 2.5,
+        borderRadius: "12px",
+        border: "1px solid #d9e4ee",
+        bgcolor: "#ffffff",
+      }}
+    >
+      <Typography
+        sx={{
+          mb: 1.4,
+          fontSize: 12.5,
+          fontWeight: 700,
+          color: "#294766",
+        }}
+      >
+        Add a Field
+      </Typography>
+
+      <Grid container spacing={1.5} alignItems="center">
+        <Grid item xs={12} md={5}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Field Name"
+            placeholder="Enter field name"
+            value={newFieldName}
+            onChange={(e) =>
+              setNewFieldName(e.target.value)
+            }
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: 42,
+                borderRadius: "7px",
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Input Type"
+            value={newInputType}
+            onChange={(e) => {
+              setNewInputType(e.target.value);
+              setNewRadioOptions("");
+              setNewDateFormat("full");
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: 42,
+                borderRadius: "7px",
+              },
+            }}
+          >
+            <MenuItem value="text">Text</MenuItem>
+            <MenuItem value="textarea">Textarea</MenuItem>
+            <MenuItem value="checkbox">Checkbox</MenuItem>
+            <MenuItem value="radio">Radio Button</MenuItem>
+            <MenuItem value="image">Attachment</MenuItem>
+            <MenuItem value="date">Date</MenuItem>
+            <MenuItem value="integer">Integer</MenuItem>
+            <MenuItem value="dropdownlist">Dropdown List</MenuItem>
+          </TextField>
+        </Grid>
+
+        {["checkbox", "radio", "dropdownlist"].includes(
+          newInputType
+        ) && (
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Options"
+              placeholder="Option A, Option B"
+              value={newRadioOptions}
+              onChange={(e) =>
+                setNewRadioOptions(e.target.value)
+              }
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: 42,
+                  borderRadius: "7px",
+                },
+              }}
+            />
+          </Grid>
+        )}
+
+        {newInputType === "date" && (
+          <Grid item xs={12} md={3}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Date Format"
+              value={newDateFormat}
+              onChange={(e) =>
+                setNewDateFormat(e.target.value)
+              }
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: 42,
+                  borderRadius: "7px",
+                },
+              }}
+            >
+              <MenuItem value="full">
+                Full Date
+              </MenuItem>
+
+              <MenuItem value="month">
+                Month
+              </MenuItem>
+
+              <MenuItem value="year">
+                Year
+              </MenuItem>
+
+              <MenuItem value="day">
+                Day Only
+              </MenuItem>
+            </TextField>
+          </Grid>
+        )}
+
+        <Grid item xs={12} md="auto">
+          <Button
+            variant="contained"
+            onClick={handleAddField}
+            sx={{
+              height: 42,
+              px: 2.1,
+              borderRadius: "7px",
+              bgcolor: "#0a74d7",
+              fontSize: 11.5,
+              fontWeight: 700,
+              textTransform: "none",
+              boxShadow: "0 3px 8px rgba(10,116,215,.20)",
+              "&:hover": {
+                bgcolor: "#0862b8",
+              },
+            }}
+          >
+            Add Field
+          </Button>
+        </Grid>
+      </Grid>
+    </Paper>
+
+    {/* =========================================================
+        FIELD LIST
+       ========================================================= */}
+
+    <Paper
+      elevation={0}
+      sx={{
+        border: "1px solid #d9e4ee",
+        borderRadius: "12px",
+        overflow: "hidden",
+        bgcolor: "#fff",
+      }}
+    >
+      <Box
+        sx={{
+          px: 2,
+          py: 1.25,
+          bgcolor: "#f3f7fb",
+          borderBottom: "1px solid #dce5ed",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: "#294766",
+          }}
+        >
+          Template Fields
+        </Typography>
+      </Box>
+
+      <TableContainer>
+        <Table
+          size="small"
+          sx={{
+            "& .MuiTableCell-root": {
+              px: 1.5,
+              py: 1,
+              fontSize: 11.5,
+              borderColor: "#edf1f5",
+            },
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              {[
+                "Field Name",
+                "Data Type",
+                "Input Type",
+                "Options / Format",
+                "Action",
+              ].map((heading) => (
+                <TableCell
+                  key={heading}
+                  sx={{
+                    bgcolor: "#edf4f8",
+                    color: "#3f5874",
+                    fontSize: "10.5px !important",
+                    fontWeight: "700 !important",
+                    textTransform: "uppercase",
+                    letterSpacing: ".03em",
                   }}
-                  style={{ flex: "0 0 180px", padding: 8 }}
                 >
-                  <option value="text">Text</option>
-                  <option value="textarea">Textarea</option>
-                  <option value="checkbox">Checkbox</option>
-                  <option value="radio">Radio Button</option>
-                      <option value="image">Attachment</option>
-                  <option value="date">Date</option>
-                  <option value="integer">Integer</option>
-                  <option value="dropdownlist">Dropdownlist</option>
-                </select>
+                  {heading}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
 
-                {newInputType === "radio" && (
-                  <input
-                    type="text"
-                    placeholder="Radio options (e.g. Yes,No,Maybe)"
-                    value={newRadioOptions}
-                    onChange={(e) => setNewRadioOptions(e.target.value)}
-                    style={{ flex: "1 1 220px", padding: 8 }}
-                  />
-                )}
+          <TableBody>
+            {formFields.map((field, index) => (
+              <TableRow key={index} hover>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    color: "#233a54",
+                  }}
+                >
+                  {field.fieldname}
+                </TableCell>
 
-                {newInputType === "dropdownlist" && (
-                  <input
-                    type="text"
-                    placeholder="Dropdown options (e.g. Option A, Option B)"
-                    value={newRadioOptions}
-                    onChange={(e) => setNewRadioOptions(e.target.value)}
-                    style={{ flex: "1 1 220px", padding: 8 }}
-                  />
-                )}
+                <TableCell>
+                  {field.datatype}
+                </TableCell>
 
-                {newInputType === "date" && (
-                  <select
-                    value={newDateFormat}
-                    onChange={(e) => setNewDateFormat(e.target.value)}
-                    style={{ flex: "0 0 220px", padding: 8 }}
-                  >
-                    <option value="full">Full Date (dd/mm/yyyy)</option>
-                    <option value="month">Month</option>
-                    <option value="year">Year</option>
-                    <option value="day">Day Only</option>
-                  </select>
-                )}
+                <TableCell>
+                  {field.inputtype}
+                </TableCell>
 
-                <Button variant="contained" size="small" onClick={handleAddField}>
-                  Add Field
-                </Button>
-              </Box>
+                <TableCell>
+                  {Array.isArray(field.options)
+                    ? field.options.join(", ")
+                    : field.options ||
+                      field.format ||
+                      "-"}
+                </TableCell>
 
-              {/* fields grid (native table kept) */}
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Field Name</th>
-                    <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Data Type</th>
-                    <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Input Type</th>
-                    <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Options / Format</th>
-                    <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formFields.map((field, index) => (
-                    <tr key={index}>
-                      <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.fieldname}</td>
-                      <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.datatype}</td>
-                      <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{field.inputtype}</td>
-                      <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                        {Array.isArray(field.options)
-                          ? field.options.join(", ")
-                          : field.options || field.format || "-"}
-                      </td>
-                      <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                        <button
-                          onClick={() => handleRemoveField(index)}
-                          style={{
-                            padding: "4px 8px",
-                            backgroundColor: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer"
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-
-              {/* save + close */}
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button variant="contained" onClick={handleSaveTemplate}>
-                  Save Template
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    const confirmClose = window.confirm("All data will be lost. Do you want to continue?");
-                    if (confirmClose) {
-                      setShowFormModal(false);
-                      setTemplateName("");
-                      setFormFields([]);
-                      setNewFieldName("");
-                      setNewInputType("text");
-                      setNewRadioOptions("");
-                      setNewDateFormat("full");
+                <TableCell>
+                  <Button
+                    size="small"
+                    onClick={() =>
+                      handleRemoveField(index)
                     }
-                  }}
-                >
-                  Close
-                </Button>
-              </Stack>
+                    sx={{
+                      minHeight: 26,
+                      px: 1,
+                      borderRadius: "6px",
+                      color: "#c03c33",
+                      bgcolor: "#fff1f0",
+                      border: "1px solid #f0c8c5",
+                      fontSize: 10,
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "#fde9e7",
+                      },
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  </Box>
 
-              <button style={closeBtnSx} onClick={() => setShowFormModal(false)}>×</button>
-            </Box>
+  {/* =========================================================
+      FOOTER
+     ========================================================= */}
+
+  <Box
+    sx={{
+      px: 2.5,
+      py: 1.6,
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: 1,
+      bgcolor: "#f6f9fc",
+      borderTop: "1px solid #dce5ed",
+    }}
+  >
+    <Button
+      onClick={() => {
+        const confirmClose =
+          window.confirm(
+            "All data will be lost. Do you want to continue?"
+          );
+
+        if (confirmClose) {
+          setEditModal(false);
+          setTemplateName("");
+          setTemplateDescription("");
+          setTableType("simple");
+          setFormFields([]);
+          setNewFieldName("");
+          setNewInputType("text");
+          setNewRadioOptions("");
+          setNewDateFormat("full");
+        }
+      }}
+      sx={{
+        height: 38,
+        px: 2,
+        borderRadius: "7px",
+        bgcolor: "#e4e7ea",
+        color: "#36516f",
+        fontSize: 11.5,
+        fontWeight: 700,
+        textTransform: "none",
+        "&:hover": {
+          bgcolor: "#d8dde2",
+        },
+      }}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={handleUpdateTemplate}
+      sx={{
+        height: 38,
+        px: 2.2,
+        borderRadius: "7px",
+        bgcolor: "#0a74d7",
+        fontSize: 11.5,
+        fontWeight: 700,
+        textTransform: "none",
+        boxShadow: "0 3px 8px rgba(10,116,215,.18)",
+        "&:hover": {
+          bgcolor: "#0862b8",
+        },
+      }}
+    >
+      Save Changes
+    </Button>
+  </Box>
+</Box>
+
+
           </Box>
         )}
 
