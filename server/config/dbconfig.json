@@ -3,6 +3,6 @@
   "DB_PORT": 5432,
   "DB_USER": "postgres",
   "DB_PASSWORD": "",
-  "DB_NAME": "ttoct23",
+  "DB_NAME": "ttoct23_restore_test",
   "DB_SSL": false
 }

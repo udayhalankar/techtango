@@ -20,6 +20,9 @@ client/.env.*
 server/.env
 server/.env.*
 .aws/
+server/sequelize-auto.json
+server/config/sequelize-auto.json
+server/config/dbconfig.json
 
 # archives / office docs
 *.zip

@@ -1,5 +1,5 @@
 {
-  "database": "ttoct23",
+  "database": "ttoct23_restore_test",
   "host": "localhost",
   "dialect": "postgres",
   "port": 5432,

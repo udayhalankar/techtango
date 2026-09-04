@@ -7,8 +7,9 @@ const pool = new Pool({
   port: Number(process.env.DB_PORT || 5432),
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,           // must be "Test1234?" per your .env
-  database: process.env.DB_NAME || 'ttoct23',
-  ssl: false,
+ // database: process.env.DB_NAME || 'ttoct23_restore_test',
+  database: process.env.DB_NAME, 
+ ssl: false,
 });
 
 (async () => {

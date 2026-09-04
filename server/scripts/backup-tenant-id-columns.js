@@ -18,7 +18,8 @@ const {
 
     const manifest = {
       generatedAt: new Date().toISOString(),
-      database: process.env.DB_NAME || 'ttoct23',
+      //database: process.env.DB_NAME || 'ttoct23_restore_test',
+      database: process.env.DB_NAME,
       outputDir,
       tableCount: tables.length,
       tables: [],
