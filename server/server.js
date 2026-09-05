@@ -198,6 +198,9 @@ const experienceBuilderRoutes = require('./routes/experiencebuilder');
 const experienceLayoutsRoutes = require('./routes/experiencelayouts');
 const experienceBuilderAiRoutes = require('./routes/experiencebuilder-ai');
 const aiAppBuilderRoutes = require('./routes/aiappbuilder');
+
+// AI Simple Application Builder
+const aiSimpleAppBuilderRoutes = require('./routes/aiSimpleAppBuilderRoutes');
 //const swbRoutes             = getRouter(require('./routes/simple_workflowbuilder'), 'simple_workflowbuilder');
 //const swbStepsRoutes        = getRouter(require('./routes/simple_workflowbuilder_steps'), 'simple_workflowbuilder_steps');
 const swfiRoutes            = getRouter(require('./routes/simple_workflow_instances'), 'simple_workflow_instances');
@@ -380,6 +383,9 @@ if (experienceBuilderRoutes) app.use('/api/experiencebuilder', experienceBuilder
 if (experienceLayoutsRoutes) app.use('/api/experiencelayouts', experienceLayoutsRoutes);
 if (experienceBuilderAiRoutes) app.use('/api/experiencebuilder-ai', verifyToken, checkSubscription(BA), experienceBuilderAiRoutes);
 if (aiAppBuilderRoutes) app.use('/api/aiappbuilder', aiAppBuilderRoutes);
+if (aiSimpleAppBuilderRoutes) {app.use('/api/aiappbuilder-simple', aiSimpleAppBuilderRoutes);
+  
+}
 // simple workflow header routes (list/create/delete/etc)
 //if (swbRoutes)      app.use('/api/simple_workflowbuilder', swbRoutes);
 

@@ -21,6 +21,20 @@ import WebAssetOutlinedIcon from "@mui/icons-material/WebAssetOutlined";
 import ModuleTileGrid from "../../components/ModuleTileGrid";
 
 const tiles = [
+   {
+    label: "AI Simple Application Builder",
+    desc: "Describe your app and let AI build the frontend through a short guided conversation",
+    to: "/aiappbuilder/simple",
+    Icon: AutoFixHigh,
+    iconColor: "#2563eb",
+  },
+  // {
+  //   label: "AI Advanced Application Builder",
+  //   desc: "Build applications with direct control over fields, validation, dependencies and schema",
+  //   to: "/aiappbuilder",
+  //   Icon: DesignServicesIcon,
+  //   iconColor: "#7c3aed",
+  // },
   {
     label: "Enterprise Experience Builder",
     desc: "Create Pages",
@@ -28,19 +42,12 @@ const tiles = [
     Icon: CoPresent,
     iconColor: "#922b8d",
   },
-  {
-    label: "Experience Builder",
-    desc: "Create Pages",
-    to: "/experiencebuilder",
-    Icon: Ballot,
-    iconColor: "#0f766e",
-  },
-  {
-    label: "Entity Data Model Builder",
-    desc: "Build reusable schemas and keep your data structures consistent",
-    to: "/datatablebuilder",
-    Icon: StorageIcon,
-    iconColor: "#7c3aed",
+   {
+    label: "Workflow Studio",
+    desc: "Streamline Business Form Workflows, Design and Deploy Workflows with a level of ease never experienced before",
+    to: "/simplewfb",
+    Icon: AccountTree,
+    iconColor: "#be185d",
   },
   {
     label: "Data Application Builder",
@@ -49,27 +56,30 @@ const tiles = [
     Icon: BackupTable,
     iconColor: "#ea580c",
   },
+  // {
+  //   label: "Experience Builder",
+  //   desc: "Create Pages",
+  //   to: "/experiencebuilder",
+  //   Icon: Ballot,
+  //   iconColor: "#0f766e",
+  // },
   {
-    label: "AI App Builder",
-    desc: "Create one-page CRUD apps from AI-generated schema",
-    to: "/aiappbuilder",
-    Icon: AutoFixHigh,
-    iconColor: "#2563eb",
+    label: "Entity Data Model Builder",
+    desc: "Build reusable schemas and keep your data structures consistent",
+    to: "/datatablebuilder",
+    Icon: StorageIcon,
+    iconColor: "#7c3aed",
   },
-  {
-    label: "Workflow Studio",
-    desc: "Streamline Business Form Workflows, Design and Deploy Workflows with a level of ease never experienced before",
-    to: "/simplewfb",
-    Icon: AccountTree,
-    iconColor: "#be185d",
-  },
-  {
-    label: "Dashboard Studio",
-    desc: "Create Dashboards to Vusualize Enterprise Processes",
-    to: "/dashboardbuilder",
-    Icon: DashboardCustomize,
-    iconColor: "#0891b2",
-  },
+  
+ 
+ 
+  // {
+  //   label: "Dashboard Studio",
+  //   desc: "Create Dashboards to Vusualize Enterprise Processes",
+  //   to: "/dashboardbuilder",
+  //   Icon: DashboardCustomize,
+  //   iconColor: "#0891b2",
+  // },
   {
     label: "Bulk Uploader",
     desc: "Import CSV/Excel",

@@ -497,44 +497,6 @@ const FieldControl = ({ field, value, error, onChange }) => {
     );
   }
 
-//   const renderSelectedApplication = () => {
-//   const mode = String(schema?.appMode || "crud").toLowerCase();
-
-//   const commonProps = {
-//     selectedApp,
-//     schema,
-//     records,
-//     loading,
-//     search,
-//     setSearch,
-//     notify,
-//     reload: () => loadSelectedApp(selectedApp.app_slug),
-//   };
-
-//   if (mode === "chart" || mode === "report") {
-//     return <ChartAppRenderer {...commonProps} />;
-//   }
-
-//   if (mode === "dashboard") {
-//     return <DashboardAppRenderer {...commonProps} />;
-//   }
-
-//   if (mode === "booking_chart") {
-//     return <BookingChartRenderer {...commonProps} />;
-//   }
-
-//   if (mode === "calendar") {
-//     return <CalendarAppRenderer {...commonProps} />;
-//   }
-
-//   return (
-//     <CrudAppRenderer
-//       {...commonProps}
-//       onSaveRecord={handleSaveRecord}
-//       onDeleteRecord={handleDeleteRecord}
-//     />
-//   );
-// };
 
   return (
     <TextField
@@ -2601,7 +2563,7 @@ export default function AIAppBuilder() {
     setRecordDialogOpen(true);
   };
 
-  const renderSelectedApplication = () => {
+const renderSelectedApplication = () => {
   const mode = String(schema?.appMode || "crud").toLowerCase();
 
   const commonProps = {
@@ -2619,17 +2581,15 @@ export default function AIAppBuilder() {
     return <ChartAppRenderer {...commonProps} />;
   }
 
-  // if (mode === "dashboard") {
-  //   return <DashboardAppRenderer {...commonProps} />;
-  // }
-
-  return (
-  <DashboardAppRenderer
-    {...commonProps}
-    saveRequestToken={dashboardSaveToken}
-    disableWidgetEditing={hideDashboardWidgetActions}
-  />
-);
+  if (mode === "dashboard") {
+    return (
+      <DashboardAppRenderer
+        {...commonProps}
+        saveRequestToken={dashboardSaveToken}
+        disableWidgetEditing={hideDashboardWidgetActions}
+      />
+    );
+  }
 
   if (mode === "booking_chart") {
     return <BookingChartRenderer {...commonProps} />;
@@ -2982,7 +2942,7 @@ export default function AIAppBuilder() {
                 </Stack>
                 <Box sx={{ flex: "0 0 auto", alignSelf: "center" }}>
                   <Typography sx={{ fontSize: { xs: 18, md: 22 }, fontWeight: 600, color: "#15386d", lineHeight: 1.05 }}>
-                    AI App Builder
+                    AI Advanced App Builder
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">

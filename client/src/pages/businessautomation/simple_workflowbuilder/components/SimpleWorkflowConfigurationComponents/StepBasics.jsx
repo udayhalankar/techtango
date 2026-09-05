@@ -265,6 +265,19 @@ export default function StepBasics({
                       option.id ===
                       value.id
                     }
+                    renderOption={(props, option) => {
+                      const { key: _muiKey, ...optionProps } = props;
+                      return (
+                        <li
+                          {...optionProps}
+                          key={`performer-${String(option.id)}`}
+                        >
+                          {option.email
+                            ? `${option.label} (${option.email})`
+                            : option.label}
+                        </li>
+                      );
+                    }}
                     renderInput={(
                       params
                     ) => (

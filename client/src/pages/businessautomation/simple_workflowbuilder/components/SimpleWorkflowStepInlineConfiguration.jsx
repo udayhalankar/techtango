@@ -76,6 +76,9 @@ import {
   BorderVertical,
   HorizontalRule,
   ExpandMore as ExpandMoreIcon,
+  TuneOutlined,
+  DynamicFormOutlined,
+  VisibilityOutlined,
 } from "@mui/icons-material";
 
 
@@ -88,8 +91,11 @@ const overlayStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  zIndex: 9999,
-  pointerEvents: "none",
+  // Keep the custom workflow modal above the normal page chrome, but below
+  // MUI portal layers (Select/Menu/Autocomplete/Tooltip).  Using 9999 here
+  // caused every MUI dropdown portal to render behind the workflow modal.
+  zIndex: 1250,
+  pointerEvents: "auto",
 };
 const modalStyle = {
   background: "#fff",
@@ -252,6 +258,10 @@ export default function SimpleWorkflowStepConfigurationModal({
   onSave,
   inline = false,
   onRemove = null,
+
+  // Dedicated Process/Step modal from Workflow Map:
+  // Decision behaviour is edited separately in SimpleWorkflowDecisionModal.
+  hideDecisionFields = false,
 }) {
   /* Normalise users for selects: store numeric id; show First Last */
   const userOpts = useMemo(() => {
@@ -739,6 +749,9 @@ export default function SimpleWorkflowStepConfigurationModal({
   };
 
   const validateBeforeSave = (next) => {
+    // The dedicated Step modal must not depend on Decision settings.
+    if (hideDecisionFields) return true;
+
     if (!isInitiate) {
       const actionNow = String(
         next.step_action || local.step_action || mode || ""
@@ -2157,7 +2170,7 @@ function renderSection(section, formValues, setFormValues) {
 
       justifyContent:
         "space-between",
-
+      flexWrap: "wrap",
       mb: 2,
 
       gap: 2,
@@ -2196,73 +2209,93 @@ function renderSection(section, formValues, setFormValues) {
     </Box>
 
     <Tabs
-      value={tab}
+  value={tab}
+  onChange={(_, v) => setTab(v)}
+  sx={{
+    minHeight: 48,
 
-      onChange={(_, v) =>
-        setTab(v)
-      }
+    backgroundColor: "#f4f7fa",
+    border: "1px solid #d9e3ec",
+    borderRadius: "10px",
 
-      sx={{
-        minHeight: 0,
+    p: "5px",
 
-        bgcolor: "#f3f4f6",
+    flexShrink: 0,
 
-        borderRadius: 999,
+    "& .MuiTabs-flexContainer": {
+      gap: "5px",
+    },
 
-        p: 0.5,
+    "& .MuiTab-root": {
+      minHeight: 32,
+      minWidth: 125,
 
-        "& .MuiTab-root": {
-          minHeight: 28,
+      px: 2,
 
-          textTransform:
-            "none",
+      borderRadius: "7px",
 
-          fontSize: 13,
+      textTransform: "none",
 
-          px: 2.5,
+      fontSize: 12.5,
+      fontWeight: 600,
 
-          borderRadius: 999,
+      color: "#526b82",
 
-          border: "none",
+      backgroundColor: "transparent",
 
-          color:
-            "text.secondary",
+      transition:
+        "all 0.18s ease",
 
-          minWidth: "auto",
-        },
+      "&:hover": {
+        backgroundColor: "#e7f2fb",
+        color: "#0879df",
+      },
+    },
 
-        "& .MuiTab-root.Mui-selected":
-          {
-            bgcolor: "#ffffff",
+    "& .MuiTab-root.Mui-selected": {
+      backgroundColor: "#0879df",
 
-            color:
-              "primary.main",
+      color: "#ffffff",
 
-            boxShadow:
-              "0 0 0 1px rgba(15,23,42,.06)",
-          },
+      boxShadow:
+        "0 3px 8px rgba(8,121,223,0.22)",
 
-        "& .MuiTabs-indicator":
-          {
-            display: "none",
-          },
-      }}
-    >
-      <Tab
-        label="Step details"
-        value={TAB_STEP}
-      />
+      "& .MuiSvgIcon-root": {
+        color: "#ffffff",
+      },
+    },
 
-      <Tab
-        label="Form Fields"
-        value={TAB_FORM}
-      />
+    "& .MuiSvgIcon-root": {
+      fontSize: 14,
+    },
 
-      <Tab
-  label="View Form"
-  value={TAB_PREVIEW}
-/>
-    </Tabs>
+    "& .MuiTabs-indicator": {
+      display: "none",
+    },
+  }}
+>
+  <Tab
+    icon={<TuneOutlined />}
+    iconPosition="start"
+    label="Step Details"
+    value={TAB_STEP}
+  />
+
+  <Tab
+    icon={<DynamicFormOutlined />}
+    iconPosition="start"
+    label="Form Fields"
+    value={TAB_FORM}
+  />
+
+  <Tab
+    icon={<VisibilityOutlined />}
+    iconPosition="start"
+    label="View Form"
+    value={TAB_PREVIEW}
+  />
+</Tabs>
+
   </Box>
 )}
 
@@ -2381,6 +2414,7 @@ function renderSection(section, formValues, setFormValues) {
       ATTACH_MODE_OPTIONS={
         ATTACH_MODE_OPTIONS
       }
+      hideDecisionFields={hideDecisionFields}
     />
 
     {/* ========================================================
@@ -2823,9 +2857,26 @@ if (inline) {
 
 
   // Default: popup modal
-  return (
-    <div style={overlayStyle} role="dialog" aria-modal="true">
-      <div style={modalStyle}>{body}</div>
+  // Default: popup modal
+return (
+  <div
+    style={overlayStyle}
+    role="dialog"
+    aria-modal="true"
+    onMouseDown={(e) => {
+      // Close only when the user clicks the backdrop itself.
+      // Clicking anywhere inside the modal must NOT close it.
+      if (e.target === e.currentTarget) {
+        onClose?.();
+      }
+    }}
+  >
+    <div
+      style={modalStyle}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {body}
     </div>
-  );
+  </div>
+);
 }

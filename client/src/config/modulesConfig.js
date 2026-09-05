@@ -9,6 +9,7 @@ import Cm from "../pages/cm/Cm";
 import Ccm from "../pages/ccm/Ccm";
 import Mrm from "../pages/mrm/Mrm";
 import Dms from "../pages/dms/Dms";
+import AISimpleApplicationBuilder from "../pages/businessautomation/aiappbuilder/simple/AISimpleApplicationBuilder";
 import Approvals from "../pages/approvals/Approvals";
 import DirectAssignments from "../pages/directassignments/DirectAssignments";
 import WorkflowAssign from "../pages/workflowassign/WorkflowAssign";
@@ -94,6 +95,15 @@ EnterpriseExperienceBuilder: {
 },
 
   AIExperienceBuilder: { path: "/aiexperiencebuilder", component: AIEBV2Page, protected: true, moduleId: 8, moduleName: "Business Automation" },
+  
+  AISimpleApplicationBuilder: {
+  path: "/aiappbuilder/simple",
+  component: AISimpleApplicationBuilder,
+  protected: true,
+  moduleId: 8,
+  moduleName: "Business Automation"
+},
+
   AIAppBuilder: { path: "/aiappbuilder", component: AIAppBuilder, protected: true, moduleId: 8, moduleName: "Business Automation" },
   AIAppBuilderCrudView: { path: "/aicrudapp/:id", component: AIAppBuilder, protected: true, moduleId: 8, moduleName: "Business Automation" },
   AIAppBuilderDashboardView: { path: "/aidashboardapp/:id", component: AIAppBuilder, protected: true, moduleId: 8, moduleName: "Business Automation" },

@@ -130,7 +130,23 @@ export default function NotificationsRegular({
                 )
               )
             }
-            renderInput={(
+            isOptionEqualToValue={(option, value) =>
+                      Number(option.id) === Number(value.id)
+                    }
+                    renderOption={(props, option) => {
+                      const { key: _muiKey, ...optionProps } = props;
+                      return (
+                        <li
+                          {...optionProps}
+                          key={`notify-${String(option.id)}`}
+                        >
+                          {option.email
+                            ? `${option.label} (${option.email})`
+                            : option.label}
+                        </li>
+                      );
+                    }}
+                    renderInput={(
               params
             ) => (
               <TextField

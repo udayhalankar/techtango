@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 
 import {
@@ -59,6 +60,11 @@ const COLORS = {
 
   selected: "#2f77d0",
 };
+
+// Increment this whenever the automatic map layout rules change.
+// It lets the component discard stale in-memory positions after a layout update
+// while still preserving positions that the user drags after the new layout loads.
+const MAP_LAYOUT_VERSION = 2;
 
 /* ============================================================
    COMMON HANDLE
@@ -721,6 +727,10 @@ export default function SimpleWorkflowMapRF({
 
   onOpenStep,
 
+  onOpenDecision,
+
+  savedView,
+
   onSaveView,
 
   saveViewDisabled,
@@ -729,6 +739,9 @@ export default function SimpleWorkflowMapRF({
 }) {
   const rfInstanceRef =
     useRef(null);
+
+  const [rfReady, setRfReady] =
+    useState(false);
 
   /* ----------------------------------------------------------
      NODE / EDGE TYPES
@@ -830,8 +843,16 @@ export default function SimpleWorkflowMapRF({
     const originX = 80;
     const originY = 150;
 
-    const horizontalGap =
-      235;
+    /*
+     * Collision-free horizontal layout.
+     * A normal step reserves only its own width + a standard gap.
+     * An approval step additionally reserves room for its generated
+     * decision diamond, so the next process/end node can never sit
+     * underneath the decision node.
+     */
+    const normalNodeGap = 90;
+    const decisionGapBefore = 55;
+    const decisionGapAfter = 70;
 
     const processW = 168;
     const processH = 64;
@@ -844,6 +865,10 @@ export default function SimpleWorkflowMapRF({
 
     const decisionH =
       106;
+
+    // Running X cursor: unlike index * fixedGap, this accounts for
+    // extra visual nodes (Decision) inserted between workflow steps.
+    let cursorX = originX;
 
     ordered.forEach(
       (
@@ -890,9 +915,7 @@ export default function SimpleWorkflowMapRF({
           );
 
         const x =
-          originX +
-          index *
-            horizontalGap;
+          cursorX;
 
         const y =
           originY;
@@ -941,6 +964,9 @@ export default function SimpleWorkflowMapRF({
               index,
 
             selected,
+
+            layoutVersion:
+              MAP_LAYOUT_VERSION,
           },
 
           style: {
@@ -1020,7 +1046,7 @@ export default function SimpleWorkflowMapRF({
           const decisionX =
             x +
             width +
-            35;
+            decisionGapBefore;
 
           const decisionY =
             y -
@@ -1048,6 +1074,22 @@ export default function SimpleWorkflowMapRF({
             data: {
               label:
                 "Decision",
+
+              // Decision is a visual node generated from the
+              // approval behaviour of this underlying workflow step.
+              sourceStepId:
+                step.id ??
+                step.step_no ??
+                index,
+
+              sourceStepNo:
+                step.step_no,
+
+              sourceStepName:
+                step.step_name,
+
+              layoutVersion:
+                MAP_LAYOUT_VERSION,
             },
 
             style: {
@@ -1233,6 +1275,14 @@ export default function SimpleWorkflowMapRF({
             }
           }
 
+          // Reserve the complete approval visual chain:
+          // process -> gap -> decision -> gap -> next workflow node.
+          cursorX +=
+            width +
+            decisionGapBefore +
+            decisionW +
+            decisionGapAfter;
+
           return;
         }
 
@@ -1292,6 +1342,11 @@ export default function SimpleWorkflowMapRF({
             },
           });
         }
+
+        // Normal/start/end-independent spacing for the next ordered step.
+        cursorX +=
+          width +
+          normalNodeGap;
       }
     );
 
@@ -1353,7 +1408,9 @@ export default function SimpleWorkflowMapRF({
               );
 
             if (
-              !old
+              !old ||
+              old?.data?.layoutVersion !==
+                node?.data?.layoutVersion
             ) {
               return node;
             }
@@ -1361,6 +1418,8 @@ export default function SimpleWorkflowMapRF({
             return {
               ...node,
 
+              // Preserve user-dragged positions only when they belong
+              // to the current automatic-layout version.
               position:
                 old.position,
             };
@@ -1437,6 +1496,84 @@ export default function SimpleWorkflowMapRF({
     computedEdges,
     setEdges,
   ]);
+
+  /* ==========================================================
+     APPLY PERSISTED MAP VIEW
+
+     The backend saves React Flow's { nodes, edges, viewport }.
+     On refresh we merge only the persisted coordinates/handles
+     into the freshly generated workflow nodes so current labels,
+     styles and workflow data remain authoritative.
+  ========================================================== */
+
+  useEffect(() => {
+    if (!savedView || !Array.isArray(savedView.nodes)) {
+      return;
+    }
+
+    const savedNodeById = new Map(
+      savedView.nodes.map((node) => [String(node.id), node])
+    );
+
+    setNodes((current) =>
+      current.map((node) => {
+        const savedNode = savedNodeById.get(String(node.id));
+
+        if (!savedNode?.position) {
+          return node;
+        }
+
+        return {
+          ...node,
+          position: {
+            x: Number(savedNode.position.x) || 0,
+            y: Number(savedNode.position.y) || 0,
+          },
+        };
+      })
+    );
+
+    if (Array.isArray(savedView.edges)) {
+      const savedEdgeById = new Map(
+        savedView.edges.map((edge) => [String(edge.id), edge])
+      );
+
+      setEdges((current) =>
+        current.map((edge) => {
+          const savedEdge = savedEdgeById.get(String(edge.id));
+
+          if (!savedEdge) {
+            return edge;
+          }
+
+          return {
+            ...edge,
+            sourceHandle: savedEdge.sourceHandle ?? edge.sourceHandle,
+            targetHandle: savedEdge.targetHandle ?? edge.targetHandle,
+          };
+        })
+      );
+    }
+  }, [savedView, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (!rfReady || !savedView?.viewport || !rfInstanceRef.current) {
+      return;
+    }
+
+    const { x, y, zoom } = savedView.viewport;
+
+    if ([x, y, zoom].every((v) => Number.isFinite(Number(v)))) {
+      rfInstanceRef.current.setViewport(
+        {
+          x: Number(x),
+          y: Number(y),
+          zoom: Number(zoom),
+        },
+        { duration: 0 }
+      );
+    }
+  }, [savedView, rfReady]);
 
   /* ==========================================================
      SAVE MAP VIEW
@@ -1603,6 +1740,7 @@ export default function SimpleWorkflowMapRF({
           ) => {
             rfInstanceRef.current =
               instance;
+            setRfReady(true);
           }}
 
           onNodesChange={
@@ -1670,6 +1808,24 @@ export default function SimpleWorkflowMapRF({
                 "dec-"
               )
             ) {
+              // Decision nodes are synthetic map nodes.
+              // Edit the approval behaviour of the workflow step
+              // that generated this decision diamond.
+              const sourceStepId =
+                node?.data
+                  ?.sourceStepId;
+
+              if (
+                sourceStepId !==
+                  null &&
+                sourceStepId !==
+                  undefined
+              ) {
+                onOpenDecision?.(
+                  sourceStepId
+                );
+              }
+
               return;
             }
 
@@ -1678,29 +1834,11 @@ export default function SimpleWorkflowMapRF({
                 ?.stepId ??
               node.id;
 
+            // Real workflow nodes (INITIATE / PROCESS / TERMINATE)
+            // open the dedicated Step modal on a single click.
             onSelectStep?.(
               stepId
             );
-          }}
-
-          onNodeDoubleClick={(
-            event,
-            node
-          ) => {
-            if (
-              String(
-                node.id
-              ).startsWith(
-                "dec-"
-              )
-            ) {
-              return;
-            }
-
-            const stepId =
-              node?.data
-                ?.stepId ??
-              node.id;
 
             onOpenStep?.(
               stepId

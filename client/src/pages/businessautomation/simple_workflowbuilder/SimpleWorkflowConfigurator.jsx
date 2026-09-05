@@ -66,7 +66,8 @@
   import api from "../../../services/api";
   import StepInlineConfigurator from "./components/SimpleWorkflowStepInlineConfiguration";
   import SimpleWorkflowMapRF from "../components/SimpleWorkflowMapRF";
-  import StepModal from "./components/SimpleWorkflowStepInlineConfiguration";
+  import StepModal from "./components/SimpleWorkflowStepModal";
+  import SimpleWorkflowDecisionModal from "./components/SimpleWorkflowDecisionModal";
 
   const ATTACH_OPTIONS = [
     { value: "view_upload", label: "Can view & upload" },
@@ -89,6 +90,7 @@
     const [stepDraft, setStepDraft] = useState(null); // editable copy for center panel
 
     const [editingStep, setEditingStep] = useState(null); // opens full Step/Form/View modal
+    const [editingDecisionStep, setEditingDecisionStep] = useState(null);
     const [publishing, setPublishing] = useState(false);
     const [publishReady, setPublishReady] = useState(false);
     const [publishReasons, setPublishReasons] = useState([]);
@@ -102,6 +104,7 @@
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState("studio");
     const [mapViewId, setMapViewId] = useState(null);
+    const [savedMapView, setSavedMapView] = useState(null);
     const [mapViewSaving, setMapViewSaving] = useState(false);
 
     // ------- load workflow + steps -------
@@ -155,10 +158,26 @@
             params: { workflow_id: header.id },
           });
           if (!cancelled) {
-            setMapViewId(resp?.data?.view?.id || null);
+            const viewRow = resp?.data?.view || null;
+            setMapViewId(viewRow?.id || null);
+
+            let persistedView = viewRow?.map_view ?? null;
+            if (typeof persistedView === "string") {
+              try {
+                persistedView = JSON.parse(persistedView);
+              } catch (e) {
+                console.warn("[workflow-configurator] invalid saved map_view JSON", e);
+                persistedView = null;
+              }
+            }
+
+            setSavedMapView(persistedView);
           }
         } catch (err) {
-          if (!cancelled) setMapViewId(null);
+          if (!cancelled) {
+            setMapViewId(null);
+            setSavedMapView(null);
+          }
         }
       }
 
@@ -478,6 +497,9 @@
           });
           setMapViewId(resp?.data?.view?.id || null);
         }
+        // Keep the just-saved layout in local state as well.
+        // This also becomes the source of truth when the map view is reopened.
+        setSavedMapView(mapView);
         showToast("Map view saved", "success");
       } catch (err) {
         showToast(
@@ -2113,6 +2135,7 @@
 >
       <SimpleWorkflowMapRF
         steps={steps}
+        savedView={savedMapView}
         onSaveView={handleSaveMapView}
         saveViewDisabled={!header?.id}
         saveViewSaving={mapViewSaving}
@@ -2130,6 +2153,17 @@
           setSelectedStepId(step.id);
           setStepDraft({ ...step });
           setEditingStep(step);
+        }}
+        onOpenDecision={(id) => {
+          const step = (steps || []).find(
+            (s) => Number(s.id) === Number(id)
+          );
+
+          if (!step) return;
+
+          setSelectedStepId(step.id);
+          setStepDraft({ ...step });
+          setEditingDecisionStep({ ...step });
         }}
       />
     </Box>
@@ -2479,7 +2513,21 @@
             users={users}
             onClose={() => setEditingStep(null)}
             onSave={async (payload) => {
+              // Step modal owns Step Details / Form Fields / View Form only.
+              // Decision fields are deliberately excluded so saving a Step
+              // can never overwrite values configured in the Decision modal.
               const { __applyMailToFuture, ...rest } = payload || {};
+
+              [
+                "step_action",
+                "review_allowed",
+                "next_step_after_reject",
+                "approve_button_name",
+                "reject_button_name",
+              ].forEach((key) => {
+                delete rest[key];
+              });
+
               await updateStep(editingStep.id, rest);
 
               // If requested, copy mail content from INITIATE to all other steps
@@ -2519,6 +2567,35 @@
               const s = await listWorkflowSteps(workflowId);
               setSteps(s || []);
               setEditingStep(null);
+            }}
+          />
+        )}
+
+        {/* DECISION CONFIGURATION MODAL
+            A decision diamond is generated from an approval step, so this
+            modal updates only the decision-related columns on that step. */}
+        {editingDecisionStep && (
+          <SimpleWorkflowDecisionModal
+            step={editingDecisionStep}
+            steps={steps}
+            onClose={() => setEditingDecisionStep(null)}
+            onSave={async (patch) => {
+              await updateStep(editingDecisionStep.id, patch);
+
+              const refreshed = await listWorkflowSteps(workflowId);
+              setSteps(refreshed || []);
+
+              const updatedStep = (refreshed || []).find(
+                (item) => Number(item.id) === Number(editingDecisionStep.id)
+              );
+
+              if (updatedStep) {
+                setSelectedStepId(updatedStep.id);
+                setStepDraft({ ...updatedStep });
+              }
+
+              setEditingDecisionStep(null);
+              showToast("Decision settings saved", "success");
             }}
           />
         )}

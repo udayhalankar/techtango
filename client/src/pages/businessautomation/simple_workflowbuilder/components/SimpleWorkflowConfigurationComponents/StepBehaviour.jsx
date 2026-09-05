@@ -79,6 +79,7 @@ export default function StepBehaviour({
   isInitiate,
   stepsLessThanCurrent,
   ATTACH_MODE_OPTIONS,
+  hideDecisionFields = false,
 }) {
   return (
     <Box
@@ -150,7 +151,7 @@ export default function StepBehaviour({
           <Grid
             item
             xs={12}
-            md={9}
+            md={hideDecisionFields ? 12 : 9}
           >
             <Typography sx={LABEL_SX}>
               Attachment Rule
@@ -191,57 +192,59 @@ export default function StepBehaviour({
             </FormControl>
           </Grid>
 
-          <Grid
-            item
-            xs={12}
-            md={3}
-          >
-            <Typography sx={LABEL_SX}>
-              Step Action
-            </Typography>
-
-            <FormControl
-              fullWidth
-              size="small"
-              sx={CONTROL_SX}
+          {!hideDecisionFields && (
+            <Grid
+              item
+              xs={12}
+              md={3}
             >
-              {isInitiate ? (
-                <Select
-                  value="create"
-                  disabled
-                >
-                  <MenuItem value="create">
-                    Create
-                  </MenuItem>
-                </Select>
-              ) : (
-                <Select
-                  value={mode}
-                  onChange={(e) => {
-                    const value =
-                      e.target.value;
+              <Typography sx={LABEL_SX}>
+                Step Action
+              </Typography>
 
-                    setMode(value);
+              <FormControl
+                fullWidth
+                size="small"
+                sx={CONTROL_SX}
+              >
+                {isInitiate ? (
+                  <Select
+                    value="create"
+                    disabled
+                  >
+                    <MenuItem value="create">
+                      Create
+                    </MenuItem>
+                  </Select>
+                ) : (
+                  <Select
+                    value={mode}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value;
 
-                    change(
-                      "step_action",
-                      value
-                    );
-                  }}
-                >
-                  <MenuItem value="approve">
-                    Approve
-                  </MenuItem>
+                      setMode(value);
 
-                  <MenuItem value="send">
-                    Send
-                  </MenuItem>
-                </Select>
-              )}
-            </FormControl>
-          </Grid>
+                      change(
+                        "step_action",
+                        value
+                      );
+                    }}
+                  >
+                    <MenuItem value="approve">
+                      Approve
+                    </MenuItem>
 
-          {!isInitiate && (
+                    <MenuItem value="send">
+                      Send
+                    </MenuItem>
+                  </Select>
+                )}
+              </FormControl>
+            </Grid>
+          )}
+
+          {!hideDecisionFields && !isInitiate && (
             <>
               <Grid
                 item
