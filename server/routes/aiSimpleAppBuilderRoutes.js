@@ -238,6 +238,8 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const sanitizeHtml = require("sanitize-html");
+
 
 const router = express.Router();
 const { verifyToken } = require("../middleware/authMiddleware");
@@ -306,7 +308,7 @@ const detectHardSecurityRisk = (value = "") => {
         /\b(other|another|different|all)\s+tenants?\b/i,
         /\bcross[-\s]?tenant\b/i,
         /\b(users?|data|records?|information)\b.{0,40}\b(other|another|different)\s+tenants?\b/i,
-        /\bshow|give|list|export|read|access\b.{0,60}\b(all\s+tenants?|other\s+tenants?|another\s+tenant)\b/i,
+        /\b(show|give|list|export|read|access)\b.{0,60}\b(all\s+tenants?|other\s+tenants?|another\s+tenant)\b/i,
       ],
     },
     {
@@ -344,22 +346,83 @@ const detectHardSecurityRisk = (value = "") => {
   ];
 
   for (const check of checks) {
-    if (check.patterns.some((pattern) => pattern.test(text))) {
-      return {
-        isSecurityRisk: true,
-        category: check.category,
-        confidence: "high",
-        reason: check.reason,
-      };
+  for (const pattern of check.patterns) {
+    const match = text.match(pattern);
+
+    if (!match) {
+      continue;
     }
+
+    const evidence = String(
+      match[0] || ""
+    )
+      .trim()
+      .slice(0, 240);
+
+    return {
+      isSecurityRisk: true,
+
+      category:
+        check.category,
+
+      confidence:
+        "high",
+
+      // Backward-compatible field
+      reason:
+        check.reason,
+
+      // New auditable fields
+      decisionSource:
+        "deterministic_policy",
+
+      policyApplied:
+        check.category,
+
+      policyDescription:
+        check.reason,
+
+      triggerEvidence:
+        evidence
+          ? [evidence]
+          : [],
+
+      decisionRationale:
+        check.reason,
+
+      normalBusinessInterpretation:
+        "The deterministic security policy matched explicit wording in the request.",
+    };
   }
+}
 
   return {
-    isSecurityRisk: false,
-    category: "none",
-    confidence: "high",
-    reason: "No hard security-boundary violation detected.",
-  };
+  isSecurityRisk: false,
+
+  category: "none",
+
+  confidence: "high",
+
+  reason:
+    "No hard security-boundary violation detected.",
+
+  decisionSource:
+    "deterministic_policy",
+
+  policyApplied:
+    "none",
+
+  policyDescription:
+    "No deterministic AUGMIS security policy matched.",
+
+  triggerEvidence: [],
+
+  decisionRationale:
+    "No explicit destructive or security-boundary pattern was detected.",
+
+  normalBusinessInterpretation:
+    "The request may proceed to the AI security classifier.",
+};
 };
 
 const createAdminMailTransport = () => {
@@ -425,6 +488,50 @@ const sendAugmisAdminApprovalEmail = async ({
     ...(req.user?.email ? { replyTo: req.user.email } : {}),
   });
 };
+
+
+const buildSecurityAssessmentSummary = (assessment = {}) => {
+  const triggerEvidence =
+    Array.isArray(assessment?.triggerEvidence) &&
+    assessment.triggerEvidence.length
+      ? assessment.triggerEvidence
+          .map((item) => String(item || "").trim())
+          .filter(Boolean)
+          .join(" | ")
+      : "None provided";
+
+  return [
+    `Decision Source: ${assessment?.decisionSource || "unknown"}`,
+    `Classifier: ${
+      assessment?.classifier ||
+      (assessment?.decisionSource === "deterministic_policy"
+        ? "AUGMIS deterministic security policy"
+        : "AUGMIS AI security classifier")
+    }`,
+    `Policy Applied: ${
+      assessment?.policyApplied ||
+      assessment?.category ||
+      "none"
+    }`,
+    `Policy Description: ${
+      assessment?.policyDescription ||
+      assessment?.reason ||
+      "N/A"
+    }`,
+    `Confidence: ${assessment?.confidence || "N/A"}`,
+    `Trigger Evidence: ${triggerEvidence}`,
+    `Decision Rationale: ${
+      assessment?.decisionRationale ||
+      assessment?.reason ||
+      "N/A"
+    }`,
+    `Normal Business Interpretation: ${
+      assessment?.normalBusinessInterpretation ||
+      "N/A"
+    }`,
+  ].join("\\n");
+};
+
 
 // -----------------------------------------------------------------------------
 // V2.3 SAFETY BOUNDARY
@@ -603,28 +710,75 @@ const callStructuredModel = async ({
 
 
 
+const SECURITY_POLICY_VALUES = [
+  "none",
+  "destructive_operation",
+  "sandbox_escape",
+  "tenant_boundary_violation",
+  "privilege_escalation",
+  "security_bypass",
+  "secrets_or_credentials_access",
+  "arbitrary_system_or_database_access",
+];
+
 const securityRiskSchema = {
   type: "object",
   additionalProperties: false,
+
   properties: {
-    isSecurityRisk: { type: "boolean" },
+    isSecurityRisk: {
+      type: "boolean",
+    },
+
     category: {
       type: "string",
+      enum: SECURITY_POLICY_VALUES,
+    },
+
+    confidence: {
+      type: "string",
       enum: [
-        "none",
-        "destructive_operation",
-        "sandbox_escape",
-        "tenant_boundary_violation",
-        "privilege_escalation",
-        "security_bypass",
-        "secrets_or_credentials_access",
-        "arbitrary_system_or_database_access",
+        "low",
+        "medium",
+        "high",
       ],
     },
-    confidence: { type: "string", enum: ["low", "medium", "high"] },
-    reason: { type: "string" },
+
+    policyApplied: {
+      type: "string",
+      enum: SECURITY_POLICY_VALUES,
+    },
+
+    policyDescription: {
+      type: "string",
+    },
+
+    triggerEvidence: {
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
+
+    decisionRationale: {
+      type: "string",
+    },
+
+    normalBusinessInterpretation: {
+      type: "string",
+    },
   },
-  required: ["isSecurityRisk", "category", "confidence", "reason"],
+
+  required: [
+    "isSecurityRisk",
+    "category",
+    "confidence",
+    "policyApplied",
+    "policyDescription",
+    "triggerEvidence",
+    "decisionRationale",
+    "normalBusinessInterpretation",
+  ],
 };
 
 const classifySecurityRisk = async ({
@@ -667,6 +821,40 @@ const classifySecurityRisk = async ({
     "Context matters. The word 'delete' alone is NOT risky. 'Delete my booking' is normal. 'Delete the application/database' is risky.",
     "If intent is ambiguous, prefer NOT flagging it here; the normal change planner can ask clarification.",
     "Only return isSecurityRisk=true when confidence is HIGH.",
+    "",
+    "SECURITY DECISION EXPLANATION REQUIREMENTS:",
+    "",
+    "For every classification, return an auditable concise explanation.",
+    "Do NOT provide hidden chain-of-thought or internal scratchpad reasoning.",
+    "",
+    "policyApplied:",
+    "- Must be exactly the AUGMIS policy category you applied.",
+    "- Use 'none' when no security policy applies.",
+    "",
+    "policyDescription:",
+    "- Briefly describe what that policy protects against.",
+    "",
+    "triggerEvidence:",
+    "- Quote only the shortest exact phrase(s) from the user's request that caused the classification.",
+    "- Do not invent evidence.",
+    "- If there is no direct evidence, return an empty array and do NOT classify the request as high-confidence security risk.",
+    "",
+    "decisionRationale:",
+    "- Explain in 1-3 sentences why the quoted evidence crosses the selected AUGMIS security boundary.",
+    "- Explain the actual boundary being crossed, not merely that the request sounds sensitive.",
+    "",
+    "normalBusinessInterpretation:",
+    "- Explain how the request could reasonably be interpreted as ordinary application functionality.",
+    "- Explicitly compare that interpretation against the selected security policy.",
+    "",
+    "IMPORTANT:",
+    "- Words such as upload, import, audit, history, status, customer, prospect, inquiry, records, backend, schema or database are NOT security risks by themselves.",
+    "- Creating audit history for current-application records is normal business functionality.",
+    "- Importing the current user's client/customer list into the current application is normal business functionality.",
+    "- Changing the status of current-application records is normal business functionality.",
+    "- 'all my records/inquiries/customers' refers to the user's current application unless another tenant or unauthorized scope is explicitly requested.",
+    "",
+    "If you cannot identify an explicit boundary-crossing phrase in triggerEvidence, return isSecurityRisk=false.",
     `Current builder phase: ${String(phase || "")}`,
     `User request: ${String(message || "")}`,
     attachmentContext
@@ -676,7 +864,7 @@ const classifySecurityRisk = async ({
 
   try {
     const result = await callStructuredModel({
-      name: "augmis_simple_app_security_risk_v25",
+      name: "augmis_simple_app_security_risk_v26",
       schema: securityRiskSchema,
       prompt,
     });
@@ -688,11 +876,67 @@ const classifySecurityRisk = async ({
       SECURITY_RISK_CATEGORIES.has(category);
 
     if (modelHighRisk) {
+  const triggerEvidence =
+    Array.isArray(
+      result?.triggerEvidence
+    )
+      ? result.triggerEvidence
+          .map((item) =>
+            String(item || "")
+              .trim()
+              .slice(0, 240)
+          )
+          .filter(Boolean)
+          .slice(0, 5)
+      : [];
+
       return {
         isSecurityRisk: true,
+
         category,
+
         confidence: "high",
-        reason: String(result?.reason || "Security boundary violation detected."),
+
+        // Existing compatibility
+        reason:
+          String(
+            result?.decisionRationale ||
+            result?.policyDescription ||
+            "Security boundary violation detected."
+          ),
+
+        // New diagnostic information
+        decisionSource:
+          "ai_security_classifier",
+
+        classifier:
+          "augmis_simple_app_security_risk_v26",
+
+        policyApplied:
+          String(
+            result?.policyApplied ||
+            category
+          ),
+
+        policyDescription:
+          String(
+            result?.policyDescription ||
+            ""
+          ),
+
+        triggerEvidence,
+
+        decisionRationale:
+          String(
+            result?.decisionRationale ||
+            ""
+          ),
+
+        normalBusinessInterpretation:
+          String(
+            result?.normalBusinessInterpretation ||
+            ""
+          ),
       };
     }
   } catch (error) {
@@ -1751,6 +1995,212 @@ const buildAttachmentContextText = (analysis = {}, meta = {}) => {
   ].filter(Boolean).join("\n");
 };
 
+const AI_FREEDOM_MAX_HTML = 80000;
+const AI_FREEDOM_MAX_CSS = 70000;
+
+const aiFreedomSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    html: { type: "string" },
+    css: { type: "string" },
+    bridgeVersion: {
+      type: "number"
+    },
+    assistantSummary: {
+      type: "string"
+    }
+  },
+  required: [
+    "html",
+    "css",
+    "bridgeVersion",
+    "assistantSummary"
+  ]
+};
+
+const sanitizeFreedomHtml = (html = "") => {
+  const raw = String(html || "").slice(
+    0,
+    AI_FREEDOM_MAX_HTML
+  );
+
+  return sanitizeHtml(raw, {
+    allowedTags: [
+      "div",
+      "section",
+      "main",
+      "header",
+      "footer",
+      "nav",
+      "aside",
+      "article",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "p",
+      "span",
+      "small",
+      "strong",
+      "em",
+      "b",
+      "i",
+      "br",
+      "hr",
+      "ul",
+      "ol",
+      "li",
+      "table",
+      "thead",
+      "tbody",
+      "tfoot",
+      "tr",
+      "th",
+      "td",
+      "form",
+      "label",
+      "input",
+      "textarea",
+      "select",
+      "option",
+      "button",
+      "template",
+      "img"
+    ],
+
+    allowedAttributes: {
+      "*": [
+        "class",
+        "id",
+        "title",
+        "role",
+        "aria-*",
+        "data-*"
+      ],
+
+      form: [
+        "class",
+        "id",
+        "data-*",
+        "aria-*"
+      ],
+
+      input: [
+        "class",
+        "id",
+        "name",
+        "type",
+        "value",
+        "placeholder",
+        "required",
+        "min",
+        "max",
+        "step",
+        "disabled",
+        "readonly",
+        "checked",
+        "autocomplete",
+        "data-*",
+        "aria-*"
+      ],
+
+      textarea: [
+        "class",
+        "id",
+        "name",
+        "placeholder",
+        "required",
+        "rows",
+        "cols",
+        "disabled",
+        "readonly",
+        "data-*",
+        "aria-*"
+      ],
+
+      select: [
+        "class",
+        "id",
+        "name",
+        "required",
+        "disabled",
+        "data-*",
+        "aria-*"
+      ],
+
+      option: [
+        "value",
+        "selected",
+        "disabled"
+      ],
+
+      button: [
+        "class",
+        "id",
+        "type",
+        "disabled",
+        "title",
+        "data-*",
+        "aria-*"
+      ],
+
+      template: [
+        "data-*"
+      ],
+
+      img: [
+        "src",
+        "alt",
+        "class",
+        "width",
+        "height",
+        "data-*",
+        "aria-*"
+      ]
+    },
+
+    allowedSchemesByTag: {
+      img: ["data"]
+    },
+
+    allowProtocolRelative: false,
+
+    disallowedTagsMode: "discard",
+
+    // No user/AI script or inline event handler survives this sanitizer.
+    nonTextTags: [
+      "script",
+      "style",
+      "textarea-script",
+      "noscript",
+      "iframe",
+      "object",
+      "embed"
+    ]
+  });
+};
+
+const sanitizeFreedomCss = (css = "") => {
+  return String(css || "")
+    .slice(0, AI_FREEDOM_MAX_CSS)
+
+    // No external code/assets.
+    .replace(/@import[^;]+;?/gi, "")
+    .replace(/url\s*\([^)]*\)/gi, "none")
+
+    // Old/unsafe CSS execution mechanisms.
+    .replace(/expression\s*\(/gi, "")
+    .replace(/behavior\s*:/gi, "")
+    .replace(/-moz-binding\s*:/gi, "")
+
+    // Do not let CSS escape into a style tag.
+    .replace(/<\/?style[^>]*>/gi, "");
+};
+
+
 router.use(verifyToken, checkSubscription("Business Automation"));
 
 // -----------------------------------------------------------------------------
@@ -1913,6 +2363,9 @@ router.post("/security-check", async (req, res) => {
     let notificationSent = false;
     let notificationError = "";
 
+    const securityAssessmentSummary =
+      buildSecurityAssessmentSummary(assessment);
+
     try {
       await sendAugmisAdminApprovalEmail({
         req,
@@ -1921,7 +2374,7 @@ router.post("/security-check", async (req, res) => {
         appSlug,
         changeType: assessment.category,
         userRequest: message,
-        summary: assessment.reason,
+        summary: securityAssessmentSummary,
       });
       notificationSent = true;
     } catch (mailError) {
@@ -1930,16 +2383,64 @@ router.post("/security-check", async (req, res) => {
     }
 
     return res.json({
-      blocked: true,
-      requiresAdminApproval: true,
-      category: assessment.category,
-      reason: assessment.reason,
-      notificationSent,
-      notificationError,
-      message: notificationSent
-        ? "AUGMIS Admin approval is required for this request. The administrators have been notified. No changes have been applied."
-        : "AUGMIS Admin approval is required for this request. No changes have been applied. The automatic administrator notification could not be sent.",
-    });
+        blocked: true,
+
+        requiresAdminApproval: true,
+
+        category:
+          assessment.category,
+
+        confidence:
+          assessment.confidence ||
+          "high",
+
+        reason:
+          assessment.reason,
+
+        decisionSource:
+          assessment.decisionSource ||
+          "unknown",
+
+        classifier:
+          assessment.classifier ||
+          (
+            assessment.decisionSource ===
+            "deterministic_policy"
+              ? "AUGMIS deterministic security policy"
+              : "AUGMIS AI security classifier"
+          ),
+
+        policyApplied:
+          assessment.policyApplied ||
+          assessment.category,
+
+        policyDescription:
+          assessment.policyDescription ||
+          assessment.reason,
+
+        triggerEvidence:
+          Array.isArray(
+            assessment.triggerEvidence
+          )
+            ? assessment.triggerEvidence
+            : [],
+
+        decisionRationale:
+          assessment.decisionRationale ||
+          assessment.reason,
+
+        normalBusinessInterpretation:
+          assessment.normalBusinessInterpretation ||
+          "",
+
+        notificationSent,
+        notificationError,
+
+        message:
+          notificationSent
+            ? "AUGMIS Admin approval is required for this request. The administrators have been notified. No changes have been applied."
+            : "AUGMIS Admin approval is required for this request. No changes have been applied. The automatic administrator notification could not be sent.",
+      });
   } catch (error) {
     console.error("[AI_SIMPLE_SECURITY_CHECK]", error);
     // Do not execute a flagged action when the security screen itself has failed
@@ -2202,6 +2703,238 @@ router.post("/generate-frontend", async (req, res) => {
   }
 });
 
+router.post("/generate-ai-freedom", async (req, res) => {
+  try {
+    const requirements =
+      req.body?.requirements &&
+      typeof req.body.requirements === "object"
+        ? req.body.requirements
+        : {};
+
+    const frontendSpec =
+      req.body?.frontendSpec &&
+      typeof req.body.frontendSpec === "object"
+        ? req.body.frontendSpec
+        : null;
+
+    const backendSchema =
+      req.body?.backendSchema &&
+      typeof req.body.backendSchema === "object"
+        ? req.body.backendSchema
+        : null;
+
+    const backendConnected =
+      Boolean(req.body?.backendConnected);
+
+    const messages =
+      Array.isArray(req.body?.messages)
+        ? req.body.messages.slice(-16)
+        : [];
+
+    const changeRequest =
+      String(
+        req.body?.changeRequest || ""
+      )
+        .trim()
+        .slice(0, 5000);
+
+    if (!frontendSpec) {
+      return res.status(400).json({
+        error: "frontendSpec is required"
+      });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({
+        error:
+          "AI Freedom mode requires OPENAI_API_KEY."
+      });
+    }
+
+    const fields =
+      Array.isArray(frontendSpec?.form?.fields)
+        ? frontendSpec.form.fields
+        : [];
+
+    const fieldContract =
+      fields.map((field) => ({
+        name: field.name,
+        label: field.label,
+        type: field.type,
+        required: Boolean(field.required),
+        options: Array.isArray(field.options)
+          ? field.options
+          : [],
+        placeholder:
+          field.placeholder || "",
+        helperText:
+          field.helperText || ""
+      }));
+
+    const columns =
+      Array.isArray(frontendSpec?.list?.columns)
+        ? frontendSpec.list.columns.filter(
+            (column) =>
+              !/^actions?$/i.test(
+                String(
+                  column?.key ||
+                  column?.label ||
+                  ""
+                )
+              )
+          )
+        : [];
+
+    const prompt = [
+      "You are the visual designer for AUGMIS AI Freedom Mode.",
+
+      "The user has deliberately chosen AI Freedom styling.",
+      "You may creatively design the APPLICATION BODY using HTML and CSS.",
+      "The AUGMIS application identity/title bar is rendered by the parent application and MUST NOT be recreated.",
+
+      "SECURITY BOUNDARY:",
+      "- Return HTML fragment and CSS only.",
+      "- NEVER return JavaScript.",
+      "- Record saving MUST use the AUGMIS bridge contract. Do not invent custom JavaScript or direct API calls.",
+      "- NEVER return script, iframe, object, embed, external stylesheet, CDN, fetch, XHR, WebSocket or external URL.",
+      "- NEVER attempt to access parent/window.top, cookies, localStorage, authentication, tenant information or APIs.",
+      "- NEVER create file upload behavior in AI Freedom HTML unless the structured frontend specification already contains that feature.",
+      "- AUGMIS itself performs record API calls through the controlled bridge described below.",
+
+      "AUGMIS FREEDOM BRIDGE CONTRACT:",
+
+      "1. RECORD LIST",
+      "- Create exactly one record-list container with data-augmis-records.",
+      "- Inside or associated with it include one <template data-augmis-record-template>.",
+      "- Use placeholders such as {{id}}, {{field_name}} inside that template.",
+      "- Each rendered record may have:",
+      '  data-augmis-action="view"',
+      '  data-augmis-action="edit"',
+      '  data-augmis-action="delete"',
+      '  data-record-id="{{id}}".',
+
+      "2. SEARCH",
+      "- If the design has search, use data-augmis-search on the input.",
+
+      "3. CREATE / EDIT FORM",
+      '- A Create button uses data-augmis-action="open-create".',
+      '- The form itself MUST be <form data-augmis-form="record">.',
+      "- Every input/select/textarea name MUST exactly match a frontend field name.",
+      "- Keep HTML required attributes for required fields.",
+      '- The create/edit modal/container MUST use data-augmis-modal="form" and normally start hidden.',
+      '- Close buttons use data-augmis-action="close-modal".',
+      '- The Save/Create/Update footer button MUST use type="button" data-augmis-action="save-record".',
+      "- The Save button may sit inside or outside the <form>; the trusted AUGMIS bridge will submit the bound record form.",
+      "- NEVER create independent custom save JavaScript.",
+      "- NEVER use onclick or form action URLs.",
+      "- The trusted AUGMIS bridge automatically distinguishes create from edit.",
+
+      "4. VIEW MODAL",
+      '- Optional view modal: data-augmis-modal="view" and normally hidden.',
+      '- Display values using data-augmis-view-field="field_name".',
+
+      "5. EMPTY STATE / COUNT",
+      "- Optional empty-state element uses data-augmis-empty.",
+      "- Optional displayed record count uses data-augmis-record-count.",
+
+      "6. REFRESH",
+      '- Optional refresh button uses data-augmis-action="refresh".',
+
+      "DEBUG-DRIVEN REPAIR:",
+      '- If changeRequest contains "[AUGMIS AI Freedom Debug Report]", use its events and lastAudit to repair the generated markup.',
+      "- If recordForms is 0, output exactly one <form data-augmis-form=\"record\"> for create/edit.",
+      "- If formModals is 0, ensure the create/edit container uses data-augmis-modal=\"form\".",
+      '- Save/Create/Update must use type="button" data-augmis-action="save-record".',
+      "- The Save control may be visually outside the form, but it must remain inside the data-augmis-modal=\"form\" container.",
+      "- If SAVE_LIKE_BUTTON_NOT_BOUND appears, bind that visual save control to data-augmis-action=\"save-record\" and ensure the modal/form contract exists.",
+      "- If FORM_SUBMIT_IGNORED_UNBOUND_FORM appears, ensure the submitted form is the bound AUGMIS record form.",
+      "- If BRIDGE_POST_CREATE_RECORD or BRIDGE_POST_UPDATE_RECORD exists, the bridge binding worked; do not redesign the save contract unless another diagnostic explicitly shows a markup problem.",
+      "- Never generate custom JavaScript as a repair.",
+
+      "VISUAL FREEDOM:",
+      "- You may choose the visual layout, density, card shape, gradients, shadows, table appearance, dashboard composition, tabs, badges, forms and modal presentation.",
+      "- Make the design polished and visually distinctive based on the application's purpose.",
+      "- Responsive layouts are encouraged.",
+      "- Do not reproduce the AUGMIS Standard theme unless it genuinely suits the application.",
+
+      `Backend connected: ${backendConnected}`,
+      `Requirements: ${JSON.stringify(requirements)}`,
+      `Frontend field contract: ${JSON.stringify(fieldContract)}`,
+      `List columns: ${JSON.stringify(columns)}`,
+      `Backend schema reference: ${JSON.stringify(backendSchema || {})}`,
+      `Current frontend specification: ${JSON.stringify(frontendSpec)}`,
+      `Recent conversation: ${messages
+        .map(
+          (message) =>
+            `${message.role}: ${message.text}`
+        )
+        .join(" | ")}`,
+      changeRequest
+        ? `User styling/change request: ${changeRequest}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const generated =
+      await callStructuredModel({
+        name:
+          "augmis_simple_ai_freedom_v28",
+        schema: aiFreedomSchema,
+        prompt,
+      });
+
+    const aiFreedom = {
+      html: sanitizeFreedomHtml(
+        generated?.html || ""
+      ),
+
+      css: sanitizeFreedomCss(
+        generated?.css || ""
+      ),
+
+      // Only the AUGMIS parent supplies actual bridge JavaScript.
+      bridgeVersion: 1,
+
+      assistantSummary:
+        String(
+          generated?.assistantSummary ||
+          "AI Freedom design generated."
+        )
+          .trim()
+          .slice(0, 1000)
+    };
+
+    if (!aiFreedom.html) {
+      throw new Error(
+        "AI Freedom design contained no safe HTML after sanitization."
+      );
+    }
+
+    return res.json({
+      aiFreedom,
+      sandbox: {
+        bridgeVersion: 1,
+        allowSameOrigin: false,
+        arbitraryNetworkAccess: false,
+        arbitraryApiAccess: false,
+        arbitraryJavaScript: false
+      }
+    });
+  } catch (error) {
+    console.error(
+      "[AI_SIMPLE_APP_AI_FREEDOM]",
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        error.message ||
+        "AI Freedom styling could not be generated."
+    });
+  }
+});
+
 router.post("/modify-frontend", async (req, res) => {
   try {
     const requirements = req.body?.requirements && typeof req.body.requirements === "object" ? req.body.requirements : {};
@@ -2314,6 +3047,16 @@ router.post("/apply-change", async (req, res) => {
 ${attachmentContext}` : "",
       `Recent conversation: ${messages.map((m) => `${m.role}: ${m.text}`).join(" | ")}`,
       `User change request: ${changeRequest}`,
+      "DEVELOPER DEBUG REPORTS:",
+      '- A user message may contain the marker "[AUGMIS AI Freedom Debug Report]".',
+      "- Treat the diagnostic JSON as authoritative runtime evidence, not as ordinary styling prose.",
+      "- A debug report is NOT itself a security risk.",
+      "- Never expose or request JWTs, cookies, secrets, tenant data or record values.",
+      "- If the report shows a generated AI Freedom markup/binding problem, such as recordForms=0, formModals=0, save button missing data-augmis-action, SAVE_LIKE_BUTTON_NOT_BOUND, FORM_SUBMIT_IGNORED_UNBOUND_FORM, or missing record template/container, classify this as a normal UI/feature repair and set frontendChanged=true.",
+      "- Preserve all business fields, backend schema, validations and live data behavior.",
+      "- Do not propose changing trusted bridge JavaScript, sandbox flags, tenant controls, auth, APIs or database access.",
+      "- If the diagnostic shows the trusted bridge is healthy and the failure occurs only after API_CREATE_RECORD_START / API_UPDATE_RECORD_START, do NOT pretend HTML/CSS repair will fix it; explain that the failure is backend/API-side.",
+      "- Do not say 'fixed' merely because a debug report was received. Describe what markup contract you are repairing.",
     ].join("\n");
 
     const result = await callStructuredModel({
@@ -2385,6 +3128,8 @@ router.post("/request-admin-approval", async (req, res) => {
     const changeType = String(req.body?.changeType || "").trim().slice(0, 80);
     const userRequest = String(req.body?.userRequest || "").trim().slice(0, 4000);
     const summary = String(req.body?.summary || "").trim().slice(0, 4000);
+
+
 
     await sendAugmisAdminApprovalEmail({
       req,

@@ -59,6 +59,7 @@ import PendingActionsOutlinedIcon from "@mui/icons-material/PendingActionsOutlin
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 
 import api from "../../../../services/api";
+import SecureAiFreedomCanvas from "./SecureAiFreedomCanvas";
 
 const FALLBACK_ACCENT = "#0b78d0";
 
@@ -405,8 +406,8 @@ function EnterpriseKpiCard({ kpi, index, value }) {
   const tone = getTone(kpi?.tone || ["blue", "green", "orange", "purple", "red", "teal"][index % 6]);
   const Icon = getIcon(kpi?.icon || "dashboard");
   return (
-    <Paper elevation={0} sx={{ height: 118, p: 1.9, border: "1px solid #dce5ed", borderRadius: 1.6, bgcolor: "#fff", boxShadow: "0 3px 10px rgba(31,52,73,.04)", display: "flex", alignItems: "center", gap: 1.6 }}>
-      <Box sx={{ width: 60, height: 60, borderRadius: 1.8, display: "grid", placeItems: "center", flex: "0 0 auto", bgcolor: tone.main, color: "#fff", boxShadow: `0 7px 14px ${tone.main}33` }}>
+    <Paper elevation={0} sx={{ height: 118, p: 1.9, border: "1px solid #dce5ed", borderRadius: "12px", bgcolor: "#fff", boxShadow: "0 3px 10px rgba(31,52,73,.04)", display: "flex", alignItems: "center", gap: 1.6 }}>
+      <Box sx={{ width: 60, height: 60, borderRadius: "14px", display: "grid", placeItems: "center", flex: "0 0 auto", bgcolor: tone.main, color: "#fff", boxShadow: `0 7px 14px ${tone.main}33` }}>
         <Icon sx={{ fontSize: 27 }} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
@@ -427,7 +428,7 @@ function AppIdentityHeader({ spec, isLive, applicationFullscreen, onToggleApplic
     <Box sx={{ px: { xs: 2, md: 2.8 }, py: 1.75, bgcolor: tone.dark, color: "#fff", borderBottom: "1px solid rgba(0,0,0,.08)", position: "sticky", top: 0, zIndex: 5 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
-          <Box sx={{ width: 48, height: 48, borderRadius: 1.6, display: "grid", placeItems: "center", bgcolor: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.12)", flex: "0 0 auto" }}>
+          <Box sx={{ width: 48, height: 48, borderRadius: "12px", display: "grid", placeItems: "center", bgcolor: "rgba(255,255,255,.14)", border: "1px solid rgba(255,255,255,.12)", flex: "0 0 auto" }}>
             <Icon sx={{ fontSize: 25, color: "#fff" }} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
@@ -444,7 +445,7 @@ function AppIdentityHeader({ spec, isLive, applicationFullscreen, onToggleApplic
           />
           {onToggleApplicationFullscreen ? (
             <Tooltip title={applicationFullscreen ? "Contract application" : "Expand application"}>
-              <IconButton size="small" onClick={onToggleApplicationFullscreen} sx={{ width: 32, height: 32, bgcolor: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.22)", color: "#fff", borderRadius: 1.2, "&:hover": { bgcolor: "rgba(255,255,255,.20)" } }}>
+              <IconButton size="small" onClick={onToggleApplicationFullscreen} sx={{ width: 32, height: 32, bgcolor: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.22)", color: "#fff", borderRadius: "10px", "&:hover": { bgcolor: "rgba(255,255,255,.20)" } }}>
                 {applicationFullscreen ? <FullscreenExitRoundedIcon sx={{ fontSize: 20 }} /> : <FullscreenRoundedIcon sx={{ fontSize: 20 }} />}
               </IconButton>
             </Tooltip>
@@ -467,7 +468,7 @@ function FormBody({ spec, fields, formValues, formErrors, onFieldChange, accent,
         const sectionFields = fields.filter((field) => names.includes(field.name));
         if (!sectionFields.length) return null;
         return (
-          <Paper key={`${section.title}-${sectionIndex}`} elevation={0} sx={{ border: "1px solid #d8e4ee", borderRadius: 1.4, overflow: "hidden", bgcolor: "#fff" }}>
+          <Paper key={`${section.title}-${sectionIndex}`} elevation={0} sx={{ border: "1px solid #d8e4ee", borderRadius: "12px", overflow: "hidden", bgcolor: "#fff" }}>
             <Box sx={{ px: 1.7, py: 1.05, bgcolor: "#f2f7fb", borderBottom: "1px solid #d8e4ee" }}>
               <Typography sx={{ fontSize: 12, fontWeight: 900, color: "#13466e" }}>{section.title || "Details"}</Typography>
               {section.description ? <Typography sx={{ fontSize: 10.5, color: "#71869b", mt: 0.2 }}>{section.description}</Typography> : null}
@@ -516,7 +517,15 @@ export default function GeneratedAppPreview({
 
   const isLive = Boolean(backendApp?.app_slug);
   const fields = useMemo(() => (Array.isArray(spec?.form?.fields) ? spec.form.fields : []), [spec]);
-  const columns = useMemo(() => (Array.isArray(spec?.list?.columns) ? spec.list.columns : []), [spec]);
+  const columns = useMemo(
+    () =>
+      (Array.isArray(spec?.list?.columns) ? spec.list.columns : []).filter(
+        (column) =>
+          !/^actions?$/i.test(String(column?.key || "").trim()) &&
+          !/^actions?$/i.test(String(column?.label || "").trim())
+      ),
+    [spec]
+  );
   const backendFields = useMemo(() => (Array.isArray(backendSchema?.fields) ? backendSchema.fields : []), [backendSchema]);
   const actions = Array.isArray(spec?.list?.actions) ? spec.list.actions : [];
   const canEdit = isLive && actions.includes("edit");
@@ -756,6 +765,55 @@ export default function GeneratedAppPreview({
     );
   }
 
+  const themeMode =
+    spec?.themeMode === "ai_freedom"
+      ? "ai_freedom"
+      : "augmis_standard";
+
+  if (themeMode === "ai_freedom") {
+    return (
+      <Box sx={{ height: "100%", overflow: "auto", bgcolor: "#f2f6fa" }}>
+        <AppIdentityHeader
+          spec={spec}
+          isLive={isLive}
+          applicationFullscreen={applicationFullscreen}
+          onToggleApplicationFullscreen={onToggleApplicationFullscreen}
+        />
+
+        <Box
+          sx={{
+            p: { xs: 1.25, md: 1.7 },
+            minHeight: "calc(100% - 78px)",
+          }}
+        >
+          <SecureAiFreedomCanvas
+            spec={spec}
+            backendApp={backendApp}
+            backendSchema={backendSchema}
+            onNotice={onNotice}
+          />
+
+          <Box
+            sx={{
+              mt: 1.25,
+              px: 1.5,
+              py: 0.9,
+              borderRadius: "10px",
+              bgcolor: isLive ? "#edf9f2" : "#eef6fd",
+              border: `1px solid ${isLive ? "#cfe9da" : "#d4e7f8"}`,
+              color: isLive ? "#356b4d" : "#5a738b",
+              fontSize: 10.8,
+            }}
+          >
+            {isLive
+              ? `AI Freedom sandbox connected to ${backendApp.table_name || backendApp.app_slug}. Only controlled current-app CRUD actions are permitted.`
+              : "AI Freedom preview is isolated in a secure sandbox. Build Backend to enable controlled record operations."}
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ height: "100%", overflow: "auto", bgcolor: "#f2f6fa" }}>
       <AppIdentityHeader spec={spec} isLive={isLive} applicationFullscreen={applicationFullscreen} onToggleApplicationFullscreen={onToggleApplicationFullscreen} />
@@ -764,7 +822,7 @@ export default function GeneratedAppPreview({
         {Array.isArray(spec.navigation) && spec.navigation.length > 0 ? (
           <Stack direction="row" spacing={0.8} sx={{ mb: 1.6, flexWrap: "wrap", gap: 0.8 }}>
             {spec.navigation.map((item, index) => (
-              <Button key={`${item}-${index}`} size="small" variant={index === 0 ? "contained" : "outlined"} sx={{ height: 31, textTransform: "none", borderRadius: 1, boxShadow: "none", fontWeight: 700, fontSize: 11.2, ...(index === 0 ? { bgcolor: accent, "&:hover": { bgcolor: accent } } : { color: "#416079", borderColor: "#cfdae5", bgcolor: "#fff" }) }}>
+              <Button key={`${item}-${index}`} size="small" variant={index === 0 ? "contained" : "outlined"} sx={{ height: 31, textTransform: "none", borderRadius: "10px", boxShadow: "none", fontWeight: 700, fontSize: 11.2, ...(index === 0 ? { bgcolor: accent, "&:hover": { bgcolor: accent } } : { color: "#416079", borderColor: "#cfdae5", bgcolor: "#fff" }) }}>
                 {item}
               </Button>
             ))}
@@ -782,7 +840,7 @@ export default function GeneratedAppPreview({
         ) : null}
 
         {!modalPreferred && spec.form ? (
-          <Paper elevation={0} sx={{ mb: 1.7, border: "1px solid #d8e4ee", borderRadius: 1.5, overflow: "hidden", bgcolor: "#fff" }}>
+          <Paper elevation={0} sx={{ mb: 1.7, border: "1px solid #d8e4ee", borderRadius: "12px", overflow: "hidden", bgcolor: "#fff" }}>
             <Box sx={{ px: 1.8, py: 1.2, borderBottom: "1px solid #d8e4ee", bgcolor: "#fff" }}>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <EventAvailableOutlinedIcon sx={{ color: accent, fontSize: 20 }} />
@@ -805,7 +863,7 @@ export default function GeneratedAppPreview({
         ) : null}
 
         {spec.list ? (
-          <Paper elevation={0} sx={{ border: "1px solid #d8e4ee", borderRadius: 1.5, bgcolor: "#fff", overflow: "hidden" }}>
+          <Paper elevation={0} sx={{ border: "1px solid #d8e4ee", borderRadius: "12px", bgcolor: "#fff", overflow: "hidden" }}>
             <Box sx={{ px: 1.8, py: 1.35, borderBottom: "1px solid #d8e4ee" }}>
               <Stack direction={{ xs: "column", lg: "row" }} alignItems={{ xs: "stretch", lg: "center" }} justifyContent="space-between" spacing={1.2}>
                 <Stack direction="row" alignItems="center" spacing={1}>
@@ -821,7 +879,7 @@ export default function GeneratedAppPreview({
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder={spec.list.searchPlaceholder || "Search records..."}
-                      sx={{ width: { xs: "100%", sm: 270 }, "& .MuiOutlinedInput-root": { height: 36, fontSize: 11.5 } }}
+                      sx={{ width: { xs: "100%", sm: 270 }, "& .MuiOutlinedInput-root": { height: 36, fontSize: 11.5, borderRadius: "18px" } }}
                       InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 17, color: "#75899d" }} /></InputAdornment> }}
                     />
                   ) : null}
@@ -832,7 +890,7 @@ export default function GeneratedAppPreview({
                     const column = columns.find((item) => normalized(item.key) === normalized(filterKey) || normalized(item.label) === normalized(filterKey));
                     return (
                       <FormControl key={filterKey} size="small" sx={{ minWidth: 160 }}>
-                        <Select displayEmpty value={filters[filterKey] || ""} onChange={(event) => setFilters((prev) => ({ ...prev, [filterKey]: event.target.value }))} sx={{ height: 36, fontSize: 11.3 }}>
+                        <Select displayEmpty value={filters[filterKey] || ""} onChange={(event) => setFilters((prev) => ({ ...prev, [filterKey]: event.target.value }))} sx={{ height: 36, fontSize: 11.3, borderRadius: "10px" }}>
                           <MenuItem value="">All {column?.label || filterKey}</MenuItem>
                           {options.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
                         </Select>
@@ -841,7 +899,7 @@ export default function GeneratedAppPreview({
                   })}
 
                   {modalPreferred && spec.form ? (
-                    <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateForm} sx={{ height: 36, textTransform: "none", bgcolor: accent, boxShadow: "none", fontWeight: 800, "&:hover": { bgcolor: accent } }}>
+                    <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateForm} sx={{ height: 36, textTransform: "none", bgcolor: accent, boxShadow: "none", fontWeight: 800, borderRadius: "10px", "&:hover": { bgcolor: accent } }}>
                       {spec.form.createButtonText || "Create New"}
                     </Button>
                   ) : null}
@@ -854,7 +912,7 @@ export default function GeneratedAppPreview({
                 <Grid container spacing={1.2}>
                   {pagedItems.length ? pagedItems.map((item) => (
                     <Grid item xs={12} sm={6} lg={4} key={item.key}>
-                      <Paper elevation={0} sx={{ p: 1.5, border: "1px solid #dfe7ee", borderRadius: 1.3 }}>
+                      <Paper elevation={0} sx={{ p: 1.5, border: "1px solid #dfe7ee", borderRadius: "12px" }}>
                         {columns.map((column, columnIndex) => (
                           <Box key={column.key} sx={{ mb: columnIndex === columns.length - 1 ? 0 : 0.75 }}>
                             <Typography sx={{ fontSize: 9.8, color: "#8092a4", fontWeight: 800, textTransform: "uppercase" }}>{column.label}</Typography>
@@ -881,13 +939,13 @@ export default function GeneratedAppPreview({
                   <TableHead>
                     <TableRow sx={{ bgcolor: "#0c4875" }}>
                       {columns.map((column) => (
-                        <TableCell key={column.key} sortDirection={orderBy === column.key ? order : false} sx={{ py: 1, color: "#fff", borderBottom: "none", fontSize: 10.3, fontWeight: 900, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                        <TableCell key={column.key} sortDirection={orderBy === column.key ? order : false} sx={{ py: 0.72, color: "#fff", borderBottom: "none", fontSize: 10.1, fontWeight: 900, textTransform: "uppercase", whiteSpace: "nowrap" }}>
                           {tableConfig.sorting ? (
                             <TableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => requestSort(column.key)} sx={{ color: "#fff !important", "& .MuiTableSortLabel-icon": { color: "#fff !important" } }}>{column.label}</TableSortLabel>
                           ) : column.label}
                         </TableCell>
                       ))}
-                      {isLive ? <TableCell align="center" sx={{ py: 1, color: "#fff", borderBottom: "none", fontSize: 10.3, fontWeight: 900, textTransform: "uppercase", whiteSpace: "nowrap" }}>Actions</TableCell> : null}
+                      {isLive ? <TableCell align="center" sx={{ py: 0.72, color: "#fff", borderBottom: "none", fontSize: 10.1, fontWeight: 900, textTransform: "uppercase", whiteSpace: "nowrap" }}>Actions</TableCell> : null}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -897,16 +955,16 @@ export default function GeneratedAppPreview({
                           const value = item.values[columnIndex];
                           const keyText = `${column.key} ${column.label}`.toLowerCase();
                           return (
-                            <TableCell key={column.key} sx={{ py: 0.9, color: "#123b5d", fontSize: 11.4, borderColor: "#e3eaf0", verticalAlign: "middle" }}>
+                            <TableCell key={column.key} sx={{ py: 0.52, color: "#123b5d", fontSize: 11.15, borderColor: "#e3eaf0", verticalAlign: "middle" }}>
                               {/status/.test(keyText) ? <StatusValue value={value} /> : /progress|percentage|percent/.test(keyText) ? <ProgressValue value={value} /> : value || "—"}
                             </TableCell>
                           );
                         })}
                         {isLive ? (
-                          <TableCell align="center" sx={{ py: 0.55, borderColor: "#e3eaf0", whiteSpace: "nowrap" }}>
-                            <Tooltip title="View"><IconButton size="small" onClick={() => setViewItem(item)} sx={{ width: 30, height: 30, border: "1px solid #cfdeea", borderRadius: 1, color: "#0a6fb5", mr: 0.5 }}><VisibilityOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip>
-                            {canEdit ? <Tooltip title="Edit"><IconButton size="small" onClick={() => handleEditRecord(item)} sx={{ width: 30, height: 30, border: "1px solid #cfdeea", borderRadius: 1, color: "#0a6fb5", mr: 0.5 }}><EditOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip> : null}
-                            {canDelete ? <Tooltip title="Delete"><IconButton size="small" onClick={() => setDeleteCandidate(item)} sx={{ width: 30, height: 30, border: "1px solid #efd4d4", borderRadius: 1, color: "#c62828" }}><DeleteOutlineOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip> : null}
+                          <TableCell align="center" sx={{ py: 0.35, borderColor: "#e3eaf0", whiteSpace: "nowrap" }}>
+                            <Tooltip title="View"><IconButton size="small" onClick={() => setViewItem(item)} sx={{ width: 30, height: 30, border: "1px solid #cfdeea", borderRadius: "8px", color: "#0a6fb5", mr: 0.5 }}><VisibilityOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip>
+                            {canEdit ? <Tooltip title="Edit"><IconButton size="small" onClick={() => handleEditRecord(item)} sx={{ width: 30, height: 30, border: "1px solid #cfdeea", borderRadius: "8px", color: "#0a6fb5", mr: 0.5 }}><EditOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip> : null}
+                            {canDelete ? <Tooltip title="Delete"><IconButton size="small" onClick={() => setDeleteCandidate(item)} sx={{ width: 30, height: 30, border: "1px solid #efd4d4", borderRadius: "8px", color: "#c62828" }}><DeleteOutlineOutlinedIcon sx={{ fontSize: 16 }} /></IconButton></Tooltip> : null}
                           </TableCell>
                         ) : null}
                       </TableRow>
@@ -927,23 +985,51 @@ export default function GeneratedAppPreview({
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
                 rowsPerPageOptions={tableConfig.rowsPerPageOptions}
-                sx={{ borderTop: "1px solid #e3eaf0", "& .MuiTablePagination-toolbar": { minHeight: 48 }, "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": { fontSize: 10.8 } }}
+                sx={{
+                  borderTop: "1px solid #e3eaf0",
+                  "& .MuiTablePagination-toolbar": {
+                    minHeight: 44,
+                    px: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    gap: 0.25,
+                  },
+                  "& .MuiTablePagination-spacer": { flex: "1 1 auto" },
+                  "& .MuiTablePagination-selectLabel": {
+                    fontSize: 10.8,
+                    mb: 0,
+                    ml: 0,
+                  },
+                  "& .MuiTablePagination-select": {
+                    fontSize: 10.8,
+                    py: 0,
+                  },
+                  "& .MuiTablePagination-displayedRows": {
+                    fontSize: 10.8,
+                    mb: 0,
+                    ml: 1.5,
+                  },
+                  "& .MuiTablePagination-actions": {
+                    ml: 0.7,
+                  },
+                }}
               />
             ) : null}
           </Paper>
         ) : null}
 
-        <Box sx={{ mt: 1.5, px: 1.5, py: 1, borderRadius: 1.2, bgcolor: isLive ? "#edf9f2" : "#eef6fd", border: `1px solid ${isLive ? "#cfe9da" : "#d4e7f8"}`, color: isLive ? "#356b4d" : "#5a738b", fontSize: 10.8 }}>
+        <Box sx={{ mt: 1.5, px: 1.5, py: 1, borderRadius: "10px", bgcolor: isLive ? "#edf9f2" : "#eef6fd", border: `1px solid ${isLive ? "#cfe9da" : "#d4e7f8"}`, color: isLive ? "#356b4d" : "#5a738b", fontSize: 10.8 }}>
           {isLive ? `Backend connected to ${backendApp.table_name || backendApp.app_slug}. New records are stored in the database.` : spec.notice || "Frontend preview only. No backend has been created yet."}
         </Box>
       </Box>
 
-      <Dialog open={modalPreferred && formOpen} onClose={() => { if (!saving) { setFormOpen(false); resetForm(); } }} fullWidth maxWidth="md" PaperProps={{ sx: { borderRadius: 1.6, overflow: "hidden" } }}>
+      <Dialog open={modalPreferred && formOpen} onClose={() => { if (!saving) { setFormOpen(false); resetForm(); } }} fullWidth maxWidth={false} PaperProps={{ sx: { width: "calc(100% - 40px)", maxWidth: 780, borderRadius: "14px", overflow: "hidden" } }}>
         <DialogTitle sx={{ p: 0 }}>
           <Box sx={{ px: 2.2, py: 1.55, bgcolor: getTone(spec?.appIconTone || "teal").dark, color: "#fff" }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
               <Stack direction="row" alignItems="center" spacing={1.2}>
-                <Box sx={{ width: 42, height: 42, borderRadius: 1.3, bgcolor: "rgba(255,255,255,.14)", display: "grid", placeItems: "center" }}>
+                <Box sx={{ width: 42, height: 42, borderRadius: "12px", bgcolor: "rgba(255,255,255,.14)", display: "grid", placeItems: "center" }}>
                   {React.createElement(getIcon(spec?.appIcon || "form"), { sx: { fontSize: 22 } })}
                 </Box>
                 <Box>

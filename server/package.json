@@ -29,6 +29,7 @@
     "pg-hstore": "^2.3.4",
     "puppeteer": "^24.32.1",
     "response-time": "^2.3.4",
+    "sanitize-html": "^2.17.7",
     "sequelize": "^6.37.7",
     "twilio": "^5.9.0",
     "ws": "^8.18.3",

@@ -12,6 +12,8 @@ import {
   Snackbar,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -28,6 +30,7 @@ import AttachFileRoundedIcon from "@mui/icons-material/AttachFileRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import api from "../../../../services/api";
 import GeneratedAppPreview from "./GeneratedAppPreview";
 import ModuleTileGrid from "../../../../components/ModuleTileGrid";
@@ -161,13 +164,13 @@ function ConversationBubble({ message }) {
 function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
   const storageKey = useMemo(() => getDraftStorageKey(appSlug), [appSlug]);
   const restored = useMemo(() => loadDraft(storageKey), [storageKey]);
-  const [applicationFullscreen, setApplicationFullscreen] = useState(false);
   const [messages, setMessages] = useState(restored?.messages || [starterMessage]);
   const [input, setInput] = useState("");
   const [questionCount, setQuestionCount] = useState(restored?.questionCount || 0);
   const [requirements, setRequirements] = useState(restored?.requirements || null);
   const [requirementsComplete, setRequirementsComplete] = useState(Boolean(restored?.requirementsComplete));
   const [frontendSpec, setFrontendSpec] = useState(restored?.frontendSpec || null);
+  const [applicationFullscreen, setApplicationFullscreen] = useState(false);
   const [backendApp, setBackendApp] = useState(restored?.backendApp || null);
   const [backendSchema, setBackendSchema] = useState(restored?.backendSchema || null);
   const [busy, setBusy] = useState(false);
@@ -364,7 +367,17 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
         requirements: nextRequirements,
       });
       const generated = response?.data?.frontendSpec;
-      setFrontendSpec(generated || null);
+      const nextFrontend = generated
+        ? {
+            ...generated,
+            themeMode:
+              generated.themeMode === "ai_freedom"
+                ? "ai_freedom"
+                : "augmis_standard",
+          }
+        : null;
+
+      setFrontendSpec(nextFrontend);
       setPhase("frontend_review");
       setMessages((prev) => [
         ...prev,
@@ -472,6 +485,175 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
     return response?.data || { blocked: false };
   };
 
+  const currentThemeMode =
+    frontendSpec?.themeMode === "ai_freedom"
+      ? "ai_freedom"
+      : "augmis_standard";
+
+  const persistFrontendSpecOnly = async (nextFrontend) => {
+    if (!backendApp?.app_slug) return backendSchema;
+
+    const schemaToPersist = JSON.parse(
+      JSON.stringify(backendSchema || {})
+    );
+
+    schemaToPersist.ui = {
+      ...(backendSchema?.ui || {}),
+      ...(schemaToPersist.ui || {}),
+      builder: "simple",
+      builderVersion: 2,
+      requirements,
+      frontendSpec: nextFrontend,
+    };
+
+    await api.patch(
+      `/aiappbuilder/${backendApp.app_slug}/schema`,
+      {
+        schema: schemaToPersist,
+      }
+    );
+
+    const verifyResponse = await api.get(
+      `/aiappbuilder/${backendApp.app_slug}/schema`
+    );
+
+    const verifiedSchema =
+      verifyResponse?.data?.schema || null;
+
+    if (!verifiedSchema?.ui?.frontendSpec) {
+      throw new Error(
+        "The theme change could not be verified in the saved application."
+      );
+    }
+
+    setBackendSchema(verifiedSchema);
+
+    return verifiedSchema;
+  };
+
+  const generateFreedomDesign = async ({
+    baseFrontend,
+    changeRequest = "",
+  }) => {
+    const response = await api.post(
+      "/aiappbuilder-simple/generate-ai-freedom",
+      {
+        requirements,
+        frontendSpec: baseFrontend,
+        backendSchema,
+        backendConnected: Boolean(
+          backendApp?.app_slug
+        ),
+        messages: messages.slice(-16),
+        changeRequest,
+      }
+    );
+
+    const aiFreedom = response?.data?.aiFreedom;
+
+    if (!aiFreedom?.html) {
+      throw new Error(
+        "AI Freedom styling was not generated."
+      );
+    }
+
+    return aiFreedom;
+  };
+
+  const handleThemeModeChange = async (_event, nextMode) => {
+    if (
+      !nextMode ||
+      !frontendSpec ||
+      busy ||
+      nextMode === currentThemeMode
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    setPhase("applying_change");
+
+    try {
+      let nextFrontend = {
+        ...frontendSpec,
+        themeMode: nextMode,
+      };
+
+      if (nextMode === "ai_freedom") {
+  const existingAiFreedom =
+    frontendSpec?.aiFreedom;
+
+  // Reuse the previously generated AI Freedom design.
+  // Only generate one if this application has never had one.
+  if (existingAiFreedom?.html) {
+    nextFrontend = {
+      ...nextFrontend,
+      aiFreedom: existingAiFreedom,
+    };
+  } else {
+    const aiFreedom =
+      await generateFreedomDesign({
+        baseFrontend:
+          nextFrontend,
+
+        changeRequest:
+          "Create a distinctive AI Freedom visual design for the current application body. Preserve all fields, records, validation intent and application functionality. The AUGMIS title bar is outside the sandbox and must not be recreated.",
+      });
+
+    nextFrontend = {
+      ...nextFrontend,
+      aiFreedom,
+    };
+  }
+}
+
+      setFrontendSpec(nextFrontend);
+
+      if (backendApp?.app_slug) {
+        await persistFrontendSpecOnly(
+          nextFrontend
+        );
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text:
+            nextMode === "ai_freedom"
+              ? "AI Freedom mode is active. The application body is now rendered in a secure isolated canvas. AUGMIS still controls the title bar, APIs, tenant boundary and database access."
+              : "AUGMIS Standard theme is active again. The application has returned to the controlled enterprise renderer.",
+        },
+      ]);
+
+      showNotice(
+        nextMode === "ai_freedom"
+          ? "AI Freedom mode enabled."
+          : "AUGMIS Standard theme enabled.",
+        "success"
+      );
+    } catch (error) {
+      console.error(
+        "[AI_SIMPLE_THEME_MODE]",
+        error
+      );
+
+      showNotice(
+        error?.response?.data?.error ||
+          error.message ||
+          "Could not change theme mode.",
+        "error"
+      );
+    } finally {
+      setBusy(false);
+      setPhase(
+        backendApp?.app_slug
+          ? "backend_ready"
+          : "frontend_review"
+      );
+    }
+  };
+
   const handleApplicationChange = async (text, attachmentContext = "", attachmentMeta = null) => {
     const userMessage = { role: "user", text, ...(attachmentMeta ? { attachment: attachmentMeta } : {}) };
     const nextMessages = [...messages, userMessage];
@@ -503,9 +685,34 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
         return;
       }
 
-      const nextFrontend = plan.updatedFrontendSpec || frontendSpec;
+      let nextFrontend = {
+        ...(plan.updatedFrontendSpec || frontendSpec),
+        themeMode: currentThemeMode,
+        ...(frontendSpec?.aiFreedom
+          ? { aiFreedom: frontendSpec.aiFreedom }
+          : {}),
+      };
+
       const plannedBackend = plan.updatedBackendSchema || backendSchema;
       let verifiedBackend = backendSchema;
+
+      // In AI Freedom mode, a real frontend change must regenerate the isolated
+      // HTML/CSS canvas after the structured application spec has been updated.
+      if (
+        currentThemeMode === "ai_freedom" &&
+        plan.frontendChanged
+      ) {
+        const aiFreedom = await generateFreedomDesign({
+          baseFrontend: nextFrontend,
+          changeRequest: text,
+        });
+
+        nextFrontend = {
+          ...nextFrontend,
+          themeMode: "ai_freedom",
+          aiFreedom,
+        };
+      }
 
       // For an already-built Simple application, persist BOTH backend changes
       // and UI-only changes into schema_json.ui.frontendSpec. This allows the
@@ -664,9 +871,77 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
           ...(attachmentMeta ? { attachment: attachmentMeta } : {}),
         };
 
-        const assistantText = security.notificationSent
-          ? "AUGMIS Admin approval is required for this request. The administrators have been notified. No changes have been applied."
-          : "AUGMIS Admin approval is required for this request. No changes have been applied. The automatic administrator notification could not be sent.";
+        
+        const evidenceText =
+  Array.isArray(
+    security.triggerEvidence
+  ) &&
+  security.triggerEvidence.length
+    ? security.triggerEvidence
+        .map(
+          (item) =>
+            `• "${item}"`
+        )
+        .join("\n")
+    : "• No explicit trigger evidence returned";
+
+const decisionSourceLabel =
+  security.decisionSource ===
+  "deterministic_policy"
+    ? "AUGMIS deterministic policy"
+    : security.decisionSource ===
+        "ai_security_classifier"
+      ? "AUGMIS AI security classifier"
+      : "AUGMIS security gate";
+
+const assistantText = [
+  "AUGMIS Admin approval is required for this request. No changes have been applied.",
+
+  "",
+
+  `Decision source: ${decisionSourceLabel}`,
+
+  `Policy applied: ${
+    security.policyApplied ||
+    security.category ||
+    "Unknown"
+  }`,
+
+  `Confidence: ${
+    security.confidence ||
+    "high"
+  }`,
+
+  "",
+
+  "Why this request was stopped:",
+  security.decisionRationale ||
+    security.reason ||
+    "No rationale was returned.",
+
+  "",
+
+  "Trigger evidence:",
+  evidenceText,
+
+  security.normalBusinessInterpretation
+    ? [
+        "",
+        "Normal-business interpretation considered:",
+        security.normalBusinessInterpretation,
+      ].join("\n")
+    : "",
+
+  "",
+
+  security.notificationSent
+    ? "AUGMIS Admin has been notified."
+    : "The automatic AUGMIS Admin notification could not be sent.",
+]
+  .filter(
+    (item) => item !== ""
+  )
+  .join("\n");
 
         setMessages((prev) => [
           ...prev,
@@ -675,12 +950,62 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
         ]);
 
         setAdminApprovalPending({
-          actionType: "SECURITY_RISK",
-          changeType: security.category || "security_risk",
-          summary: security.reason || "",
-          requestedAt: new Date().toISOString(),
-          notificationSent: Boolean(security.notificationSent),
-        });
+  actionType:
+    "SECURITY_RISK",
+
+  changeType:
+    security.category ||
+    "security_risk",
+
+  confidence:
+    security.confidence ||
+    "high",
+
+  decisionSource:
+    security.decisionSource ||
+    "unknown",
+
+  classifier:
+    security.classifier ||
+    "",
+
+  policyApplied:
+    security.policyApplied ||
+    security.category ||
+    "security_risk",
+
+  policyDescription:
+    security.policyDescription ||
+    "",
+
+  triggerEvidence:
+    Array.isArray(
+      security.triggerEvidence
+    )
+      ? security.triggerEvidence
+      : [],
+
+  decisionRationale:
+    security.decisionRationale ||
+    security.reason ||
+    "",
+
+  normalBusinessInterpretation:
+    security.normalBusinessInterpretation ||
+    "",
+
+  summary:
+    security.reason ||
+    "",
+
+  requestedAt:
+    new Date().toISOString(),
+
+  notificationSent:
+    Boolean(
+      security.notificationSent
+    ),
+});
 
         showNotice(
           security.notificationSent
@@ -929,6 +1254,57 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
               fontWeight: 700,
             }}
           />
+          {frontendSpec ? (
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={currentThemeMode}
+              onChange={handleThemeModeChange}
+              aria-label="Application theme mode"
+              sx={{
+                height: 32,
+                bgcolor: "#fff",
+                borderRadius: "10px",
+                "& .MuiToggleButton-root": {
+                  px: 1.2,
+                  py: 0.45,
+                  borderColor: "#d8e3ec",
+                  color: "#587187",
+                  textTransform: "none",
+                  fontSize: 10.8,
+                  fontWeight: 750,
+                  whiteSpace: "nowrap",
+                  "&.Mui-selected": {
+                    bgcolor:
+                      currentThemeMode === "ai_freedom"
+                        ? "#f1ebff"
+                        : "#eaf4fd",
+                    color:
+                      currentThemeMode === "ai_freedom"
+                        ? "#6d35c8"
+                        : "#0b6bad",
+                  },
+                },
+              }}
+            >
+              <ToggleButton
+                value="augmis_standard"
+                aria-label="AUGMIS Standard theme"
+              >
+                AUGMIS Standard
+              </ToggleButton>
+
+              <ToggleButton
+                value="ai_freedom"
+                aria-label="AI Freedom theme"
+              >
+                <PaletteOutlinedIcon
+                  sx={{ fontSize: 15, mr: 0.45 }}
+                />
+                AI Freedom
+              </ToggleButton>
+            </ToggleButtonGroup>
+          ) : null}
           {!appSlug && (
             <Tooltip title="Start over">
               <IconButton
