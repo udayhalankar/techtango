@@ -111,6 +111,166 @@ function verifyBackendChange(planned = {}, verified = {}) {
   return true;
 }
 
+function isMultiEntityFrontend(spec = {}) {
+  const forms = Array.isArray(spec?.forms) ? spec.forms : [];
+  if (forms.length > 1) return true;
+  return forms.some((form) =>
+    (Array.isArray(form?.fields) ? form.fields : []).some(
+      (field) => String(field?.lookupEntity || "").trim()
+    )
+  );
+}
+
+
+function dynamicKpiDefinitionError(spec = {}) {
+  const kpis = Array.isArray(spec?.kpis) ? spec.kpis : [];
+  const forms = Array.isArray(spec?.forms) ? spec.forms : [];
+  const formByEntity = new Map(
+    forms
+      .filter((form) => form && typeof form === "object")
+      .map((form) => [String(form?.entity || "").trim(), form])
+  );
+
+  for (const kpi of kpis) {
+    const label = String(kpi?.label || kpi?.id || "KPI");
+    const aggregation = String(kpi?.aggregation || "").trim().toLowerCase();
+
+    // Missing aggregation means an older static/heuristic KPI. It is allowed
+    // until the user asks the AI to convert/change that KPI.
+    if (!aggregation || aggregation === "static") continue;
+
+    if (!["count", "sum", "average", "min", "max"].includes(aggregation)) {
+      return `${label} has an unsupported KPI aggregation.`;
+    }
+
+    const sourceEntity = String(kpi?.sourceEntity || "").trim();
+    let sourceForm = null;
+
+    if (forms.length > 1) {
+      if (!sourceEntity) {
+        return `${label} is dynamic but does not identify its sourceEntity.`;
+      }
+      sourceForm = formByEntity.get(sourceEntity) || null;
+      if (!sourceForm) {
+        return `${label} refers to sourceEntity '${sourceEntity}', but that entity does not exist in frontendSpec.forms.`;
+      }
+    } else {
+      sourceForm = sourceEntity
+        ? formByEntity.get(sourceEntity) || forms[0] || null
+        : forms[0] || null;
+    }
+
+    const sourceFields = Array.isArray(sourceForm?.fields) ? sourceForm.fields : [];
+    const allowedFieldNames = new Set([
+      "id",
+      "record_type",
+      ...sourceFields.map((field) => String(field?.name || "").trim()),
+    ]);
+
+    if (["sum", "average", "min", "max"].includes(aggregation)) {
+      const field = String(kpi?.field || "").trim();
+      if (!field) {
+        return `${label} uses ${aggregation} but does not identify the source field.`;
+      }
+      if (sourceForm && !allowedFieldNames.has(field)) {
+        return `${label} uses KPI field '${field}', but that field does not exist on entity '${sourceEntity || sourceForm?.entity || "record"}'.`;
+      }
+    }
+
+    const filters = Array.isArray(kpi?.filters) ? kpi.filters : [];
+    for (const filter of filters) {
+      const field = String(filter?.field || "").trim();
+      if (!field) {
+        return `${label} contains a KPI filter without a field.`;
+      }
+      if (sourceForm && !allowedFieldNames.has(field)) {
+        return `${label} filters on '${field}', but that field does not exist on entity '${sourceEntity || sourceForm?.entity || "record"}'.`;
+      }
+    }
+  }
+
+  return "";
+}
+
+function kpiPersistenceSignature(spec = {}) {
+  return (Array.isArray(spec?.kpis) ? spec.kpis : []).map((kpi) => ({
+    id: String(kpi?.id || ""),
+    label: String(kpi?.label || ""),
+    value: String(kpi?.value ?? ""),
+    sourceEntity: String(kpi?.sourceEntity || ""),
+    aggregation: String(kpi?.aggregation || ""),
+    field: String(kpi?.field || ""),
+    filters: (Array.isArray(kpi?.filters) ? kpi.filters : []).map((filter) => ({
+      field: String(filter?.field || ""),
+      operator: String(filter?.operator || ""),
+      value: String(filter?.value ?? ""),
+      values: Array.isArray(filter?.values) ? filter.values.map(String) : [],
+    })),
+    format: String(kpi?.format || ""),
+    currency: String(kpi?.currency || ""),
+    decimals: Number(kpi?.decimals || 0),
+    prefix: String(kpi?.prefix || ""),
+    suffix: String(kpi?.suffix || ""),
+  }));
+}
+
+function verifyKpiPersistence(plannedSpec = {}, verifiedSpec = {}) {
+  return JSON.stringify(kpiPersistenceSignature(plannedSpec)) ===
+    JSON.stringify(kpiPersistenceSignature(verifiedSpec));
+}
+
+function verifyRequestedFrontendStructure(changeRequest = "", spec = {}) {
+  const text = String(changeRequest || "").toLowerCase();
+  const forms = Array.isArray(spec?.forms) ? spec.forms : [];
+
+  const asksSeparateForms =
+    /(two|2|separate|independent).{0,35}(forms?|modal)/i.test(text) ||
+    /(customer|client|prospect).{0,40}(form).{0,80}(inquiry|enquiry).{0,30}(form)/i.test(text);
+
+  if (asksSeparateForms && forms.length < 2) {
+    return "The requested independent forms were not actually generated. V2.9 expected at least two objects in frontendSpec.forms.";
+  }
+
+  const asksExistingParentLookup =
+    /(inquiry|enquiry).{0,90}(only|existing|exist).{0,60}(customer|client|prospect)/i.test(text) ||
+    /(only|existing|exist).{0,50}(customer|client|prospect).{0,80}(inquiry|enquiry)/i.test(text);
+
+  if (asksExistingParentLookup) {
+    const hasLookup = forms.some((form) =>
+      (Array.isArray(form?.fields) ? form.fields : []).some(
+        (field) => String(field?.lookupEntity || "").trim()
+      )
+    );
+
+    if (!hasLookup) {
+      return "The requested existing-customer lookup was not actually generated. V2.9 expected a child-form field with lookupEntity configured.";
+    }
+  }
+
+  const kpiDefinitionError = dynamicKpiDefinitionError(spec);
+  if (kpiDefinitionError) {
+    return kpiDefinitionError;
+  }
+
+  const asksForExecutableKpi =
+    /\b(kpi|metric|status\s*card|summary\s*card|dashboard\s*card|pipeline)\b/i.test(text) &&
+    /\b(count|sum|average|avg|minimum|min|max|maximum|total\s+value|active|won|lost|open|closed|pending)\b/i.test(text);
+
+  if (asksForExecutableKpi) {
+    const hasDynamicKpi = (Array.isArray(spec?.kpis) ? spec.kpis : []).some((kpi) =>
+      ["count", "sum", "average", "min", "max"].includes(
+        String(kpi?.aggregation || "").trim().toLowerCase()
+      )
+    );
+
+    if (!hasDynamicKpi) {
+      return "The requested KPI calculation was described, but no executable V2.9.1 KPI aggregation was generated.";
+    }
+  }
+
+  return "";
+}
+
 function ConversationBubble({ message }) {
   const isUser = message.role === "user";
   return (
@@ -501,7 +661,7 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
       ...(backendSchema?.ui || {}),
       ...(schemaToPersist.ui || {}),
       builder: "simple",
-      builderVersion: 2,
+      builderVersion: 4,
       requirements,
       frontendSpec: nextFrontend,
     };
@@ -567,6 +727,14 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
       busy ||
       nextMode === currentThemeMode
     ) {
+      return;
+    }
+
+    if (nextMode === "ai_freedom" && isMultiEntityFrontend(frontendSpec)) {
+      showNotice(
+        "V2.9 multi-entity applications use the AUGMIS Standard renderer. AI Freedom multi-entity bridge support is not enabled yet.",
+        "info"
+      );
       return;
     }
 
@@ -714,6 +882,15 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
         };
       }
 
+      const structuralError = verifyRequestedFrontendStructure(
+        text,
+        nextFrontend
+      );
+
+      if (plan.frontendChanged && structuralError) {
+        throw new Error(structuralError);
+      }
+
       // For an already-built Simple application, persist BOTH backend changes
       // and UI-only changes into schema_json.ui.frontendSpec. This allows the
       // landing page to reopen the latest saved design for editing.
@@ -729,7 +906,7 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
           ...(backendSchema?.ui || {}),
           ...(schemaToPersist.ui || {}),
           builder: "simple",
-          builderVersion: 2,
+          builderVersion: 3,
           requirements,
           frontendSpec: nextFrontend,
         };
@@ -766,6 +943,23 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
             "The frontend change could not be verified in the saved application."
           );
         }
+
+        if (plan.frontendChanged) {
+          const savedFrontend = verifiedBackend?.ui?.frontendSpec || {};
+          const savedKpiError = dynamicKpiDefinitionError(savedFrontend);
+
+          if (savedKpiError) {
+            throw new Error(
+              `The saved frontend contains an invalid dynamic KPI definition: ${savedKpiError}`
+            );
+          }
+
+          if (!verifyKpiPersistence(nextFrontend, savedFrontend)) {
+            throw new Error(
+              "The KPI change was returned by the AI, but its executable aggregation/filter configuration was not persisted exactly."
+            );
+          }
+        }
       } else if (plannedBackend) {
         // Before Build Backend this remains an in-memory draft only.
         verifiedBackend = plannedBackend;
@@ -795,8 +989,8 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
       }
 
       const heading =
-        plan.backendChanged && backendApp?.app_slug
-          ? "✓ Change applied and verified."
+        backendApp?.app_slug && (plan.backendChanged || plan.frontendChanged)
+          ? "✓ Change applied; configuration persisted and structurally verified."
           : "✓ Change applied.";
 
       setMessages((prev) => [

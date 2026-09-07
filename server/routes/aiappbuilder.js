@@ -669,6 +669,18 @@ async function ensureTables() {
     );
   `);
 
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS aiappbuilder_favorites (
+      id BIGSERIAL PRIMARY KEY,
+      app_id BIGINT NOT NULL REFERENCES aiappbuilder_applications(id) ON DELETE CASCADE,
+      tenant_id BIGINT NOT NULL DEFAULT 0,
+      user_id BIGINT NOT NULL,
+      date_created TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (tenant_id, user_id, app_id)
+    );
+  `);
+
   const { rows: columnRows } = await pool.query(
     `
       SELECT column_name
@@ -1181,22 +1193,81 @@ const buildPromptSchema = () => ({
   required: ["appName", "title", "description", "appMode", "sourceTable", "tableColumns", "validations", "uniqueRules", "overlapRules", "dependencies", "relationships", "ui", "fields", "chartConfig", "dashboardConfig", "calendarConfig"],
 });
 
-async function getAppBySlug(appSlug) {
+
+const getRequestUserId = (req) =>
+  req?.user?.id ?? null;
+
+const getRequestTenantId = (req) =>
+  req?.user?.tenant_id ?? null;
+
+const getFavoriteTenantKey = (req) =>
+  getRequestTenantId(req) ?? 0;
+
+const buildApplicationTenantScope = (
+  req,
+  alias = "a",
+  parameterIndex = 1
+) => {
+  const prefix = alias ? `${alias}.` : "";
+  const tenantId = getRequestTenantId(req);
+
+  if (tenantId !== undefined && tenantId !== null) {
+    return {
+      sql: `${prefix}tenant_id = $${parameterIndex}`,
+      values: [tenantId],
+    };
+  }
+
+  return {
+    sql: `${prefix}tenant_id IS NULL AND ${prefix}created_by = $${parameterIndex}`,
+    values: [getRequestUserId(req) ?? -1],
+  };
+};
+
+async function getAppBySlug(
+  appSlug,
+  req,
+  { publishedOnly = false } = {}
+) {
+  const scope = buildApplicationTenantScope(req, "a", 2);
+  const values = [appSlug, ...scope.values];
+
   const { rows } = await pool.query(
-    `SELECT * FROM aiappbuilder_applications WHERE app_slug = $1 LIMIT 1`,
-    [appSlug]
+    `
+      SELECT a.*
+      FROM aiappbuilder_applications a
+      WHERE a.app_slug = $1
+        AND ${scope.sql}
+        ${publishedOnly ? "AND LOWER(COALESCE(a.status, '')) = 'published'" : ""}
+      LIMIT 1
+    `,
+    values
   );
+
   const app = rows[0] || null;
   if (!app) {
     return null;
   }
 
+  const relationshipValues = [appSlug];
+  let relationshipTenantSql = "";
+
+  if (app.tenant_id !== undefined && app.tenant_id !== null) {
+    relationshipValues.push(app.tenant_id);
+    relationshipTenantSql = `AND (tenant_id = $2 OR tenant_id IS NULL)`;
+  } else {
+    relationshipTenantSql = `AND tenant_id IS NULL`;
+  }
+
   const { rows: relationshipRows } = await pool.query(
-    `SELECT *
-       FROM aiappbuilder_relationships
+    `
+      SELECT *
+      FROM aiappbuilder_relationships
       WHERE app_slug = $1
-      ORDER BY id ASC`,
-    [appSlug]
+        ${relationshipTenantSql}
+      ORDER BY id ASC
+    `,
+    relationshipValues
   );
 
   const relationshipPayload = relationshipRows.map((row) => ({
@@ -1226,7 +1297,28 @@ async function getAppBySlug(appSlug) {
         ? app.schema_json.relationships
         : [],
   };
+
   return app;
+}
+
+async function isTableAccessibleToRequest(tableName, req) {
+  if (!IDENT.test(String(tableName || ""))) {
+    return false;
+  }
+
+  const scope = buildApplicationTenantScope(req, "a", 2);
+  const { rows } = await pool.query(
+    `
+      SELECT 1
+      FROM aiappbuilder_applications a
+      WHERE a.table_name = $1
+        AND ${scope.sql}
+      LIMIT 1
+    `,
+    [tableName, ...scope.values]
+  );
+
+  return Boolean(rows.length);
 }
 
 async function getTableColumns(tableName) {
@@ -1616,6 +1708,188 @@ const validateSchemaRules = async (app, payload, excludeId = null) => {
   await validateOverlapRules(app, payload, excludeId);
 };
 
+
+// -----------------------------------------------------------------------------
+// V2.9 SIMPLE BUILDER MULTI-ENTITY RUNTIME VALIDATION
+// One physical tenant-scoped app table can host multiple logical entities.
+// record_type identifies the logical entity. Entity-specific required fields and
+// lookup integrity are read from schema_json.ui.frontendSpec.forms.
+// -----------------------------------------------------------------------------
+const getSimpleMultiEntityForms = (app) => {
+  const forms = app?.schema_json?.ui?.frontendSpec?.forms;
+  return Array.isArray(forms)
+    ? forms.filter((form) => form && typeof form === "object")
+    : [];
+};
+
+const validateSimpleMultiEntityPayload = async (
+  app,
+  payload,
+  tenantId
+) => {
+  const forms = getSimpleMultiEntityForms(app);
+  const hasMultiEntityContract =
+    forms.length > 1 ||
+    forms.some((form) =>
+      (Array.isArray(form?.fields) ? form.fields : []).some(
+        (field) => String(field?.lookupEntity || "").trim()
+      )
+    );
+
+  if (!hasMultiEntityContract) return;
+
+  const recordType = String(payload?.record_type || "").trim();
+  if (!recordType) {
+    const error = new Error("record_type is required for this multi-entity application");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const form = forms.find(
+    (item) => String(item?.entity || item?.id || "").trim() === recordType
+  );
+
+  if (!form) {
+    const error = new Error(`Unknown record type: ${recordType}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const fields = Array.isArray(form?.fields) ? form.fields : [];
+
+  for (const field of fields) {
+    const name = String(field?.name || "").trim();
+    if (!name) continue;
+
+    const value = payload?.[name];
+    const text = String(value ?? "").trim();
+
+    if (field?.required && !text) {
+      const error = new Error(`${field?.label || name} is required`);
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const lookupEntity = String(field?.lookupEntity || "").trim();
+    if (!lookupEntity || !text) continue;
+
+    if (!IDENT.test(app.table_name)) {
+      throw new Error("Invalid application table name");
+    }
+
+    const valueField = String(field?.lookupValueField || "id").trim() || "id";
+
+    let sql;
+    let params;
+
+    if (valueField === "id") {
+      sql = `
+        SELECT id
+        FROM "${app.table_name}"
+        WHERE id = $1
+          AND tenant_id = $2
+          AND COALESCE(is_deleted, false) = false
+          AND COALESCE(transaction_data->>'record_type', '') = $3
+        LIMIT 1
+      `;
+      params = [text, tenantId, lookupEntity];
+    } else {
+      if (!IDENT.test(valueField)) {
+        const error = new Error(`Invalid lookup value field: ${valueField}`);
+        error.statusCode = 400;
+        throw error;
+      }
+
+      sql = `
+        SELECT id
+        FROM "${app.table_name}"
+        WHERE COALESCE(transaction_data->>'${valueField}', '') = $1
+          AND tenant_id = $2
+          AND COALESCE(is_deleted, false) = false
+          AND COALESCE(transaction_data->>'record_type', '') = $3
+        LIMIT 1
+      `;
+      params = [text, tenantId, lookupEntity];
+    }
+
+    const { rows } = await pool.query(sql, params);
+
+    if (!rows.length) {
+      const error = new Error(
+        `${field?.label || name} must reference an existing ${lookupEntity.replace(/_/g, " ")} record`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+};
+
+const validateSimpleMultiEntityDelete = async (
+  app,
+  recordId,
+  tenantId
+) => {
+  const forms = getSimpleMultiEntityForms(app);
+  if (!forms.length || !IDENT.test(app.table_name)) return;
+
+  const { rows: targetRows } = await pool.query(
+    `
+      SELECT id, transaction_data
+      FROM "${app.table_name}"
+      WHERE id = $1
+        AND tenant_id = $2
+        AND COALESCE(is_deleted, false) = false
+      LIMIT 1
+    `,
+    [recordId, tenantId]
+  );
+
+  if (!targetRows.length) return;
+
+  const targetEntity = String(
+    targetRows[0]?.transaction_data?.record_type || ""
+  ).trim();
+
+  if (!targetEntity) return;
+
+  const referencingFields = forms.flatMap((form) =>
+    (Array.isArray(form?.fields) ? form.fields : [])
+      .filter((field) => String(field?.lookupEntity || "").trim() === targetEntity)
+      .map((field) => ({
+        entity: String(form?.entity || form?.id || "record"),
+        name: String(field?.name || "").trim(),
+        label: String(field?.label || field?.name || "Related record"),
+        valueField: String(field?.lookupValueField || "id").trim() || "id",
+      }))
+      .filter((item) => item.name && item.valueField === "id")
+  );
+
+  for (const reference of referencingFields) {
+    if (!IDENT.test(reference.name)) continue;
+
+    const { rows } = await pool.query(
+      `
+        SELECT id
+        FROM "${app.table_name}"
+        WHERE tenant_id = $1
+          AND COALESCE(is_deleted, false) = false
+          AND COALESCE(transaction_data->>'record_type', '') = $2
+          AND COALESCE(transaction_data->>'${reference.name}', '') = $3
+        LIMIT 1
+      `,
+      [tenantId, reference.entity, String(recordId)]
+    );
+
+    if (rows.length) {
+      const error = new Error(
+        `This ${targetEntity.replace(/_/g, " ")} cannot be deleted because it is referenced by an existing ${reference.entity.replace(/_/g, " ")} record.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+};
+
 async function generateSchemaFromAi(appName, requirement, builderSpec = null, appType = "auto", sourceTable = "") {
   const builderSchema = buildSchemaFromBuilderSpec(builderSpec, appName, requirement);
 
@@ -1706,33 +1980,361 @@ async function generateSchemaFromAi(appName, requirement, builderSpec = null, ap
 
 router.use(verifyToken, checkSubscription("Business Automation"));
 
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res) => {
   try {
     await ensureTables();
+
+    const scope = buildApplicationTenantScope(req, "a", 1);
+
     const { rows } = await pool.query(
-    `SELECT id, app_name, app_slug, table_name, requirement, schema_json, status, created_by, tenant_id, date_created, date_modified
-       FROM aiappbuilder_applications
-       ORDER BY id DESC`
+      `
+        SELECT
+          a.id,
+          a.app_name,
+          a.app_slug,
+          a.table_name,
+          a.requirement,
+          a.schema_json,
+          a.status,
+          a.created_by,
+          a.tenant_id,
+          a.date_created,
+          a.date_modified
+        FROM aiappbuilder_applications a
+        WHERE ${scope.sql}
+        ORDER BY a.id DESC
+      `,
+      scope.values
     );
+
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.get("/source-tables", async (_req, res) => {
+router.get("/source-tables", async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = current_schema()
-        AND table_type = 'BASE TABLE'
-        AND table_name LIKE 'cust_%'
-      ORDER BY table_name
-    `);
+    await ensureTables();
+
+    const scope = buildApplicationTenantScope(req, "a", 1);
+
+    const { rows } = await pool.query(
+      `
+        SELECT DISTINCT a.table_name
+        FROM aiappbuilder_applications a
+        WHERE ${scope.sql}
+          AND COALESCE(a.table_name, '') <> ''
+        ORDER BY a.table_name
+      `,
+      scope.values
+    );
 
     res.json(rows.map((row) => row.table_name));
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// -----------------------------------------------------------------------------
+// V2.9.2 TENANT-SAFE PUBLISH + FAVORITES
+// - Published applications are returned only for the authenticated tenant.
+// - Favorites are per authenticated user AND tenant.
+// - A favorite can only reference a published application in the same tenant.
+// -----------------------------------------------------------------------------
+router.get("/published", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const userId = getRequestUserId(req);
+    if (userId === undefined || userId === null) {
+      return res.status(401).json({ error: "Authenticated user is required" });
+    }
+
+    const tenantKey = getFavoriteTenantKey(req);
+    const scope = buildApplicationTenantScope(req, "a", 1);
+    const values = [...scope.values];
+
+    values.push(userId);
+    const userParam = values.length;
+
+    values.push(tenantKey);
+    const tenantKeyParam = values.length;
+
+    const { rows } = await pool.query(
+      `
+        SELECT
+          a.id,
+          a.app_name,
+          a.app_slug,
+          a.table_name,
+          a.requirement,
+          a.schema_json,
+          a.status,
+          a.created_by,
+          a.tenant_id,
+          a.date_created,
+          a.date_modified,
+          EXISTS (
+            SELECT 1
+            FROM aiappbuilder_favorites f
+            WHERE f.app_id = a.id
+              AND f.user_id = $${userParam}
+              AND f.tenant_id = $${tenantKeyParam}
+          ) AS is_favorite
+        FROM aiappbuilder_applications a
+        WHERE ${scope.sql}
+          AND LOWER(COALESCE(a.status, '')) = 'published'
+        ORDER BY COALESCE(a.date_modified, a.date_created) DESC, a.id DESC
+      `,
+      values
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("[AIAPPBUILDER_PUBLISHED_LIST]", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/published/:appSlug", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const appSlug = String(req.params.appSlug || "").trim();
+    if (!appSlug) {
+      return res.status(400).json({ error: "appSlug is required" });
+    }
+
+    const app = await getAppBySlug(appSlug, req, {
+      publishedOnly: true,
+    });
+
+    if (!app) {
+      return res.status(404).json({
+        error: "Published application not found for this tenant.",
+      });
+    }
+
+    const userId = getRequestUserId(req);
+    const tenantKey = getFavoriteTenantKey(req);
+
+    let isFavorite = false;
+
+    if (userId !== undefined && userId !== null) {
+      const { rows } = await pool.query(
+        `
+          SELECT 1
+          FROM aiappbuilder_favorites
+          WHERE app_id = $1
+            AND user_id = $2
+            AND tenant_id = $3
+          LIMIT 1
+        `,
+        [app.id, userId, tenantKey]
+      );
+
+      isFavorite = Boolean(rows.length);
+    }
+
+    res.json({
+      app: {
+        ...app,
+        is_favorite: isFavorite,
+      },
+      schema: app.schema_json || {},
+    });
+  } catch (error) {
+    console.error("[AIAPPBUILDER_PUBLISHED_GET]", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/favorites", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const userId = getRequestUserId(req);
+    if (userId === undefined || userId === null) {
+      return res.status(401).json({ error: "Authenticated user is required" });
+    }
+
+    const tenantKey = getFavoriteTenantKey(req);
+    const scope = buildApplicationTenantScope(req, "a", 3);
+
+    const { rows } = await pool.query(
+      `
+        SELECT
+          a.id,
+          a.app_name,
+          a.app_slug,
+          a.table_name,
+          a.requirement,
+          a.schema_json,
+          a.status,
+          a.created_by,
+          a.tenant_id,
+          a.date_created,
+          a.date_modified,
+          true AS is_favorite,
+          f.date_created AS favorite_date_created
+        FROM aiappbuilder_favorites f
+        INNER JOIN aiappbuilder_applications a
+          ON a.id = f.app_id
+        WHERE f.user_id = $1
+          AND f.tenant_id = $2
+          AND ${scope.sql}
+          AND LOWER(COALESCE(a.status, '')) = 'published'
+        ORDER BY f.date_created DESC, a.id DESC
+      `,
+      [userId, tenantKey, ...scope.values]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("[AIAPPBUILDER_FAVORITES_LIST]", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/:appSlug/favorite", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const appSlug = String(req.params.appSlug || "").trim();
+    const userId = getRequestUserId(req);
+
+    if (!appSlug) {
+      return res.status(400).json({ error: "appSlug is required" });
+    }
+
+    if (userId === undefined || userId === null) {
+      return res.status(401).json({ error: "Authenticated user is required" });
+    }
+
+    const app = await getAppBySlug(appSlug, req, {
+      publishedOnly: true,
+    });
+
+    if (!app) {
+      return res.json({
+        isFavorite: false,
+        published: false,
+      });
+    }
+
+    const { rows } = await pool.query(
+      `
+        SELECT 1
+        FROM aiappbuilder_favorites
+        WHERE app_id = $1
+          AND user_id = $2
+          AND tenant_id = $3
+        LIMIT 1
+      `,
+      [app.id, userId, getFavoriteTenantKey(req)]
+    );
+
+    res.json({
+      isFavorite: Boolean(rows.length),
+      published: true,
+    });
+  } catch (error) {
+    console.error("[AIAPPBUILDER_FAVORITE_STATUS]", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/:appSlug/favorite", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const appSlug = String(req.params.appSlug || "").trim();
+    const userId = getRequestUserId(req);
+
+    if (!appSlug) {
+      return res.status(400).json({ error: "appSlug is required" });
+    }
+
+    if (userId === undefined || userId === null) {
+      return res.status(401).json({ error: "Authenticated user is required" });
+    }
+
+    const app = await getAppBySlug(appSlug, req, {
+      publishedOnly: true,
+    });
+
+    if (!app) {
+      return res.status(404).json({
+        error:
+          "Only a published application in your tenant can be added to Favorites.",
+      });
+    }
+
+    await pool.query(
+      `
+        INSERT INTO aiappbuilder_favorites (
+          app_id,
+          tenant_id,
+          user_id
+        )
+        VALUES ($1, $2, $3)
+        ON CONFLICT (tenant_id, user_id, app_id)
+        DO NOTHING
+      `,
+      [app.id, getFavoriteTenantKey(req), userId]
+    );
+
+    res.json({
+      success: true,
+      isFavorite: true,
+      appSlug,
+    });
+  } catch (error) {
+    console.error("[AIAPPBUILDER_FAVORITE_ADD]", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete("/:appSlug/favorite", async (req, res) => {
+  try {
+    await ensureTables();
+
+    const appSlug = String(req.params.appSlug || "").trim();
+    const userId = getRequestUserId(req);
+
+    if (!appSlug) {
+      return res.status(400).json({ error: "appSlug is required" });
+    }
+
+    if (userId === undefined || userId === null) {
+      return res.status(401).json({ error: "Authenticated user is required" });
+    }
+
+    const app = await getAppBySlug(appSlug, req);
+
+    if (!app) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    await pool.query(
+      `
+        DELETE FROM aiappbuilder_favorites
+        WHERE app_id = $1
+          AND tenant_id = $2
+          AND user_id = $3
+      `,
+      [app.id, getFavoriteTenantKey(req), userId]
+    );
+
+    res.json({
+      success: true,
+      isFavorite: false,
+      appSlug,
+    });
+  } catch (error) {
+    console.error("[AIAPPBUILDER_FAVORITE_REMOVE]", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1790,21 +2392,48 @@ router.post("/", async (req, res) => {
 router.patch("/:appSlug/publish", async (req, res) => {
   try {
     await ensureTables();
+
     const appSlug = String(req.params.appSlug || "").trim();
     if (!appSlug) {
       return res.status(400).json({ error: "appSlug is required" });
     }
+
+    const app = await getAppBySlug(appSlug, req);
+    if (!app) {
+      return res.status(404).json({
+        error: "Application not found for this tenant.",
+      });
+    }
+
+    // Publishing is allowed only after the application/backend exists.
+    await ensureAppTable(app.table_name, app.schema_json);
+
     const { rows } = await pool.query(
-      `UPDATE aiappbuilder_applications
-          SET status = 'Published',
-              date_modified = now()
-        WHERE app_slug = $1
-        RETURNING id, app_name, app_slug, table_name, requirement, schema_json, status, created_by, tenant_id, date_created, date_modified`,
-      [appSlug]
+      `
+        UPDATE aiappbuilder_applications
+        SET status = 'Published',
+            date_modified = now()
+        WHERE id = $1
+        RETURNING
+          id,
+          app_name,
+          app_slug,
+          table_name,
+          requirement,
+          schema_json,
+          status,
+          created_by,
+          tenant_id,
+          date_created,
+          date_modified
+      `,
+      [app.id]
     );
+
     if (!rows.length) {
       return res.status(404).json({ error: "Application not found" });
     }
+
     res.json(rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1819,7 +2448,7 @@ router.patch("/:appSlug/schema", async (req, res) => {
       return res.status(400).json({ error: "appSlug is required" });
     }
 
-    const app = await getAppBySlug(appSlug);
+    const app = await getAppBySlug(appSlug, req);
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -1850,13 +2479,13 @@ router.patch("/:appSlug/schema", async (req, res) => {
               requirement = $2,
               schema_json = $3::jsonb,
               date_modified = now()
-        WHERE app_slug = $4
+        WHERE id = $4
         RETURNING id, app_name, app_slug, table_name, requirement, schema_json, status, created_by, tenant_id, date_created, date_modified`,
       [
         String(mergedSchema.appName || app.app_name || "").trim() || app.app_name,
         String(mergedSchema.description || app.requirement || "").trim() || null,
         JSON.stringify(mergedSchema),
-        appSlug,
+        app.id,
       ]
     );
 
@@ -1881,15 +2510,15 @@ router.delete("/:appSlug", async (req, res) => {
       return res.status(400).json({ error: "appSlug is required" });
     }
 
-    const app = await getAppBySlug(appSlug);
+    const app = await getAppBySlug(appSlug, req);
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
 
     await client.query("BEGIN");
     await client.query(
-      `DELETE FROM aiappbuilder_applications WHERE app_slug = $1`,
-      [appSlug]
+      `DELETE FROM aiappbuilder_applications WHERE id = $1`,
+      [app.id]
     );
 
     if (IDENT.test(app.table_name)) {
@@ -1909,7 +2538,7 @@ router.delete("/:appSlug", async (req, res) => {
 router.get("/:appSlug/schema", async (req, res) => {
   try {
     await ensureTables();
-    const app = await getAppBySlug(req.params.appSlug);
+    const app = await getAppBySlug(req.params.appSlug, req);
     if (!app) return res.status(404).json({ error: "Application not found" });
     await ensureAppTable(app.table_name, app.schema_json);
     res.json({ schema: app.schema_json, app });
@@ -1922,7 +2551,7 @@ router.get("/:appSlug/records", async (req, res) => {
   try {
     await ensureTables();
 
-    const app = await getAppBySlug(req.params.appSlug);
+    const app = await getAppBySlug(req.params.appSlug, req);
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -1957,16 +2586,44 @@ router.get("/:appSlug/records", async (req, res) => {
           await ensureAppTable(tableName, tableName === app.table_name ? schema : null);
         }
         const targetColumns = await getTableColumns(tableName);
-        const softDeleteFilter = targetColumns.has("is_deleted")
-          ? "WHERE COALESCE(is_deleted, false) = false"
+        if (
+          tableName !== app.table_name &&
+          !(await isTableAccessibleToRequest(tableName, req))
+        ) {
+          return res.status(403).json({
+            error: `Table ${tableName} is not available in your tenant.`,
+          });
+        }
+
+        const conditions = [];
+        const params = [];
+
+        if (targetColumns.has("is_deleted")) {
+          conditions.push("COALESCE(is_deleted, false) = false");
+        }
+
+        if (targetColumns.has("tenant_id")) {
+          params.push(req.user?.tenant_id ?? 1);
+          conditions.push(`tenant_id = $${params.length}`);
+        }
+
+        const whereSql = conditions.length
+          ? `WHERE ${conditions.join(" AND ")}`
           : "";
-        const { rows } = await pool.query(`
-          SELECT *
-          FROM "${tableName}"
-          ${softDeleteFilter}
-          ORDER BY 1 DESC
-        `);
-        dashboardRows[tableName] = rows.map((row) => mergeRowWithRelationships(row, collectRelationships(schema)));
+
+        const { rows } = await pool.query(
+          `
+            SELECT *
+            FROM "${tableName}"
+            ${whereSql}
+            ORDER BY 1 DESC
+          `,
+          params
+        );
+
+        dashboardRows[tableName] = rows.map((row) =>
+          mergeRowWithRelationships(row, collectRelationships(schema))
+        );
       }
 
       return res.json(dashboardRows);
@@ -1986,18 +2643,42 @@ router.get("/:appSlug/records", async (req, res) => {
     if (targetTable === app.table_name || targetTable.startsWith("cust_")) {
       await ensureAppTable(targetTable, targetTable === app.table_name ? schema : null);
     }
+    if (
+      targetTable !== app.table_name &&
+      !(await isTableAccessibleToRequest(targetTable, req))
+    ) {
+      return res.status(403).json({
+        error: `Table ${targetTable} is not available in your tenant.`,
+      });
+    }
+
     const targetColumns = await getTableColumns(targetTable);
     const relationships = collectRelationships(schema);
-    const softDeleteFilter = targetColumns.has("is_deleted")
-      ? "WHERE COALESCE(is_deleted, false) = false"
+    const conditions = [];
+    const params = [];
+
+    if (targetColumns.has("is_deleted")) {
+      conditions.push("COALESCE(is_deleted, false) = false");
+    }
+
+    if (targetColumns.has("tenant_id")) {
+      params.push(req.user?.tenant_id ?? 1);
+      conditions.push(`tenant_id = $${params.length}`);
+    }
+
+    const whereSql = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
       : "";
 
-    const { rows } = await pool.query(`
-      SELECT *
-      FROM "${targetTable}"
-      ${softDeleteFilter}
-      ORDER BY 1 DESC
-    `);
+    const { rows } = await pool.query(
+      `
+        SELECT *
+        FROM "${targetTable}"
+        ${whereSql}
+        ORDER BY 1 DESC
+      `,
+      params
+    );
 
     res.json(rows.map((row) => mergeRowWithRelationships(row, relationships)));
   } catch (error) {
@@ -2009,12 +2690,17 @@ router.get("/:appSlug/records", async (req, res) => {
 router.post("/:appSlug/records", async (req, res) => {
   try {
     await ensureTables();
-    const app = await getAppBySlug(req.params.appSlug);
+    const app = await getAppBySlug(req.params.appSlug, req);
     if (!app) return res.status(404).json({ error: "Application not found" });
     await ensureAppTable(app.table_name, app.schema_json);
     const payload = req.body?.transaction_data && typeof req.body.transaction_data === "object"
       ? req.body.transaction_data
       : req.body || {};
+    await validateSimpleMultiEntityPayload(
+      app,
+      payload,
+      req.user?.tenant_id ?? 1
+    );
     validateFieldRules(app, payload);
     await validateSchemaRules(app, payload);
     const { transactionData, relationValues, relationships } = splitPayloadForTable(app.schema_json, payload);
@@ -2055,12 +2741,17 @@ router.post("/:appSlug/records", async (req, res) => {
 router.put("/:appSlug/records/:id", async (req, res) => {
   try {
     await ensureTables();
-    const app = await getAppBySlug(req.params.appSlug);
+    const app = await getAppBySlug(req.params.appSlug, req);
     if (!app) return res.status(404).json({ error: "Application not found" });
     await ensureAppTable(app.table_name, app.schema_json);
     const payload = req.body?.transaction_data && typeof req.body.transaction_data === "object"
       ? req.body.transaction_data
       : req.body || {};
+    await validateSimpleMultiEntityPayload(
+      app,
+      payload,
+      req.user?.tenant_id ?? 1
+    );
     validateFieldRules(app, payload);
     await validateSchemaRules(app, payload, req.params.id);
     const { transactionData, relationValues, relationships, presentKeys } = splitPayloadForTable(app.schema_json, payload);
@@ -2084,11 +2775,17 @@ router.put("/:appSlug/records/:id", async (req, res) => {
       values.push(relationValues[relationship.columnName] ?? null);
       setClauses.push(`"${relationship.columnName}" = $${values.length}`);
     }
+    values.push(req.user?.tenant_id ?? 1);
+    const tenantParam = values.length;
+
     values.push(req.params.id);
+    const idParam = values.length;
+
     const { rows } = await pool.query(
       `UPDATE "${app.table_name}"
        SET ${setClauses.join(", ")}
-       WHERE id = $${values.length}
+       WHERE id = $${idParam}
+         AND tenant_id = $${tenantParam}
          AND COALESCE(is_deleted, false) = false
        RETURNING *`,
       values
@@ -2103,9 +2800,14 @@ router.put("/:appSlug/records/:id", async (req, res) => {
 router.delete("/:appSlug/records/:id", async (req, res) => {
   try {
     await ensureTables();
-    const app = await getAppBySlug(req.params.appSlug);
+    const app = await getAppBySlug(req.params.appSlug, req);
     if (!app) return res.status(404).json({ error: "Application not found" });
     await ensureAppTable(app.table_name, app.schema_json);
+    await validateSimpleMultiEntityDelete(
+      app,
+      req.params.id,
+      req.user?.tenant_id ?? 1
+    );
     const { rows } = await pool.query(
       `UPDATE "${app.table_name}"
        SET is_deleted = true,
@@ -2115,14 +2817,19 @@ router.delete("/:appSlug/records/:id", async (req, res) => {
            date_modified = now(),
            version_no = COALESCE(version_no, 1) + 1
        WHERE id = $2
+         AND tenant_id = $3
          AND COALESCE(is_deleted, false) = false
        RETURNING id`,
-      [req.user?.id || null, req.params.id]
+      [
+        req.user?.id || null,
+        req.params.id,
+        req.user?.tenant_id ?? 1,
+      ]
     );
     if (!rows.length) return res.status(404).json({ error: "Record not found" });
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(error.statusCode || 500).json({ error: error.message });
   }
 });
 
