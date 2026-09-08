@@ -36,6 +36,8 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import AppsOutlinedIcon from "@mui/icons-material/AppsOutlined";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import WebAssetOutlinedIcon from "@mui/icons-material/WebAssetOutlined";
 
 import { getModuleIconByName } from "./moduleIcons";
 
@@ -53,6 +55,7 @@ export default function Home() {
   });
 
   const [modules, setModules] = useState([]);
+  const [favoriteApps, setFavoriteApps] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -85,6 +88,116 @@ export default function Home() {
       }
     })();
   }, []);
+
+
+  // ---------------------------------------------------------------------------
+  // FAVORITE PUBLISHED APPLICATIONS
+  // Server returns only favorites for the authenticated user + tenant.
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!token) return;
+
+    let cancelled = false;
+
+    const loadFavorites = async () => {
+      try {
+        const res = await api.get(
+          "/aiappbuilder/favorites"
+        );
+
+        if (cancelled) return;
+
+        setFavoriteApps(
+          Array.isArray(res.data)
+            ? res.data
+            : []
+        );
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Failed to fetch favorite applications",
+            error
+          );
+          setFavoriteApps([]);
+        }
+      }
+    };
+
+    loadFavorites();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const getPublishedApplicationUrl = (
+    app
+  ) => {
+    const isSimpleBuilderApp =
+      String(
+        app?.schema_json?.ui
+          ?.builder || ""
+      ).toLowerCase() ===
+        "simple" &&
+      Boolean(
+        app?.schema_json?.ui
+          ?.frontendSpec
+      );
+
+    if (
+      isSimpleBuilderApp &&
+      app?.app_slug
+    ) {
+      return `/customapps/${encodeURIComponent(
+        app.app_slug
+      )}`;
+    }
+
+    const mode = String(
+      app?.schema_json?.appMode ||
+        ""
+    ).toLowerCase();
+
+    return mode === "crud"
+      ? `/aicrudapp/${app.id}`
+      : `/aidashboardapp/${app.id}`;
+  };
+
+  const removeFavorite = async (
+    appSlug
+  ) => {
+    const slug = String(
+      appSlug || ""
+    ).trim();
+
+    if (!slug) return;
+
+    const previous =
+      favoriteApps;
+
+    setFavoriteApps((prev) =>
+      prev.filter(
+        (app) =>
+          String(app.app_slug) !==
+          slug
+      )
+    );
+
+    try {
+      await api.delete(
+        `/aiappbuilder/${encodeURIComponent(
+          slug
+        )}/favorite`
+      );
+    } catch (error) {
+      console.error(
+        "Failed to remove favorite",
+        error
+      );
+      setFavoriteApps(previous);
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // MY WORK / HOME INSIGHTS
@@ -926,6 +1039,301 @@ export default function Home() {
               )
             )}
           </Grid>
+        </Paper>
+
+        {/* ================================================================ */}
+        {/* FAVORITES */}
+        {/* ================================================================ */}
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: {
+              xs: 2,
+              md: 2.5,
+            },
+            mb: 2.5,
+            borderRadius: "6px",
+            border:
+              "1px solid #e1e5e9",
+            bgcolor: "#ffffff",
+          }}
+        >
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 1.7 }}
+          >
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+            >
+              <StarRoundedIcon
+                sx={{
+                  color: "#d18b00",
+                  fontSize: 19,
+                }}
+              />
+
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                  }}
+                >
+                  Favorites
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: "#6a7c8e",
+                    fontSize: 11.5,
+                  }}
+                >
+                  Your favorite published
+                  applications
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Button
+              component={Link}
+              to="/customapps"
+              size="small"
+              endIcon={
+                <ArrowForwardIosIcon
+                  sx={{
+                    fontSize:
+                      "10px !important",
+                  }}
+                />
+              }
+              sx={{
+                textTransform: "none",
+                fontSize: 12,
+              }}
+            >
+              View All
+            </Button>
+          </Stack>
+
+          {favoriteApps.length === 0 ? (
+            <Box
+              sx={{
+                py: 2.5,
+                px: 1,
+                border:
+                  "1px dashed #d8e1e9",
+                borderRadius: "6px",
+                bgcolor: "#fafcfe",
+                textAlign: "center",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: "#6a7c8e",
+                  fontSize: 12.5,
+                }}
+              >
+                No favorites yet. Open
+                Custom Applications and
+                select the star on a
+                published application.
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={1.5}>
+              {favoriteApps
+                .slice(0, 6)
+                .map((app) => {
+                  const appUrl =
+                    getPublishedApplicationUrl(
+                      app
+                    );
+
+                  return (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      lg={2}
+                      key={app.id}
+                    >
+                      <Card
+                        elevation={0}
+                        sx={{
+                          height: 132,
+                          position:
+                            "relative",
+                          border:
+                            "1px solid #d9dfe7",
+                          borderRadius:
+                            "6px",
+                          bgcolor:
+                            "#ffffff",
+                          transition:
+                            "all .18s ease",
+                          "&:hover": {
+                            borderColor:
+                              "#7aaee8",
+                            boxShadow:
+                              "0 8px 22px rgba(17,43,77,.10)",
+                            transform:
+                              "translateY(-2px)",
+                          },
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          title="Remove from Favorites"
+                          aria-label="Remove from Favorites"
+                          onClick={(
+                            event
+                          ) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            removeFavorite(
+                              app.app_slug
+                            );
+                          }}
+                          sx={{
+                            position:
+                              "absolute",
+                            right: 8,
+                            top: 8,
+                            zIndex: 2,
+                            width: 28,
+                            height: 28,
+                            bgcolor:
+                              "#fff8e6",
+                            color:
+                              "#d18b00",
+                            "&:hover": {
+                              bgcolor:
+                                "#fff0c2",
+                            },
+                          }}
+                        >
+                          <StarRoundedIcon
+                            sx={{
+                              fontSize: 17,
+                            }}
+                          />
+                        </IconButton>
+
+                        <CardActionArea
+                          component={Link}
+                          to={appUrl}
+                          sx={{
+                            height:
+                              "100%",
+                            alignItems:
+                              "stretch",
+                          }}
+                        >
+                          <CardContent
+                            sx={{
+                              p:
+                                "12px !important",
+                              height:
+                                "100%",
+                              display:
+                                "flex",
+                              flexDirection:
+                                "column",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 31,
+                                height: 31,
+                                borderRadius:
+                                  "6px",
+                                display:
+                                  "grid",
+                                placeItems:
+                                  "center",
+                                bgcolor:
+                                  "#f1edfb",
+                                color:
+                                  "#6b46c1",
+                              }}
+                            >
+                              <WebAssetOutlinedIcon
+                                sx={{
+                                  fontSize:
+                                    18,
+                                }}
+                              />
+                            </Box>
+
+                            <Typography
+                              noWrap
+                              sx={{
+                                mt: 1,
+                                pr: 3.5,
+                                fontSize: 13,
+                                fontWeight:
+                                  700,
+                                color:
+                                  "#223548",
+                              }}
+                            >
+                              {app.app_name ||
+                                "Published Application"}
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                mt: 0.35,
+                                color:
+                                  "#6a7c8e",
+                                fontSize:
+                                  10.5,
+                                display:
+                                  "-webkit-box",
+                                WebkitBoxOrient:
+                                  "vertical",
+                                WebkitLineClamp:
+                                  1,
+                                overflow:
+                                  "hidden",
+                              }}
+                            >
+                              {app.requirement ||
+                                "Open your favorite application"}
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                flexGrow: 1,
+                              }}
+                            />
+
+                            <Typography
+                              sx={{
+                                color:
+                                  "#0a6ed1",
+                                fontSize:
+                                  10.5,
+                                fontWeight:
+                                  700,
+                              }}
+                            >
+                              Open application
+                            </Typography>
+                          </CardContent>
+                        </CardActionArea>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+            </Grid>
+          )}
         </Paper>
 
         {/* ================================================================ */}

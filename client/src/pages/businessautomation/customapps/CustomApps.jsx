@@ -8,16 +8,22 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Select,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import WebAssetOutlinedIcon from "@mui/icons-material/WebAssetOutlined";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 import ModuleTileGrid from "../../../components/ModuleTileGrid";
 import api from "../../../services/api";
@@ -67,7 +73,7 @@ export default function CustomApps() {
     const loadApplications = async () => {
       try {
         const res = await api.get(
-          "/aiappbuilder"
+          "/aiappbuilder/published"
         );
 
         setDashboards(
@@ -146,6 +152,25 @@ export default function CustomApps() {
   =========================================================================== */
 
   const getAppUrl = (item) => {
+    const isSimpleBuilderApp =
+      String(
+        item?.schema_json?.ui?.builder ||
+          ""
+      ).toLowerCase() === "simple" &&
+      Boolean(
+        item?.schema_json?.ui
+          ?.frontendSpec
+      );
+
+    if (
+      isSimpleBuilderApp &&
+      item?.app_slug
+    ) {
+      return `/customapps/${encodeURIComponent(
+        item.app_slug
+      )}`;
+    }
+
     const mode = String(
       item?.schema_json?.appMode ||
         item?.schema?.appMode ||
@@ -157,6 +182,66 @@ export default function CustomApps() {
     }
 
     return `/aidashboardapp/${item.id}`;
+  };
+
+  const toggleFavorite = async (
+    item
+  ) => {
+    const appSlug = String(
+      item?.app_slug || ""
+    ).trim();
+
+    if (!appSlug) return;
+
+    const nextFavorite =
+      !Boolean(item?.is_favorite);
+
+    // Optimistic UI update.
+    setDashboards((prev) =>
+      prev.map((app) =>
+        app.id === item.id
+          ? {
+              ...app,
+              is_favorite:
+                nextFavorite,
+            }
+          : app
+      )
+    );
+
+    try {
+      if (nextFavorite) {
+        await api.post(
+          `/aiappbuilder/${encodeURIComponent(
+            appSlug
+          )}/favorite`
+        );
+      } else {
+        await api.delete(
+          `/aiappbuilder/${encodeURIComponent(
+            appSlug
+          )}/favorite`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to update favorite",
+        error
+      );
+
+      // Roll back optimistic state.
+      setDashboards((prev) =>
+        prev.map((app) =>
+          app.id === item.id
+            ? {
+                ...app,
+                is_favorite:
+                  !nextFavorite,
+              }
+            : app
+        )
+      );
+    }
   };
 
   /* ===========================================================================
@@ -176,58 +261,237 @@ export default function CustomApps() {
   =========================================================================== */
 
   const applicationTiles = useMemo(() => {
-    return dashboards
-      .filter(
-        (item) =>
-          String(
-            item.status || ""
-          ).toLowerCase() ===
-          "published"
-      )
-      .map((item) => {
-        const modifiedDate =
-          item.date_modified
+    return dashboards.map((item) => {
+      const modifiedDate =
+        item.date_modified
+          ? new Date(
+              item.date_modified
+            ).toLocaleDateString()
+          : item.date_created
             ? new Date(
-                item.date_modified
+                item.date_created
               ).toLocaleDateString()
-            : item.date_created
-              ? new Date(
-                  item.date_created
-                ).toLocaleDateString()
-              : "-";
+            : "-";
 
-        const appName =
-          item.app_name ||
-          item.page_name ||
-          "Untitled Application";
+      const appName =
+        item.app_name ||
+        item.page_name ||
+        "Untitled Application";
 
-        return {
-          id: item.id,
-
-          label: appName,
-
-          desc: [
-            `Application ID: ${item.id}`,
-            `Created by: ${
-              item.created_by ?? "-"
-            }`,
-            `Last Modified: ${modifiedDate}`,
-          ].join(" · "),
-
-          Icon: WebAssetOutlinedIcon,
-
-          iconColor: "#6b46c1",
-
-          onClick: () => {
-            window.open(
-              getAppUrl(item),
-              "_blank",
-              "noopener,noreferrer"
-            );
-          },
-        };
-      });
+      return {
+        id: item.id,
+        label: appName,
+        desc: [
+          `Application ID: ${item.id}`,
+          `Last Modified: ${modifiedDate}`,
+        ].join(" · "),
+        Icon: WebAssetOutlinedIcon,
+        iconColor: "#6b46c1",
+        app: item,
+        appUrl: getAppUrl(item),
+        isFavorite: Boolean(
+          item.is_favorite
+        ),
+      };
+    });
   }, [dashboards]);
+
+  const renderPublishedTile = (
+    tile
+  ) => {
+    const app = tile.app || {};
+    const Icon =
+      tile.Icon ||
+      WebAssetOutlinedIcon;
+
+    const openApplication = () => {
+      if (!tile.appUrl) return;
+
+      window.open(
+        tile.appUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    };
+
+    return (
+      <Paper
+        key={tile.id}
+        elevation={0}
+        sx={{
+          position: "relative",
+          bgcolor: "#ffffff",
+          border:
+            "1px solid #dce2e8",
+          borderRadius: "6px",
+          p: 1.6,
+          height: 176,
+          minHeight: 176,
+          maxHeight: 176,
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxShadow:
+            "0 2px 5px rgba(28,45,65,.04)",
+          transition:
+            "transform .16s ease, box-shadow .16s ease, border-color .16s ease",
+          "&:hover": {
+            transform:
+              "translateY(-2px)",
+            boxShadow:
+              "0 8px 18px rgba(28,45,65,.10)",
+            borderColor: "#8fb0d0",
+          },
+        }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="flex-start"
+        >
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: "8px",
+              display: "grid",
+              placeItems: "center",
+              bgcolor: "#6b46c112",
+              color: "#6b46c1",
+            }}
+          >
+            <Icon sx={{ fontSize: 19 }} />
+          </Box>
+
+          <Tooltip
+            title={
+              tile.isFavorite
+                ? "Remove from Favorites"
+                : "Add to Favorites"
+            }
+          >
+            <IconButton
+              size="small"
+              aria-label={
+                tile.isFavorite
+                  ? "Remove from Favorites"
+                  : "Add to Favorites"
+              }
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleFavorite(app);
+              }}
+              sx={{
+                width: 30,
+                height: 30,
+                color: tile.isFavorite
+                  ? "#d18b00"
+                  : "#8494a4",
+                bgcolor: tile.isFavorite
+                  ? "#fff8e6"
+                  : "#f7f9fb",
+                "&:hover": {
+                  bgcolor: tile.isFavorite
+                    ? "#fff1c7"
+                    : "#eef3f7",
+                },
+              }}
+            >
+              {tile.isFavorite ? (
+                <StarRoundedIcon
+                  sx={{ fontSize: 18 }}
+                />
+              ) : (
+                <StarBorderRoundedIcon
+                  sx={{ fontSize: 18 }}
+                />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={openApplication}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" ||
+              event.key === " "
+            ) {
+              event.preventDefault();
+              openApplication();
+            }
+          }}
+          sx={{
+            mt: 1.1,
+            minHeight: 0,
+            cursor: "pointer",
+            outline: "none",
+            flexGrow: 1,
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 14,
+              lineHeight: 1.3,
+              color: "#223548",
+              display: "-webkit-box",
+              overflow: "hidden",
+              WebkitBoxOrient:
+                "vertical",
+              WebkitLineClamp: 2,
+            }}
+          >
+            {tile.label}
+          </Typography>
+
+          <Typography
+            sx={{
+              mt: 0.45,
+              fontSize: 11.5,
+              lineHeight: 1.45,
+              color: "#6b7d8f",
+              display: "-webkit-box",
+              overflow: "hidden",
+              WebkitBoxOrient:
+                "vertical",
+              WebkitLineClamp: 2,
+            }}
+          >
+            {tile.desc}
+          </Typography>
+        </Box>
+
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Typography
+            onClick={openApplication}
+            sx={{
+              fontSize: 10.8,
+              fontWeight: 700,
+              color: "#0a6ed1",
+              cursor: "pointer",
+            }}
+          >
+            Open application
+          </Typography>
+
+          <ArrowForwardIosIcon
+            sx={{
+              color: "#9aa8b7",
+              fontSize: 11,
+            }}
+          />
+        </Stack>
+      </Paper>
+    );
+  };
 
   /* ===========================================================================
      CREATE FORM
@@ -518,6 +782,7 @@ export default function CustomApps() {
         subtitle="Access custom-built and AI-generated enterprise applications."
         searchPlaceholder="Search enterprise applications"
         tiles={applicationTiles}
+        renderTile={renderPublishedTile}
 
         /*
           If you want the Create New Dashboard button visible,

@@ -31,6 +31,9 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
+import PublishRoundedIcon from "@mui/icons-material/PublishRounded";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import api from "../../../../services/api";
 import GeneratedAppPreview from "./GeneratedAppPreview";
 import ModuleTileGrid from "../../../../components/ModuleTileGrid";
@@ -333,6 +336,9 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
   const [applicationFullscreen, setApplicationFullscreen] = useState(false);
   const [backendApp, setBackendApp] = useState(restored?.backendApp || null);
   const [backendSchema, setBackendSchema] = useState(restored?.backendSchema || null);
+  const [publishing, setPublishing] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState(restored?.phase || "discovery");
   const [notice, setNotice] = useState({ open: false, severity: "success", text: "" });
@@ -346,6 +352,9 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
   const [hydrated, setHydrated] = useState(!appSlug);
   const fileInputRef = useRef(null);
   const scrollerRef = useRef(null);
+
+  const isPublished =
+    String(backendApp?.status || "").toLowerCase() === "published";
 
   useEffect(() => {
     if (!hydrated) return;
@@ -497,6 +506,57 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
   }, [appSlug]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadFavoriteStatus = async () => {
+      const slug = String(
+        backendApp?.app_slug || ""
+      ).trim();
+
+      if (!slug || !isPublished) {
+        if (!cancelled) {
+          setIsFavorite(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await api.get(
+          `/aiappbuilder/${encodeURIComponent(
+            slug
+          )}/favorite`
+        );
+
+        if (!cancelled) {
+          setIsFavorite(
+            Boolean(
+              response?.data?.isFavorite
+            )
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "[AI_SIMPLE_FAVORITE_STATUS]",
+            error
+          );
+          setIsFavorite(false);
+        }
+      }
+    };
+
+    loadFavoriteStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    backendApp?.app_slug,
+    backendApp?.status,
+    isPublished,
+  ]);
+
+  useEffect(() => {
     if (scrollerRef.current) {
       scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
     }
@@ -514,6 +574,7 @@ function AISimpleBuilderWorkspace({ appSlug = "", onBack, onAppCreated }) {
     setFrontendSpec(null);
     setBackendApp(null);
     setBackendSchema(null);
+    setIsFavorite(false);
     setPendingAttachment(null);
     setAdminApprovalPending(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1320,6 +1381,119 @@ const assistantText = [
     }
   };
 
+  const handlePublishApp = async () => {
+    const slug = String(
+      backendApp?.app_slug || ""
+    ).trim();
+
+    if (
+      !slug ||
+      publishing ||
+      busy ||
+      isPublished
+    ) {
+      return;
+    }
+
+    setPublishing(true);
+
+    try {
+      const response = await api.patch(
+        `/aiappbuilder/${encodeURIComponent(
+          slug
+        )}/publish`
+      );
+
+      const publishedApp =
+        response?.data || {};
+
+      setBackendApp((prev) => ({
+        ...(prev || {}),
+        ...publishedApp,
+        status: "Published",
+      }));
+
+      showNotice(
+        "Application published successfully. It is now available in Custom Applications for users in this tenant.",
+        "success"
+      );
+    } catch (error) {
+      console.error(
+        "[AI_SIMPLE_PUBLISH_APP]",
+        error
+      );
+
+      showNotice(
+        error?.response?.data?.error ||
+          error.message ||
+          "Failed to publish application",
+        "error"
+      );
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    const slug = String(
+      backendApp?.app_slug || ""
+    ).trim();
+
+    if (
+      !slug ||
+      !isPublished ||
+      favoriteBusy
+    ) {
+      return;
+    }
+
+    const nextFavorite =
+      !isFavorite;
+
+    setFavoriteBusy(true);
+    setIsFavorite(nextFavorite);
+
+    try {
+      if (nextFavorite) {
+        await api.post(
+          `/aiappbuilder/${encodeURIComponent(
+            slug
+          )}/favorite`
+        );
+      } else {
+        await api.delete(
+          `/aiappbuilder/${encodeURIComponent(
+            slug
+          )}/favorite`
+        );
+      }
+
+      showNotice(
+        nextFavorite
+          ? "Added to Favorites."
+          : "Removed from Favorites.",
+        "success"
+      );
+    } catch (error) {
+      setIsFavorite(!nextFavorite);
+
+      console.error(
+        "[AI_SIMPLE_TOGGLE_FAVORITE]",
+        error
+      );
+
+      showNotice(
+        error?.response?.data?.error ||
+          error.message ||
+          "Could not update Favorites",
+        "error"
+      );
+    } finally {
+      setFavoriteBusy(false);
+    }
+  };
+
+
   if (loadingSavedApp) {
     return (
       <Box
@@ -1510,6 +1684,103 @@ const assistantText = [
               </IconButton>
             </Tooltip>
           )}
+          <Button
+            variant="outlined"
+            startIcon={
+              isFavorite ? (
+                <StarRoundedIcon />
+              ) : (
+                <StarBorderRoundedIcon />
+              )
+            }
+            disabled={
+              !isPublished ||
+              favoriteBusy
+            }
+            onClick={handleToggleFavorite}
+            sx={{
+              textTransform: "none",
+              borderRadius: 1.5,
+              px: 1.5,
+              color: isFavorite
+                ? "#a56f00"
+                : "#536b80",
+              borderColor: isFavorite
+                ? "#e6c46b"
+                : "#ccd9e4",
+              bgcolor: isFavorite
+                ? "#fff9e8"
+                : "#fff",
+            }}
+          >
+            {favoriteBusy
+              ? "Updating..."
+              : isFavorite
+                ? "Favorite"
+                : "Add to Favorites"}
+          </Button>
+
+          <Button
+            variant={
+              isPublished
+                ? "outlined"
+                : "contained"
+            }
+            startIcon={
+              isPublished ? (
+                <CheckCircleRoundedIcon />
+              ) : (
+                <PublishRoundedIcon />
+              )
+            }
+            disabled={
+              !backendApp?.app_slug ||
+              publishing ||
+              isPublished
+            }
+            onClick={handlePublishApp}
+            sx={{
+              textTransform: "none",
+              borderRadius: 1.5,
+              px: 1.7,
+              boxShadow: "none",
+              bgcolor: isPublished
+                ? "#edf9f2"
+                : "#0b7a4b",
+              color: isPublished
+                ? "#177245"
+                : "#fff",
+              borderColor: isPublished
+                ? "#b8dec9"
+                : "#0b7a4b",
+              "&:hover": {
+                bgcolor: isPublished
+                  ? "#edf9f2"
+                  : "#09653e",
+                borderColor: isPublished
+                  ? "#b8dec9"
+                  : "#09653e",
+              },
+              "&.Mui-disabled": {
+                bgcolor: isPublished
+                  ? "#edf9f2"
+                  : "#eef2f5",
+                color: isPublished
+                  ? "#177245"
+                  : "#97a6b3",
+                borderColor: isPublished
+                  ? "#b8dec9"
+                  : "#d9e1e7",
+              },
+            }}
+          >
+            {publishing
+              ? "Publishing..."
+              : isPublished
+                ? "Published"
+                : "Publish App"}
+          </Button>
+
           <Button
             variant="contained"
             startIcon={<BuildRoundedIcon />}
