@@ -35,8 +35,7 @@ function resolveUserId(req) {
       user.id,
       user.userId,
       user.sub,
-      user.uid,
-      req.headers["x-user-id"]
+      user.uid
     )
   );
 }
@@ -49,9 +48,7 @@ function resolveTenantId(req) {
       user.tenantId,
       user.tenantid,
       user.tid,
-      user.tenant,
-      req.headers["x-tenant-id"],
-      req.headers["x-tenant_id"]
+      user.tenant
     )
   );
 }
@@ -61,8 +58,7 @@ function resolveRole(req) {
   const role = firstDefined(
     user.role,
     user.userRole,
-    Array.isArray(user.roles) ? user.roles[0] : null,
-    req.headers["x-user-role"]
+    Array.isArray(user.roles) ? user.roles[0] : null
   );
   return role ? String(role).toLowerCase() : "";
 }

@@ -27,10 +27,8 @@ async function verifyToken(req, res, next) {
 
     // --- inactivity window (keeps your existing logic) ---
     const now = Date.now();
-    const lastActivityHeader = parseInt(req.headers['x-last-activity'], 10);
-    const lastSeen = !isNaN(lastActivityHeader)
-      ? lastActivityHeader
-      : (userId && sessionStore[userId]?.lastActivity) || now;
+    // Never accept client-supplied inactivity timestamps as a session authority.
+    const lastSeen = (userId && sessionStore[userId]?.lastActivity) || now;
 
     const INACTIVITY_LIMIT = 59 * 60 * 1000; // 59 minutes
     if (now - lastSeen > INACTIVITY_LIMIT) {

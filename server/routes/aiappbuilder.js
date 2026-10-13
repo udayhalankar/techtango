@@ -5,6 +5,7 @@ const router = express.Router();
 const pool = require("../db");
 const { verifyToken } = require("../middleware/authMiddleware");
 const { checkSubscription } = require("../middleware/checkSubscription");
+const augmisBridge = require("../services/augmisBridge");
 
 const IDENT = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const ALLOWED_FIELD_TYPES = new Set([
@@ -1980,6 +1981,61 @@ async function generateSchemaFromAi(appName, requirement, builderSpec = null, ap
 }
 
 router.use(verifyToken, checkSubscription("Business Automation"));
+
+// B4 Pass 2: proof issuance is tenant-admin-only and uses live DB identity.
+// These paths are BEFORE generic /:appSlug routes and never expose raw records.
+router.post("/augmis/tenant-proof", async (req, res) => {
+  try {
+    const admin = await augmisBridge.requireSourceTenantAdmin(pool, req);
+    if (!admin) return res.status(403).json({ error: "Active source-tenant admin required" });
+    let target;
+    try { target = augmisBridge.validateTarget(req.body); }
+    catch (_) { return res.status(422).json({ error: "Invalid AUGMIS link target" }); }
+    const proof = augmisBridge.signProof(augmisBridge.VERIFY, { ...admin, ...target });
+    res.json({ proof, expiresInSeconds: 120 });
+  } catch (error) {
+    console.error("[AUGMIS_BRIDGE_TENANT_PROOF] proof issuance unavailable");
+    res.status(503).json({ error: "Signing service unavailable" });
+  }
+});
+
+router.post("/augmis/stage-proof", async (req, res) => {
+  try {
+    const admin = await augmisBridge.requireSourceTenantAdmin(pool, req);
+    if (!admin) return res.status(403).json({ error: "Active source-tenant admin required" });
+    let target;
+    try { target = augmisBridge.validateTarget(req.body); }
+    catch (_) { return res.status(422).json({ error: "Invalid AUGMIS link target" }); }
+    const appSlug = req.body?.appSlug;
+    if (typeof appSlug !== "string" || !/^[a-z0-9][a-z0-9_]{0,63}$/.test(appSlug)) {
+      return res.status(422).json({ error: "Invalid application slug" });
+    }
+    await ensureTables();
+    const { rows } = await pool.query(
+      `SELECT id, app_name, app_slug, status, tenant_id, schema_json
+         FROM aiappbuilder_applications
+        WHERE app_slug = $1 AND tenant_id = $2
+          AND LOWER(COALESCE(status, '')) = 'published'
+        LIMIT 1`,
+      [appSlug, admin.sourceTenantId]
+    );
+    if (!rows.length) return res.status(404).json({ error: "Published tenant app not found" });
+    let snapshot;
+    try { snapshot = augmisBridge.validatedSnapshot(rows[0], admin.sourceTenantId); }
+    catch (_) { return res.status(422).json({ error: "App metadata incompatible with B4 staging contract" }); }
+    const sourceAppId = Number(rows[0].id);
+    if (!Number.isSafeInteger(sourceAppId) || sourceAppId < 1) {
+      return res.status(422).json({ error: "Invalid source application ID" });
+    }
+    const proof = augmisBridge.signProof(augmisBridge.STAGE,
+      { ...admin, ...target }, { sourceAppId, snapshot });
+    res.json({ proof, sha256: snapshot.sha256, expiresInSeconds: 120 });
+  } catch (_) {
+    console.error("[AUGMIS_BRIDGE_STAGE_PROOF] proof issuance unavailable");
+    res.status(503).json({ error: "Application staging proof unavailable" });
+  }
+});
+
 
 router.get("/", async (req, res) => {
   try {
